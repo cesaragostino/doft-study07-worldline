@@ -11,6 +11,7 @@
 Red de trabajo: la MISMA composición del fixture f6 (self-contained, régimen caliente, T>0,
 aristas mixtas) — sin oráculo externo.
 """
+import hashlib
 import json
 import shutil
 import tempfile
@@ -18,9 +19,6 @@ import unittest
 from pathlib import Path
 
 import numpy as np
-
-MAN = {"run_id": "test", "spec_tipo": "M1",
-       "hashes_base_externa": {"fixture_f6": "local"}}
 
 from study07.artifacts.checkpoint import (load_checkpoint, network_from_checkpoint,
                                           save_checkpoint)
@@ -32,6 +30,11 @@ from study07.physics.state import Layer, NodeState
 
 REPO = Path(__file__).resolve().parents[1]
 F6 = REPO / "tests/fixtures/study07_f6_regimen_caliente.npz"
+
+# hashes_base_externa con SHA REAL, no placeholder ('local' era un testigo incomprobable —
+# double tap F4 A5): la base externa de estos films de test ES el fixture f6.
+MAN = {"run_id": "test", "spec_tipo": "M1",
+       "hashes_base_externa": {"fixture_f6": hashlib.sha256(F6.read_bytes()).hexdigest()}}
 
 
 def _f6_net(ticks_ya_corridos=0):

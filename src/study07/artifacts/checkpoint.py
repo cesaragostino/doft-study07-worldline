@@ -9,12 +9,14 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
-from typing import Dict, Sequence
+from typing import TYPE_CHECKING, Dict, Sequence
 
 import numpy as np
 
-from ..engine.network import Network
 from ..physics.state import Layer, NodeSpec, NodeState
+
+if TYPE_CHECKING:                       # el motor NO se importa en runtime de módulo: este
+    from ..engine.network import Network  # módulo lo consumen los instrumentos (F4 A7)
 
 
 def spec_fingerprint(spec: NodeSpec) -> str:
@@ -96,6 +98,7 @@ def network_from_checkpoint(specs: Sequence[NodeSpec], ck: Dict) -> Network:
     topología) y la constitución se VERIFICA por huella fail-loud. Cero kwargs: una continuación
     con otros parámetros no es una continuación, es otra corrida (se construye Network directo
     y se declara hija con su propio linaje)."""
+    from ..engine.network import Network   # acá SÍ se construye el motor: import local
     meta = ck["meta"]
     if len(specs) != int(meta["n_nodes"]):
         raise ValueError(f"specs: {len(specs)} != n_nodes {meta['n_nodes']} del checkpoint")

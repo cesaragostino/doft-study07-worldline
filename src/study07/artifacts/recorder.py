@@ -9,11 +9,14 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
-from typing import Dict, List
+from typing import TYPE_CHECKING, Dict, List
 
 import numpy as np
 
-from ..engine.network import Network
+from .checkpoint import spec_fingerprint
+
+if TYPE_CHECKING:                       # sólo anotación: importarlo en runtime cargaba el
+    from ..engine.network import Network  # motor en el proceso de los instrumentos (F4 A7)
 
 # Claves que el CALLER debe aportar (PROVENANCE_CONTRACT): sin ellas el artefacto nace huérfano.
 CLAVES_OBLIGATORIAS = ("run_id", "spec_tipo", "hashes_base_externa")
@@ -76,8 +79,12 @@ class WorldlineRecorder:
             "n_nodes": self.n_nodes, "dims": self.dims,
             "por_nodo": [{"n_modes": sp.n_modes, "n_z": sp.n_z, "n_layers": sp.n_layers,
                           "capas_por_modo": [m.layer.name for m in sp.modes],
-                          "layers_present": [l.name for l in sp.layers_present]}
+                          "layers_present": [l.name for l in sp.layers_present],
+                          "emission_scale": sp.emission_scale}
                          for sp in net.specs],
+            # la CONSTITUCIÓN del film, verificable por huella (F4 A5): sin esto, la
+            # constitucion_sha256 de una vista de energía era un testigo incomprobable
+            "spec_fingerprints": [spec_fingerprint(sp) for sp in net.specs],
             "dt": net.dt, "seed": net.seed, "temperature": net.temperature,
             "k_global": net.k_global, "gamma_c": net.gamma_c,
             "topologia": {"edges_ij": net.edge_ij.tolist(), "w_k": net.edge_w_k.tolist(),

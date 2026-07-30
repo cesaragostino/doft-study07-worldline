@@ -62,6 +62,18 @@ RNG exigen numpy pineado) · topología completa (aristas con w_k/w_gamma/τ) ·
 semilla · perfil (conformidad|campaña) con su retención · `parent_run_id`/`parent_checkpoint`
 si es hija · estado de finalización.
 
+**Enmienda F4 (film auto-suficiente + constitución verificable) — claves OBLIGATORIAS v1:**
+- `por_nodo`: `n_modes`, `n_z`, `n_layers`, `capas_por_modo` (layout del estado que los
+  instrumentos usan para NO adivinar), `layers_present`, `emission_scale`. Films sin esta
+  clave = pre-esquema, rechazados por los instrumentos.
+- `spec_fingerprints`: huella de la CONSTITUCIÓN por nodo (la misma de CHECKPOINT_SCHEMA, sin
+  e_ref) — sin esto, la constitución declarada de una vista de energía era un testigo
+  incomprobable (double tap F4 A5).
+
+**Identidad del film** (usada por las vistas): `sha256(sha_total ‖ manifest_sha)` — los bytes
+de los chunks MÁS el manifiesto que los instrumentos leen. NOTA v1: la ruta de vistas usa el
+hash truncado `[:16]` (declarado; colisión accidental implausible en catálogos de este tamaño).
+
 ## Reglas de integridad
 
 1. Chunks con hash individual (escritos tmp+rename: jamás un chunk a medias); `COMPLETE` = hash del conjunto + hash del manifiesto (adulterar el manifiesto post-cierre = rechazo). COMPLETE prueba CIERRE ÍNTEGRO, no autenticidad: el sha_total lo pinea el catálogo/manifiesto EXTERNO (quien tenga el hash detecta cualquier reemplazo coherente). Una interrupción deja chunks

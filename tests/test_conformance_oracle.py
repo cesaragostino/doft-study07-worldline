@@ -288,6 +288,22 @@ class TestArquitectura(unittest.TestCase):
         self.assertNotIn("paper5", cargados)
         self.assertNotIn("olar", cargados)
 
+    def test_instruments_proceso_limpio_sin_motor(self):
+        """F4 A7: el gate AST caza imports DIRECTOS; éste verifica el INVARIANTE DE PROCESO —
+        importar los instrumentos no carga study07.engine ni transitivamente. «Sin re-simular»
+        deja de ser sintáctico: el motor NO está en el proceso del observador."""
+        import subprocess
+        import sys as _sys
+        code = ("import sys; sys.path.insert(0, 'src'); "
+                "import study07.instruments.api, study07.instruments.phase, "
+                "study07.instruments.energy; "
+                "malos = [m for m in sys.modules if m.startswith('study07.engine')]; "
+                "assert not malos, f'motor cargado transitivamente: {malos}'")
+        r = subprocess.run([_sys.executable, "-c", code], cwd=REPO,
+                           capture_output=True, text=True, timeout=60)
+        self.assertEqual(r.returncode, 0,
+                         f"el motor se cargó en el proceso del instrumento:\n{r.stderr}")
+
 
 if __name__ == "__main__":
     unittest.main()

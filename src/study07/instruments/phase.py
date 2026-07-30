@@ -7,6 +7,10 @@ Reproduce, LEYENDO SÓLO LA WORLDLINE, lo que el motor de Study06 calculaba onli
                                                [oráculo atlas/observables.py:93-109]
 Constantes transcriptas: eps_den=1e-12, r_min=0.08 (R_MIN_DEFAULT) — en la config, declaradas.
 El film es auto-suficiente para esta vista: el layout por nodo viaja en el manifiesto.
+Taxonomía de canales (INSTRUMENT_CONTRACT): theta/z son DATO transformado del film; r/j/omega
+son INFERENCIA (estimador dZ/dt dependiente de la ventana); omega_valid es VEREDICTO (umbral
+r_min declarado). Con stride>1, J/omega usan dt efectivo = dt·stride: es OTRO estimador, no
+una decimación del de stride=1 — declarado en el manifiesto de la vista.
 """
 from __future__ import annotations
 
@@ -14,20 +18,26 @@ from typing import Dict
 
 import numpy as np
 
-from .api import View, exigir_canales
+from .api import View, armar_config, exigir_canales, exigir_completo, ventana
 
 INSTRUMENT_ID = "phase_lock"
-VERSION = "1.0"
-DEFAULTS = {"eps_den": 1e-12, "r_min": 0.08, "t0_tick": 0, "t1_tick": None, "stride": 1}
+VERSION = "1.1"
+DEFAULTS = {"eps_den": 1e-12, "r_min": 0.08, "t0_tick": 0, "t1_tick": None, "stride": 1,
+            "permitir_incompleto": False}
+
+CANALES = {"ticks": "dato", "theta": "dato", "z": "dato",
+           "r": "inferencia", "j": "inferencia (estimador dZ/dt, dt_ef=dt*stride)",
+           "omega": "inferencia (J/max(R^2,eps_den), umbral r_min)",
+           "omega_valid": "veredicto (r >= r_min)"}
 
 
 def run(wl: Dict, observation_config: Dict | None = None) -> View:
-    cfg = {**DEFAULTS, **(observation_config or {})}
-    exigir_canales(wl, ["estados", "manifest", "worldline_hash"])
+    cfg = armar_config(DEFAULTS, observation_config)
+    exigir_canales(wl, ["estados", "manifest", "worldline_hash", "ticks"])
+    exigir_completo(wl, cfg["permitir_incompleto"])
     man = wl["manifest"]
     dt = float(man["dt"])
-    t1 = cfg["t1_tick"] if cfg["t1_tick"] is not None else len(wl["ticks"]) - 1
-    sel = np.arange(int(cfg["t0_tick"]), int(t1) + 1, int(cfg["stride"]))
+    sel = ventana(wl, cfg)
 
     thetas = []
     for j, info in enumerate(man["por_nodo"]):
@@ -71,4 +81,7 @@ def run(wl: Dict, observation_config: Dict | None = None) -> View:
     return View(INSTRUMENT_ID, VERSION, cfg, wl["worldline_hash"],
                 {"ticks": wl["ticks"][sel], "theta": theta, "z": z, "r": r,
                  "j": j_val, "omega": omega, "omega_valid": valido},
-                {"nota": "J[0]=0, omega[0] segun validez; stride>1 => dZ/dt con dt efectivo"})
+                {"canales": dict(CANALES),
+                 "nota": ("J[0]=0, omega[0] segun validez; el primer tick de TODA ventana "
+                          "tiene J=0 por construccion; stride>1 => dZ/dt con dt efectivo "
+                          "(OTRO estimador, no decimacion)")})

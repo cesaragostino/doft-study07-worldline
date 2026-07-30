@@ -17,6 +17,7 @@ import copy
 import hashlib
 import json
 import platform
+import subprocess
 import sys
 from pathlib import Path
 
@@ -79,14 +80,29 @@ def main():
         z[tick] = complex(np.mean(np.exp(1j * theta[tick])))
         jj[tick], r[tick], om[tick], omv[tick] = lock_band_observables(
             z[tick], z[tick - 1], dt, R_MIN_DEFAULT, True)
+        # identidad de trayectoria POR TICK contra el f6 (double tap F4 A6): una divergencia a
+        # mitad de corrida aparecería después como residuo de Gate A atribuido al instrumento
+        for j, o in enumerate(net.oscillators):
+            st = o.state
+            plano = np.concatenate([st.x, st.v, st.z, st.b, st.e])
+            d = float(np.max(np.abs(plano - fx[f"estados_nodo{j}"][tick])))
+            assert d == 0.0, f"tick {tick} nodo {j}: trayectoria difiere del f6 ({d:.3e})"
 
+    # procedencia MEDIDA, no declarada en prosa (F4 A6: «la metadata miente»)
+    oracle_commit = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=ORACLE,
+                                   capture_output=True, text=True).stdout.strip()
+    oracle_dirty = bool(subprocess.run(["git", "status", "--porcelain"], cwd=ORACLE,
+                                       capture_output=True, text=True).stdout.strip())
+    blocks_path = ORACLE / "data/processed/ola1_v4_c1/ola1/simple_blocks_canonical.json"
     payload = {
         "schema": "study07_observables_reference_v1",
         "fuente": "oraculo online (theta_q_from_state + energies + lock_band_observables)",
         "f6_sha256": hashlib.sha256(F6.read_bytes()).hexdigest(),
+        "blocks_sha256": hashlib.sha256(blocks_path.read_bytes()).hexdigest(),
         "ticks": ticks, "dt": dt, "n_nodes": n,
         "eps_den": EPS_DEN, "r_min": R_MIN_DEFAULT,
-        "oracle_commit": "39f8df6", "numpy": np.__version__,
+        "oracle_commit": oracle_commit, "oracle_dirty": oracle_dirty,
+        "numpy": np.__version__,
         "python": platform.python_version(), "machine": platform.machine(),
         "nota": ("fila 0 = PRE-step; theta[k] = fase Q POST step k; Z=mean(exp(i*theta)); "
                  "J[k]=Im(conj(Z_k)*(Z_k-Z_{k-1})/dt), J[0]=0; omega=J/max(R^2,eps_den) si "
