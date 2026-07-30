@@ -115,8 +115,12 @@ def network_from_checkpoint(specs: Sequence[NodeSpec], ck: Dict) -> Network:
     ed = meta["edges"]
     edges = [{"i": int(ij[0]), "j": int(ij[1]), "w_k": wk, "w_gamma": wg, "tau": tv}
              for ij, wk, wg, tv in zip(ed["ij"], ed["w_k"], ed["w_gamma"], ed["tau"])]
-    return Network(specs, ck["states"], edges, dt=float(meta["dt"]), seed=int(meta["seed"]),
-                   temperature=float(meta["temperature"]),
-                   k_global=float(meta["k_global"]), coupling_gamma_c=float(meta["gamma_c"]),
-                   history_init=(ck["buffer"], ck["head"]),
-                   rng_state=meta["rng_state"])
+    net = Network(specs, ck["states"], edges, dt=float(meta["dt"]), seed=int(meta["seed"]),
+                  temperature=float(meta["temperature"]),
+                  k_global=float(meta["k_global"]), coupling_gamma_c=float(meta["gamma_c"]),
+                  history_init=(ck["buffer"], ck["head"]),
+                  rng_state=meta["rng_state"])
+    # LINAJE ADHERIDO (F6, patrón A5 de F5): una red restaurada lo lleva puesto — el recorder
+    # EXIGE que el film declare de qué checkpoint nació; una hija sin linaje no se graba
+    net.origen_checkpoint = {"sha256": ck["sha256"], "tick": int(meta["tick"])}
+    return net

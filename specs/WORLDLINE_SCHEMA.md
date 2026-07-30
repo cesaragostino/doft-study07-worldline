@@ -31,7 +31,7 @@ runs/<run_id>/
   manifest.json        # TODO lo necesario para re-integrar: ver "Manifiesto"
   worldline/           # chunks del film (chunk_00000.npz, ...)
   checkpoints/         # CHECKPOINT_SCHEMA: continuación exacta (float64 + buffers + RNG)
-  events.jsonl         # timeline de intervenciones — LLEGA CON F6 (declarado pendiente)
+  events.jsonl         # timeline EJECUTADO de intervenciones (F6, sellado abajo)
   COMPLETE             # sha256 del film completo; SOLO tras cierre atómico + verificación
 
 views/<worldline_hash>/<instrument_id>/<config_hash>/
@@ -73,6 +73,20 @@ si es hija · estado de finalización.
 **Identidad del film** (usada por las vistas): `sha256(sha_total ‖ manifest_sha)` — los bytes
 de los chunks MÁS el manifiesto que los instrumentos leen. NOTA v1: la ruta de vistas usa el
 hash truncado `[:16]` (declarado; colisión accidental implausible en catálogos de este tamaño).
+
+**Enmienda F6 (hijas — sellada):** una red restaurada de checkpoint lleva su ORIGEN adherido
+(`net.origen_checkpoint`) y el recorder EXIGE el linaje completo y verificado en el manifiesto:
+`parent_run_id` · `parent_worldline_hash` · `parent_checkpoint_sha256` (== el restaurado) ·
+`tick_madre` (== el del checkpoint) · `eventos_declarados` (timeline [M1], validado ANTES de
+crear nada en disco) · `intervenida` (== bool(eventos): una gemela no es intervenida). Tipos
+v1: `kick` (delta aditivo sobre x|v de un nodo) y `escala_arista` (pesos × factor; hotcut =
+0.0); el evento con tick_hija=k se aplica sobre el estado POST step k-1 y el step k integra
+lo intervenido; cambiar τ (estructura de delay) queda FUERA de contrato v1. `events.jsonl` =
+timeline EJECUTADO (un renglón por evento, con lo aplicado exacto + sha256 pre/post del
+objetivo): no lleva sello propio porque es VERIFICABLE desde el film + el manifiesto sellado
+(`verificar_hija` recomputa: el pre ES la fila tick_hija−1, el post es derivable exacto).
+Fila 0 del film hijo = estado restaurado (= fila tick_madre del film madre). La madre JAMÁS
+se modifica (gate medido archivo por archivo).
 
 **Enmienda F5 (composición — double tap A5/A9):** cuando la red del film nació de
 `componer_red`, el manifiesto DEBE llevar la clave `composicion` con el recibo EXACTO

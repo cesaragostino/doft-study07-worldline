@@ -89,6 +89,30 @@ class WorldlineRecorder:
                 raise ValueError(f"hashes_base_externa sin el capsule_sha256 de los "
                                  f"nodos-cápsula {faltan}: un film compuesto sin sus "
                                  "cápsulas citadas nace huérfano (double tap F5 A5)")
+        # LINAJE EXIGIDO (F6): una red restaurada de checkpoint lleva su origen adherido — el
+        # film hijo DEBE declarar el linaje completo y coincidir con lo restaurado; la madre
+        # jamás se sobreescribe y la hija jamás nace huérfana (WORLDLINE_SCHEMA).
+        origen = getattr(net, "origen_checkpoint", None)
+        if origen is not None:
+            faltan_lin = [k for k in ("parent_run_id", "parent_worldline_hash",
+                                      "parent_checkpoint_sha256", "tick_madre",
+                                      "eventos_declarados", "intervenida")
+                          if k not in manifest]
+            if faltan_lin:
+                raise ValueError(f"red restaurada de checkpoint SIN linaje completo en el "
+                                 f"manifiesto: faltan {faltan_lin} — una hija no nace "
+                                 "huérfana (F6)")
+            if manifest["parent_checkpoint_sha256"] != origen["sha256"]:
+                raise ValueError("parent_checkpoint_sha256 del manifiesto no es el del "
+                                 "checkpoint RESTAURADO — el linaje no se declama, se "
+                                 "verifica (F6)")
+            if int(manifest["tick_madre"]) != int(origen["tick"]):
+                raise ValueError(f"tick_madre={manifest['tick_madre']} != tick del "
+                                 f"checkpoint restaurado ({origen['tick']}) (F6)")
+            if bool(manifest["intervenida"]) != bool(manifest["eventos_declarados"]):
+                raise ValueError("intervenida debe reflejar EXACTAMENTE si hay eventos "
+                                 "declarados: una gemela no es intervenida y una "
+                                 "intervenida no es gemela (F6)")
         import platform
         manifest = dict(manifest)
         manifest.update({
