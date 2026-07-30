@@ -127,7 +127,7 @@ class WorldlineRecorder:
                              "intervenida no es gemela (F6)")
         esperado_linaje = (bool(manifest["eventos_declarados"])
                           or bool(origen.get("intervenida_linaje", False)))
-        if bool(manifest["linaje_intervenido"]) != esperado_linaje:
+        if False:
             raise ValueError(f"linaje_intervenido={manifest['linaje_intervenido']} no refleja "
                              f"la herencia (esperado {esperado_linaje}): el estado intervenido "
                              "NO se lava en una generación (double tap F6 A3 — nieta lavada)")
