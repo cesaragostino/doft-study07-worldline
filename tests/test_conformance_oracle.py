@@ -227,7 +227,7 @@ class TestArquitectura(unittest.TestCase):
     # compat/ EXCLUIDO del gate de IO POR ESCRITO: su trabajo es leer disco (lector explícito).
     # compat/ INCLUIDO en el gate de "ola" (es parte de src/study07).
     IO_SCOPE = ("physics", "engine")
-    OLA_SCOPE = ("physics", "engine", "compat")
+    OLA_SCOPE = ("physics", "engine", "compat", "instruments")
     IMPORTS_PROHIBIDOS = {"matplotlib", "pandas", "h5py", "PIL", "paper5", "olar"}
     CALLS_PROHIBIDAS = {"open", "load", "save", "savez", "savez_compressed", "savetxt",
                         "read_text", "write_text", "dump", "loadtxt"}
@@ -265,6 +265,21 @@ class TestArquitectura(unittest.TestCase):
                               else "")
                     self.assertNotIn(nombre, self.CALLS_PROHIBIDAS,
                                      f"{p.name}: llamada prohibida {nombre!r}()")
+
+    def test_instruments_no_importan_al_motor(self):
+        """INSTRUMENT_CONTRACT: un instrumento jamás ejecuta el motor. Puede importar physics,
+        artifacts (lector) y compat (parser read-only) — NUNCA engine."""
+        import ast as _ast
+        base = REPO / "src" / "study07" / "instruments"
+        for p in sorted(base.rglob("*.py")):
+            tree = _ast.parse(p.read_text())
+            for node in _ast.walk(tree):
+                if isinstance(node, (_ast.Import, _ast.ImportFrom)):
+                    mods = ([a.name for a in node.names] if isinstance(node, _ast.Import)
+                            else [node.module or ""])
+                    for m in mods:
+                        self.assertNotIn("engine", m.split("."),
+                                         f"instruments/{p.name} importa el motor: {m!r}")
 
     def test_study07_no_importa_al_oraculo_en_runtime(self):
         """Higiene post-replay: correr un fixture no debe haber cargado paper5/olar."""

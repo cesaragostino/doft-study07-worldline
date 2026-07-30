@@ -74,7 +74,9 @@ class WorldlineRecorder:
         manifest.update({
             "schema": "study07_worldline_v1",
             "n_nodes": self.n_nodes, "dims": self.dims,
-            "por_nodo": [{"n_modes": sp.n_modes, "n_z": sp.n_z, "n_layers": sp.n_layers}
+            "por_nodo": [{"n_modes": sp.n_modes, "n_z": sp.n_z, "n_layers": sp.n_layers,
+                          "capas_por_modo": [m.layer.name for m in sp.modes],
+                          "layers_present": [l.name for l in sp.layers_present]}
                          for sp in net.specs],
             "dt": net.dt, "seed": net.seed, "temperature": net.temperature,
             "k_global": net.k_global, "gamma_c": net.gamma_c,
