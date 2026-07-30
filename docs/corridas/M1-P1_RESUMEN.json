@@ -1,0 +1,57 @@
+{
+ "prereg": "M1-P1",
+ "prereg_sha256": "37527e45c76b86bb94781a8177f1c9d954d1a7f3cb5f27aec2178042beb4497a",
+ "study07_commit": "be29a63",
+ "study07_dirty": false,
+ "entorno": {
+  "numpy": "2.3.4"
+ },
+ "corridas": {
+  "transported": {
+   "worldline_hash": "a0fafc6abc0eca972eb73d145468f97e8d03e57cca5b877b54f7510d518ceb52",
+   "view_hash_energy": "b7bc54077cb8ee32bffa6ee29f110ae17779c807661cd7a4053067d88e317419",
+   "view_hash_phase": "7d8a7624f90ed81cc33ee378fee6015475fffaa479de11308db3a104657a3553",
+   "duracion_s": 436.7,
+   "E0_nodo0": 23680.12521506656,
+   "E0_nodo1": 1.780293990803043e-05,
+   "E_final_nodo0": 9303.082368845193,
+   "E_final_nodo1": 0.13706374741768051,
+   "E_max_nodo1": 0.3959430504149605,
+   "E_max_nodo1_tick": 5446,
+   "R_final_media_ult10pct": 0.29556898009266624,
+   "R_min": 2.0926574379487582e-07,
+   "R_max": 0.9999999999999682,
+   "omega_valid_frac": 0.4595501617993528,
+   "fuego_t_half_tick": 87171,
+   "fuego_t_half_ut": 6.973680000000001,
+   "fuego_t_dec10_tick": null,
+   "fuego_t_dec10_ut": null,
+   "t_lock_tick": null,
+   "t_lock_ut": null
+  },
+  "fresh": {
+   "worldline_hash": "77e10219ac2475bd9d34bb57662e1a77f0d0826812fdd76bee1b9f438295050c",
+   "view_hash_energy": "3ed424234be05b4374773c4ef346eea75ce075ce7146ba50cbe53ae0d17e7d55",
+   "view_hash_phase": "a2c5c091301b6debba715a41442537467b2b7ce6ff2c816a91abc25c286b2249",
+   "duracion_s": 469.3,
+   "E0_nodo0": 0.37676352060169166,
+   "E0_nodo1": 0.01874008727817229,
+   "E_final_nodo0": 4.11215272792446e-05,
+   "E_final_nodo1": 0.00010282498368507085,
+   "E_max_nodo1": 0.02000243297393668,
+   "E_max_nodo1_tick": 175,
+   "R_final_media_ult10pct": 0.5385616265375667,
+   "R_min": 5.672072610983752e-07,
+   "R_max": 0.9999999999993933,
+   "omega_valid_frac": 0.858940564237743,
+   "fuego_t_half_tick": 1987,
+   "fuego_t_half_ut": 0.15896000000000002,
+   "fuego_t_dec10_tick": 6566,
+   "fuego_t_dec10_ut": 0.5252800000000001,
+   "t_lock_tick": 1957,
+   "t_lock_ut": 0.15656
+  }
+ },
+ "delta_R_final": -0.24299264644490043,
+ "duracion_total_s": 943.8
+}
