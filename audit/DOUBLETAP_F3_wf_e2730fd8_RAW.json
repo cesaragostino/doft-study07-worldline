@@ -1,0 +1,363 @@
+{
+  "summary": "Double tap de F3: recorder de worldline + checkpoint/restore — atacar la completitud causal antes de declarar",
+  "agentCount": 5,
+  "logs": [
+    "[b2:mutacion] failed: API Error: 500 Internal server error. This is a server-side issue, usually temporary — try again in a moment. If it persists, check https://status.claude.com."
+  ],
+  "result": {
+    "veredicto": "Ambos repos intactos (git limpio, cero escrituras fuera del sandbox). Verificación completa. Veredicto para bitácora:\n\n---\n\n# DOUBLE TAP F3 — VEREDICTO DEL JUEZ (repo @ e235d4f, sandbox propio, todo re-ejecutado por mano del juez)\n\nBaseline reproducido en copia bit-idéntica: gates F3 **7/7**, suite completa **17 passed** (F2 intacta). El 7/7 queda **REFUTADO como evidencia suficiente**: 5 mutantes del recorder viven con todos los gates verdes — la misma trampa del F2 (verde por régimen degenerado/cobertura parcial). El código shipped, en cambio, sobrevivió TODAS las sondas dinámicas: kicks rederivados de los 4 chunks (incluido el parcial) desde el rng_state PROPIO con residuo 0.000e+00; canal drive veraz contra re-integración independiente (residuo 0, dtype float64, no-vacuo max|drive|=2.44e-01); continuación bit-exacta; controles de no-vacuidad todos muertos. **El defecto es de los GATES y de la mitad de PROCEDENCIA, no de la dinámica.**\n\n## 1. VEREDICTO ÚNICO: **PASADA CON ARREGLOS** — prohibido declarar F3 hasta aplicar A1–A6 y re-verificar matando\n\n- **A1 [tests — DEMOSTRADO]** `tests/test_worldline_checkpoint.py`: agregar **gate2b** (replay-compare total: 130 ticks, chunk_ticks=16, memoria de estados+drive+kicks, dtype float64 en los 3 canales, guard max|drive[1:]|>0, igualdad EXACTA fila a fila) y **gate5b** (rederivar kicks de TODOS los chunks desde el rng_state PROPIO de cada uno + dtype). Parche listo y verificado: `/private/tmp/claude-501/-Users-cagostino-code-doft-study06-fundamental-lock-dynamics/a013d8a0-cafd-49d8-9f07-ba0ef540402e/scratchpad/juez_f3/repo/tests/test_gates_f3_juez.py` — pristine **9 passed**; los 5 vivos **mueren**. Corregir además el comentario falso de `:182` (\"chunk 0 tiene filas 0..16\" → 0..15; layout medido: 0..15 / 16..31 / 32..47 / 48..48).\n- **A2 [prod]** `src/study07/artifacts/recorder.py:49-60`: manifiesto auto-poblado desde `net` — topología (aristas w_k/w_gamma/τ), k_global/gamma_c/tau_field, por nodo {n_modes, n_z, n_layers}, git commit+dirty, versiones python/numpy, perfil='conformidad'; validación fail-loud de claves obligatorias del caller (run_id, spec [M1|M2], hashes de base externa). Verificado por el juez: el manifiesto real tiene 9 claves y NINGUNO de los campos de WORLDLINE_SCHEMA:56-63.\n- **A3 [prod]** `recorder.py:116-120` y `:139-147`: COMPLETE incluye sha256 de manifest.json y el lector lo verifica + cross-check n_nodes/dims contra las formas reales. Verificado: manifest adulterado TRAS COMPLETE (dt=123.456, seed=999999) es aceptado sin error.\n- **A4 [prod]** `src/study07/artifacts/checkpoint.py:31-43` y `:67-79`: la meta lleva k_global/gamma_c/tau_field + sha de edges normalizados y de la constitución serializada; `network_from_checkpoint` los APLICA de la meta y verifica el hash de los specs fail-loud (kwargs sólo override explícito registrado). Verificado: sin k_global → aceptado con k_global=0.0, divergencia 3.610e-04 en 10 ticks, cero excepción; constitución gamma×1.5+0.01 → aceptada, divergencia 1.095e-06, silencio.\n- **A5 [prod]** `recorder.py:91-92`: chunks con tmp .npz + rename (patrón `checkpoint.py:44-47`, cuidando el append .npz ya cazado); lector `allow_incomplete` captura BadZipFile por chunk y reporta cuál. Verificado: chunk truncado → `BadZipFile: File is not a zip file` crudo, justo en el modo cuyo propósito es auditar restos.\n- **A6 [docs]** CHECKPOINT_SCHEMA promovido a v1 sellado (hoy: BORRADOR de 5 líneas que checkpoint.py declara implementar); WORLDLINE_SCHEMA: sellar drive=sub-paso 0, canal t=derivado (no almacenado), events.jsonl=(F6), y que COMPLETE prueba CIERRE no autenticidad (sha_total lo pinea el catálogo externo); bitácora §4: sección NO-CUBIERTO (verificado: §3-F2 la tiene en :64, §4-F3 no tiene ninguna).\n\n**Condición dura:** A2–A5 tocan producción y cambian el formato de los artefactos → re-correr batería reforzada + suite completa (las 17 de F2 deben seguir verdes) TRAS aplicarlos. El double tap no se hereda.\n\n## 2. Tabla de mutantes consolidada (los 11 re-ejecutados por el juez; equivalencias b1/b4 anotadas)\n\n| mutante (dónde) | batería actual 7 gates | batería reforzada 9 gates |\n|---|---|---|\n| M6 drive=ceros en record_step (=B de b4) | **VIVO 7/7** | MUERTO |\n| M4c drive float32 en _flush_chunk | **VIVO 7/7** | MUERTO |\n| M3 rng_state estancado en _flush_chunk :99 (≈A de b4) | **VIVO 7/7** | MUERTO |\n| M7 kicks basura tick>16 (≈C de b4) | **VIVO 7/7** | MUERTO (2 gates) |\n| D estados +1e-9 tick>100 | **VIVO 7/7** | MUERTO |\n| M1 e_ref no aplicado (control) | MUERTO (gate1) | MUERTO |\n| M2 RNG no restaurado (control) | MUERTO (gate1) | MUERTO |\n| M8 buffer no restaurado (control) | MUERTO (gate1) | MUERTO |\n| M4 estados float32 (control) | MUERTO (gate2) | MUERTO |\n| M4b kicks float32 (control) | MUERTO (gate5) | MUERTO |\n| M5 fila0=POST (control) | MUERTO (gate2) | MUERTO |\n\n**Totales: batería actual 11 probados / 6 detectados / 5 VIVOS. Batería reforzada: 11/11/0, pristine 9 passed.** El claim de b2 no existe (agente muerto); los claims de mutación de b1 y b4 quedaron CONFIRMADOS por re-ejecución independiente. La no-vacuidad del camino e_ref confirmada aparte: 9/9 pares (nodo,capa) del meta difieren del theta fresco.\n\n## 3. Cumplimiento de schemas por cláusula — PARCIAL-silenciosos al frente\n\n**WORLDLINE_SCHEMA v1 (sellado COA):**\n\n| cláusula | estado | evidencia del juez |\n|---|---|---|\n| Manifiesto PROVENANCE (:56-63) | **NO CUMPLE — silencioso** | 9 claves; cero de: topología, engine params, git+dirty, entorno, hashes base externa, perfil, [M1|M2], parent, finalización. Sin events.jsonl |\n| Canales x,v,z,b,e recuperables del artefacto (:47) | **PARCIAL — silencioso** | dims=33; resto 13 = n_z+2·n_layers ambiguo; partición sólo con el fixture externo — el film NO es auto-suficiente |\n| Perfil por corrida (:13-16,:62) | **NO — silencioso** | campo inexistente |\n| Regla 2 inmutabilidad post-COMPLETE (:70) | **PARCIAL — silencioso** | manifest adulterado aceptado; truncación + COMPLETE reescrito coherente aceptada (48 filas, complete=True) — tamper, no accidente |\n| Regla 1 interrupción/reanudación (:67-69) | **PARCIAL — silencioso** | chunks sin tmp+rename (:92) → BadZipFile en restos; reanudación sin API (mkdir exist_ok=False :32) |\n| Canal t (:46) | NO (sólo ticks; derivable — enmendar) | inspección |\n| drive sub-paso (:48) | PARCIAL — declarado en manifest, no en el doc normativo | semantica del manifest |\n| Fila 0 PRE-step | **CUMPLE** | gate2; M5 muere |\n| float64 primario | **CUMPLE en producción** | dtypes verificados; drive sin gate hasta A1 |\n| rng_state por chunk | **CUMPLE y CORRECTO 4/4 chunks** | residuo 0.000e+00 incluido el parcial — el gate cubría sólo el chunk 0 |\n| noise_kick / chunks con hash / COMPLETE atómico / lector verificador | **CUMPLE** (corrupción accidental) | gates 3/3b + sondas |\n\n**CHECKPOINT_SCHEMA ([BORRADOR] de 5 líneas):** parámetros activos **PARCIAL-silencioso** (e_ref sí, no-vacuo; k_global/gamma_c/tau_field/edges NO viajan — default silencioso 0.0, divergencia 3.61e-04); linaje por hash **NO** (constitución mutada aceptada en silencio); reloj **PARCIAL-silencioso** (tick viaja en meta pero la continuación lo descarta, hija renumera desde 0); estado float64 completo / buffer no-uniforme / RNG **CUMPLEN** (bit-exacto).\n\n## 4. NO-CUBIERTO consolidado para bitácora\n\n1. Reanudar-GRABANDO tras interrupción: sin API (hija renumera desde 0, sin parent_run_id automático, empalme manual; física del empalme medida exacta por b4, residuo 0).\n2. Worldline HIJA: parent_run_id / parent_checkpoint_hash / events.jsonl inexistentes en código — F6.\n3. Ingesta del FORMATO cápsula v4 real (orden nodos/modos, head, layout): gate4 cubre el mecanismo no-uniforme, no el formato; la guarda de history_init es sólo de FORMA (network.py:68-70).\n4. Perfil campaña + retención declarada — F7.\n5. gate1 sólo T>0: restore con T=0 sin gate permanente (sondado bit-exacto por b4; parametrizar en T∈{0, 0.05}).\n6. Bordes de chunking (chunk_ticks=1, >ticks, frontera exacta, 0 ticks) y runner con checkpoint_every: sin gate (sondados sanos por b4, residuo 0).\n7. meta['seed'] del checkpoint sin verificación: un seed mentiroso continúa bit-exacto igual (procedencia, no dinámica).\n8. Durabilidad: sin fsync antes de los rename (corte de energía; el lector lo ataja fail-loud).\n9. Recorder apuntado al dir PADRE aceptado (contamina layout); tmp del checkpoint matchea el glob ck_*.npz (riesgo para un descubridor futuro de \"último checkpoint\").\n10. Truncación con COMPLETE reescrito coherente ACEPTADA: la inmutabilidad real exige pineo externo del sha_total en el catálogo — declararlo en el schema, no dejarlo implícito.\n\n**Reproducibilidad del juez** (todo en sandbox, repos read-only respetados): `/private/tmp/claude-501/-Users-cagostino-code-doft-study06-fundamental-lock-dynamics/a013d8a0-cafd-49d8-9f07-ba0ef540402e/scratchpad/juez_f3/harness_mutantes.py` (11 mutantes), `.../juez_f3/sondas_juez.py` (sondas S1–S9), `.../juez_f3/repo/tests/test_gates_f3_juez.py` (los 2 gates del arreglo A1, listos para copiar), `.../juez_f3/suite_completa_baseline.txt` (17 passed).",
+    "revs": [
+      {
+        "hallazgos": [
+          {
+            "que": "El canal drive de la worldline tiene cobertura CERO en los gates: un recorder que graba drive=ceros (M6) o drive en float32 (M4c) pasa 7/7 verde. WORLDLINE_SCHEMA vende drive como 'el ledger causal sin re-derivar'; si F3 se declara con estos gates, un bug en drive envenena toda vista futura que lo consuma sin que ningún gate lo vea.",
+            "donde": "src/study07/artifacts/recorder.py:77 (canal sin gate); tests/test_worldline_checkpoint.py (gate2 compara sólo estados, gate5 sólo kicks)",
+            "severidad": "BLOQUEA_F3",
+            "evidencia": "Mutante M6 (self._drive.append(np.zeros(...)) en record_step) → 7 passed. Mutante M4c (drive .astype(np.float32) en _flush_chunk) → 7 passed. Corridos en sandbox sobre copia bit-idéntica del repo @ e235d4f.",
+            "parche": "Gate espejo demostrado (pristine pasa; M6 y M4c mueren): en un loop tipo gate2, acumular net.last_drive0.copy() por step, y al leer: assert wl['drive'].dtype==float64, max|wl['drive']-memoria|==0.0, y guard max|drive[1:]|>0 para que el escenario no sea vacuo. Complemento: load_worldline debería rechazar dtype!=float64 en estados/kicks/drive (schema: 'float64 primario') — mata la clase entera en el lector, no sólo en el test."
+          },
+          {
+            "que": "gate5 NO mide lo que dice: rederiva sólo los ticks 1..16 de 48 y sólo desde rng_states_chunk[0], que es el estado DEGENERADO de construcción (nunca avanzado) — jamás verifica que el recorder capture bien un rng_state a mitad de corrida. Un _flush_chunk que nunca refresca _rng_state_chunk (M3: todos los chunks llevan el estado inicial) pasa 7/7; kicks basura desde el tick 21 (M7) pasa 7/7. Es la misma trampa del F2: gate verde por régimen degenerado.",
+            "donde": "tests/test_worldline_checkpoint.py:180-191 (rango 1..17 y rng_states_chunk[0] fijo); src/study07/artifacts/recorder.py:99 (la línea que M3 anula sin que ningún gate lo note)",
+            "severidad": "ALTO",
+            "evidencia": "M3 (pass en vez de refrescar _rng_state_chunk en _flush_chunk) → 7 passed. M7 (kicks[:]=0.123456789 si tick>20) → 7 passed. Descargo verificado fuera de banda: el recorder ACTUAL es correcto — los 4 chunks (ticks 0-15/16-31/32-47/48) rederivan sus kicks con residuo 0.000e+00 desde SU propio rng_state; el agujero es del GATE, no del código shipped.",
+            "parche": "Gate5 reforzado demostrado (pristine pasa; M3, M7 y también M4b mueren): iterar TODOS los chunks, rng.bit_generator.state = json.loads(str(fx['rng_state_json'])) por chunk, rederivar cada tick del chunk (saltando la fila tick==0) y exigir residuo 0.0 + dtype float64. Código listo en sandbox: tests/test_gate5_reforzado.py (scratchpad f3sandbox)."
+          },
+          {
+            "que": "Comentario del gate5 factualmente falso: 'chunk 0 tiene filas 0..16'. El chunk 0 real tiene ticks 0..15 (el flush dispara cuando len>=chunk_ticks contando la fila PRE); el tick 16 vive en el chunk 1. El test pasa de casualidad estructural: indexa wl['kicks'] concatenado y el stream del RNG es continuo a través de la frontera. Un futuro lector que se crea el comentario hereda un off-by-one.",
+            "donde": "tests/test_worldline_checkpoint.py:182",
+            "severidad": "BAJO",
+            "evidencia": "Layout medido en sandbox: chunk_00000 ticks 0..15 (16 filas), chunk_00001 16..31, chunk_00002 32..47, chunk_00003 48..48 (1 fila) para 48 steps con chunk_ticks=16.",
+            "parche": "Corregir el comentario (0..15) o, mejor, absorberlo en el gate5 reforzado que itera por chunk y no necesita aritmética manual de fronteras."
+          },
+          {
+            "que": "La escritura de chunks NO es atómica (savez_compressed directo al path final), contradiciendo WORLDLINE_SCHEMA regla 1 ('una interrupción deja chunks válidos y ningún COMPLETE'): muerte a mitad del write deja un chunk INVÁLIDO. El modo restos (allow_incomplete=True) revienta con BadZipFile — fail-loud, no silencioso, pero la 'auditoría de restos' y el 'reanudar del último checkpoint' prometidos no pueden ni leer lo que sí quedó sano. Nótese que checkpoint.py YA resuelve esto con tmp+rename (y su comentario documenta la trampa del append .npz).",
+            "donde": "src/study07/artifacts/recorder.py:91-92 vs specs/WORLDLINE_SCHEMA.md:67-69; patrón correcto en src/study07/artifacts/checkpoint.py:44-47",
+            "severidad": "BAJO",
+            "evidencia": "Simulado en sandbox: truncar el último chunk escrito de una corrida sin close() → load_worldline(allow_incomplete=True) levanta BadZipFile ('File is not a zip file'), no un artefacto legible de restos.",
+            "parche": "En _flush_chunk: escribir a chunk_XXXXX.tmp.npz y rename al nombre final (mismo patrón que save_checkpoint). Deja la regla 1 del spec verdadera de facto."
+          },
+          {
+            "que": "COMPLETE no está sellado contra reescritura: el lector confía en su contenido. Un duplicado/extra de chunk se rechaza incluso con COMPLETE reescrito coherente (lo salva el check de ticks consecutivos), pero una TRUNCACIÓN (borrar el último chunk y reescribir COMPLETE con 3 chunks y sus shas) dejaría ticks 0..47 consecutivos y sería aceptada en silencio. No es corrupción accidental sino tamper; la inmutabilidad real depende de que el catálogo externo pinee sha_total, como el layout de views/<worldline_hash> ya insinúa — dejarlo declarado, no implícito.",
+            "donde": "src/study07/artifacts/recorder.py:116-120 (COMPLETE sin firma) y :139-146 (lector confía en marca)",
+            "severidad": "NOTA",
+            "evidencia": "Probado el vecino: chunk extra + COMPLETE reescrito coherente → RECHAZADO sólo por 'ticks no consecutivos' (defensa en profundidad, no diseño); el caso truncación pasa todos los checks del lector por construcción (count, shas y arange quedan coherentes).",
+            "parche": "Declarar en WORLDLINE_SCHEMA que el catálogo/manifest externo pinea sha_total y que COMPLETE por sí solo prueba cierre, no autenticidad."
+          },
+          {
+            "que": "El campo seed del checkpoint es invisible al gate1: network_from_checkpoint construye el RNG desde seed y lo pisa inmediatamente con rng_state, así que un seed mentiroso en el checkpoint produce continuación bit-exacta igual. No afecta dinámica; envenena sólo la PROCEDENCIA (Network.seed queda mal y un recorder hijo lo escribiría en su manifest).",
+            "donde": "src/study07/artifacts/checkpoint.py:76 + src/study07/engine/network.py:61,73-74",
+            "severidad": "NOTA",
+            "evidencia": "Por construcción del código: rng_state se aplica después de default_rng(seed*1000003+99991); ningún gate compara meta['seed'] contra nada.",
+            "parche": "Si se quiere cubrir: assert en network_from_checkpoint o en el gate de que meta['seed'] coincide con el declarado por el caller (PROVENANCE_CONTRACT)."
+          },
+          {
+            "que": "Lo que SÍ resistió (descargo del double tap, todo medido, no pronosticado): gate1 mata e_ref-no-aplicado (M1), RNG-no-restaurado (M2) y buffer-no-restaurado (M8) — y el camino e_ref NO es vacuo: en el fixture f6 el e_ref del meta DIFIERE del embebido en theta para los 3 nodos y las 3 capas, y e_ref es load-bearing (entra en db, rhs.py:101). Sin aliasing: NodeState.copy es profundo, load_checkpoint copia arrays, Network copia states y el buffer se asigna por valor; directa y continuación no comparten objetos. gate2 mata float32-en-estados y POST-en-fila-0; gate5 mata float32-en-kicks. El lector rechaza el duplicado REAL en 4 escenarios (chunk extra / chunk pisado / restos sin COMPLETE / COMPLETE reescrito). El orden de draws del gate5 es el del ENGINE verificado línea a línea (nodos por índice, standard_normal(n_modes), mismo sigma con piso de masa 1e-12; network.py:123-133). Suite completa en sandbox pristine: 17 passed (conformidad F2 intacta).",
+            "donde": "tests/test_worldline_checkpoint.py (gates 1,2,5); src/study07/physics/rhs.py:101; src/study07/physics/state.py:116-117",
+            "severidad": "NOTA",
+            "evidencia": "M1/M2/M8 → 1 failed (gate1) cada uno; M4 estados float32 → gate2 FAILED; M5 fila0=POST → gate2 FAILED; M4b kicks float32 → gate5 FAILED; duplicados 4/4 RECHAZADO; rederivación por chunk 4/4 residuo 0."
+          }
+        ],
+        "resumen": "REFUTADO el 7/7 como evidencia suficiente: 4 mutantes del recorder VIVEN con todos los gates verdes. El código F3 en sí sobrevivió cada sonda (recorder/checkpoint/lector correctos; verifiqué fuera de banda que los 4 chunks rederivan sus kicks desde SU rng_state con residuo 0), pero los GATES repiten la trampa del F2 — verde por régimen degenerado/cobertura parcial: (1) el canal drive tiene cobertura CERO — drive=ceros y drive-float32 pasan 7/7 [BLOQUEA_F3]; (2) gate5 sólo rederiva ticks 1..16 de 48 desde rng_states_chunk[0], que es el estado degenerado de construcción — rng_state estancado en todos los chunks y kicks basura desde tick 21 pasan 7/7 [ALTO]. Lo fuerte: gate1 es genuino — mata e_ref-no-aplicado (camino no-vacuo: meta e_ref ≠ theta e_ref y e_ref entra en db), RNG-no-restaurado y buffer-no-restaurado; sin aliasing entre directa y continuación; gate2 mata float32 y POST-en-fila-0; el lector rechaza el duplicado real en los 4 escenarios probados. Parches DEMOSTRADOS en sandbox (pristine pasa / mutantes mueren): gate5 iterando todos los chunks + gate espejo de drive con dtype. Menores: comentario 'filas 0..16' falso (son 0..15); chunks sin escritura atómica contradicen la regla 1 del schema (checkpoint.py ya tiene el patrón); COMPLETE no protege contra truncación con reescritura coherente (que lo pinee el catálogo). Suite completa 17 passed en pristine; ambos repos intactos. Veredicto: NO declarar F3 con esta batería; con los 2 gates nuevos aplicados, el código actual los pasa."
+      },
+      null,
+      {
+        "resumen": "LENTE 3 (¿el código cumple los schemas, cláusula por cláusula?) sobre F3 candidata @ e235d4f. Corrí los gates F3 (7/7) y la suite completa (17 passed, conformidad F2 intacta) + 8 experimentos de refutación en sandbox (script: /private/tmp/claude-501/-Users-cagostino-code-doft-study06-fundamental-lock-dynamics/a013d8a0-cafd-49d8-9f07-ba0ef540402e/scratchpad/audit_f3_lente3.py). LO QUE SOBREVIVIÓ A LA REFUTACIÓN — la mitad DINÁMICA de ambos schemas está bien implementada: fila 0 PRE-step CUMPLE (gate2); float64 primario CUMPLE (verifiqué dtype de todos los canales; npz es lossless); rng_state POR CHUNK CUMPLE y es CORRECTO EN LOS 4 CHUNKS incluido el parcial de cierre (rederivé los kicks de cada chunk desde su propio estado: residuo 0.0 — gate5 sólo cubre el chunk 0, pero no encontré el recorder roto que buscaba); noise_kick CUMPLE; COMPLETE atómico CUMPLE (rename mismo filesystem; mkdir exist_ok=False impide pisar corridas y hace imposible un tmp huérfano — verificado con FileExistsError); lector verificador CUMPLE (count+sha por chunk, ticks consecutivos, corrupción detectada); checkpoint: estado float64 completo CUMPLE, buffer no-uniforme round-trip CUMPLE, RNG CUMPLE (continuación bit-exacta con T>0). LO QUE NO CUMPLE — Y NO ESTÁ DECLARADO: la bitácora §4 (F3) NO tiene sección NO-CUBIERTO, a diferencia del §3 (F2) que sí la tuvo; toda la mitad de PROCEDENCIA/AUTO-DESCRIPCIÓN de ambos schemas quedó en prosa, en silencio — la enfermedad documental exacta. (1) El manifiesto real de toda worldline producida hoy tiene 9 claves y NINGUNO de los campos exigidos: sin topología, sin engine params, sin git+dirty, sin entorno, sin hashes de base externa (el 'defecto de Pimienta A resuelto de nacimiento' NO está resuelto en código), sin perfil, sin parent_run, sin [M1|M2]; el recorder acepta cualquier dict sin validar, y TIENE net a mano (edges/k_global/gamma_c ya parseados) — se detuvo a mitad de camino. (2) El blob de estado por nodo no es descomponible en x/v/z/b/e desde el artefacto solo (dims=30 no separa n_z=7 de n_layers=3): un instrumento F4 con SOLO el run dir no puede leer los canales que el schema promete — el film hoy NO es fuente primaria auto-suficiente. (3) El checkpoint no lleva linaje por hash y network_from_checkpoint no verifica NADA: una constitución con gamma×1.5 fue aceptada y continuó en silencio; olvidar k_global = default silencioso 0.0 con física distinta (divergencia 1.6e-4 en 10 ticks, cero error). Es la misma trampa del F2: los gates pasan porque el caller de los tests es honesto. PROPUESTA: NO declarar F3 hasta (a) completar el manifiesto desde net + descomposición por nodo + validación de claves obligatorias, (b) sellar engine params (y hashes de linaje, o al menos el campo) en el checkpoint o volver la continuación fail-loud, y (c) declarar NO-CUBIERTO explícito para lo que es F6/F7 legítimo (hija/events, perfil campaña, reanudación). Los parches (a)+(b) son chicos y no tocan la física — la parte difícil (bit-exactitud) ya está bien hecha.",
+        "hallazgos": [
+          {
+            "que": "Cláusula 'Manifiesto de corrida (PROVENANCE_CONTRACT aplicado)' — NO implementada ni declarada pendiente. El manifiesto real de toda worldline producida hoy contiene sólo run_id/schema/n_nodes/dims/dt/seed/temperature/chunk_ticks/semantica. Ausentes TODOS los exigidos por WORLDLINE_SCHEMA:56-63: topología completa (aristas w_k/w_gamma/τ), engine params (k_global/gamma_c/tau_field), git commit+dirty, entorno python/numpy, hashes de base externa (la cláusula 'defecto de Pimienta A resuelto de nacimiento' quedó en prosa), perfil+retención, parent_run_id/parent_checkpoint, spec [M1|M2], estado de finalización. El recorder acepta cualquier dict del caller sin validar nada, y los gates pasan {'run_id': 'gate2'}. PARCIAL(silencioso): bitácora §4 no tiene sección NO-CUBIERTO (el §3 de F2 sí la tuvo).",
+            "donde": "/Users/cagostino/code/doft-study07-worldline/src/study07/artifacts/recorder.py:49-60 vs /Users/cagostino/code/doft-study07-worldline/specs/WORLDLINE_SCHEMA.md:56-63; /Users/cagostino/code/doft-study07-worldline/docs/bitacora/2026-07-29.md §4",
+            "severidad": "BLOQUEA_F3",
+            "evidencia": "EXP-2 del sandbox: claves presentes en el manifiesto de una corrida real = ['chunk_ticks','dims','dt','n_nodes','run_id','schema','seed','temperature','semantica']. El schema dice que manifest.json es 'TODO lo necesario para re-integrar' (WORLDLINE_SCHEMA.md:31): hoy el film no puede reconstruir su red ni declarar su procedencia. El recorder YA tiene net (edge_ij/edge_w_k/edge_w_g/edge_tau, k_global, gamma_c parseados en network.py:39-44) — extrae dt/seed/temperature y se detiene ahí.",
+            "parche": "En WorldlineRecorder.__init__: serializar desde net la topología (edges normalizados), k_global/gamma_c/tau_field, y por nodo (n_modes,n_z,n_layers); exigir del caller (raise si faltan) perfil, tipo [M1|M2] y hashes de base externa; agregar git commit+dirty y versiones python/numpy. Lo que legítimamente es F6/F7 (parent_*, retención de campaña) declararlo NO-CUBIERTO en bitácora ANTES de declarar F3."
+          },
+          {
+            "que": "Canales 'x, v, z, b, e por nodo' (tabla del schema) — los datos están pero NO son recuperables del artefacto solo: cada nodo se guarda como blob plano concatenado (2·n_modes+n_z+n_layers) y el manifiesto sólo tiene dims=total. n_modes es derivable de la forma de kicks_nodo{j}, pero n_z vs n_layers es ambiguo (30 = 20+7+3 ó 20+8+2...). Los tests sólo lo decomponen porque leen los thetas del FIXTURE, no del film. PARCIAL(silencioso).",
+            "donde": "/Users/cagostino/code/doft-study07-worldline/src/study07/artifacts/recorder.py:19-20,37 vs /Users/cagostino/code/doft-study07-worldline/specs/WORLDLINE_SCHEMA.md:47",
+            "severidad": "ALTO",
+            "evidencia": "EXP-6: nodo j con dims(flat)=30 = 2*10+7+3; n_modes/n_z/n_layers no están en el manifiesto. El helper de los gates (_f6_net, test_worldline_checkpoint.py:43-49) obtiene la descomposición del fixture externo — un instrumento F4 con SOLO el run dir no puede. Contradice la premisa fundacional 'la worldline es LA fuente de observación'.",
+            "parche": "Manifiesto: por nodo {n_modes, n_z, n_layers} (u offsets de cada campo). Cabe en el mismo parche del hallazgo 1."
+          },
+          {
+            "que": "CHECKPOINT_SCHEMA cláusula 'linaje (código, config, inputs por hash)' — NO en el artefacto, y network_from_checkpoint no verifica NADA: confía 100% en el caller. La meta del checkpoint es dt/e_ref_por_nodo/n_nodes/rng_state/schema/seed/temperature/tick — cero hashes de constitución/código/config. El docstring declara la reconstrucción 'por hash, responsabilidad del caller — PROVENANCE_CONTRACT', pero el artefacto no porta los hashes con los que NADIE (ni el caller diligente) podría verificar. PARCIAL(declarado) en docstring / PARCIAL(silencioso) en el artefacto.",
+            "donde": "/Users/cagostino/code/doft-study07-worldline/src/study07/artifacts/checkpoint.py:31-43,67-79 vs /Users/cagostino/code/doft-study07-worldline/specs/CHECKPOINT_SCHEMA.md:2-4",
+            "severidad": "ALTO",
+            "evidencia": "EXP-4: reconstruí la red con una constitución mutada (gamma del modo 0 del nodo 0 ×1.5+0.01) → network_from_checkpoint la ACEPTÓ SIN ERROR y la continuación corre en silencio con otra física. El gate1 pasa porque el test pasa los specs correctos — exactamente el patrón de mutante-vivo del F2 (gate verde con caller honesto, veneno con caller real).",
+            "parche": "save_checkpoint: sellar sha256 de la constitución serializada (specs) + git hash en meta; network_from_checkpoint: recomputar el hash de los specs recibidos y comparar fail-loud (override explícito p/ intervenciones F6 que MUTAN constitución, con evento declarado)."
+          },
+          {
+            "que": "CHECKPOINT_SCHEMA cláusula 'parámetros activos' — PARCIAL: e_ref viaja (bien), pero k_global/gamma_c/tau_field/edges NO están en el checkpoint; network_from_checkpoint los toma como **kwargs y si el caller los olvida caen al default de Network (k_global=0.0) — continuación con OTRA física, SIN error. Anti fail-loud en la API cuyo único propósito es la continuación exacta.",
+            "donde": "/Users/cagostino/code/doft-study07-worldline/src/study07/artifacts/checkpoint.py:67-79 + /Users/cagostino/code/doft-study07-worldline/src/study07/engine/network.py:22-23 vs /Users/cagostino/code/doft-study07-worldline/specs/CHECKPOINT_SCHEMA.md:3",
+            "severidad": "ALTO",
+            "evidencia": "EXP-5: network_from_checkpoint(specs, ck, edges) sin k_global/gamma_c → ACEPTADO; divergencia vs la madre = 1.632e-04 tras 10 ticks, cero excepción. La única guarda real es la forma del buffer (network.py:68-70), que sólo ataja cambios del delay máximo.",
+            "parche": "Guardar k_global/gamma_c/tau_field (+edges normalizados) en la meta del checkpoint y que network_from_checkpoint los APLIQUE de ahí (kwargs sólo como override explícito que se registra), o al menos exigirlos como argumentos obligatorios sin default."
+          },
+          {
+            "que": "Reloj/edad ('tick viaja — y t=tick·dt'): el tick viaja EN el artefacto (meta['tick'], t derivable de dt) pero NO a la continuación — network_from_checkpoint lo descarta, Network no tiene reloj, el recorder de una corrida hija re-arranca en tick 0, y load_worldline EXIGE ticks==arange(0..) — la edad absoluta no puede vivir en el canal tick de una continuación. Además el canal 't' de la tabla del schema no existe en los chunks (sólo 'ticks'). PARCIAL(silencioso).",
+            "donde": "/Users/cagostino/code/doft-study07-worldline/src/study07/artifacts/checkpoint.py:76-79 + /Users/cagostino/code/doft-study07-worldline/src/study07/artifacts/recorder.py:38,160-163 vs /Users/cagostino/code/doft-study07-worldline/specs/WORLDLINE_SCHEMA.md:46 y CHECKPOINT_SCHEMA.md:2-3",
+            "severidad": "MEDIO",
+            "evidencia": "EXP-8: checkpoint con meta['tick']=60 → worldline de la continuación tiene ticks=[0..8]; EXP-3: canal 't' presente? False. La semántica global del reloj para hijas (F6) queda sin resolver y sin declarar.",
+            "parche": "Recorder acepta tick_inicial (del checkpoint) y lo persiste en el manifiesto; el lector valida arange(tick_inicial,...). El canal 't' o se agrega o se enmienda el schema declarándolo derivado (dt configurado)."
+          },
+          {
+            "que": "Cláusula 'DOS PERFILES declarados por corrida' (conformidad/campaña) — sólo existe de facto el perfil conformidad (todo completo float64); no hay campo 'perfil' en el manifiesto, ni mecanismo de retención, ni declaración de pendiente en bitácora §4. El README ubica campañas en F7 (media declaración por roadmap), pero el schema exige que CADA corrida declare su perfil — hoy ninguna lo hace. PARCIAL(silencioso) a nivel manifiesto.",
+            "donde": "/Users/cagostino/code/doft-study07-worldline/src/study07/artifacts/recorder.py:49-60 vs /Users/cagostino/code/doft-study07-worldline/specs/WORLDLINE_SCHEMA.md:13-16,62",
+            "severidad": "MEDIO",
+            "evidencia": "EXP-2: 'perfil' no está entre las claves del manifiesto producido. grep 'perfil' en src/ = cero resultados.",
+            "parche": "Campo obligatorio perfil='conformidad' hardcodeado en el recorder v1 + nota de que 'campaña' es F7 (una línea en bitácora NO-CUBIERTO)."
+          },
+          {
+            "que": "Regla de integridad 1: 'Una interrupción deja chunks VÁLIDOS' + 'la corrida se reanuda del último checkpoint' — los chunks se escriben SIN tmp+rename (savez_compressed directo al nombre final; el checkpoint SÍ lo tiene tras el bug cazado, el chunk NO): un kill mid-write deja un chunk inválido con nombre válido. Y la reanudación in-place no existe: mkdir(exist_ok=False) bloquea reabrir el run dir (correcto como protección, pero convierte la 'reanudación' de la regla en prosa — sólo queda 'descartar entera' o una corrida nueva con reloj reseteado, hallazgo 5). PARCIAL(silencioso).",
+            "donde": "/Users/cagostino/code/doft-study07-worldline/src/study07/artifacts/recorder.py:91-92,32 vs /Users/cagostino/code/doft-study07-worldline/specs/WORLDLINE_SCHEMA.md:67-69",
+            "severidad": "MEDIO",
+            "evidencia": "Inspección: recorder.py:92 np.savez_compressed(path,...) sin tmp (contrastar con checkpoint.py:45-47 que sí usa tmp+rename). EXP-7: reabrir el run dir tras interrupción → FileExistsError; no hay API de resume. Mitigante: sin COMPLETE el lector estricto rechaza igual (gate3), así que el daño es fail-loud, no silencioso en LECTURA — el silencioso es la promesa del schema.",
+            "parche": "Chunks con el mismo patrón tmp .npz + rename del checkpoint; enmendar la regla 1 a lo real ('se descarta o se continúa como corrida nueva desde checkpoint') o implementar resume en F6."
+          },
+          {
+            "que": "Canal drive: el SCHEMA dice 'fuerza KV aplicada por nodo' sin declarar CUÁL sub-paso del RK4 (hay 4: f0..f3). El código graba f0 y LO DECLARA en manifest['semantica'] ('drive[k] = fuerza KV del sub-paso 0 del step k') — el código es más preciso que el schema normativo, que quedó ambiguo. PARCIAL(declarado) — pero la declaración vive en el artefacto, no en el doc normativo.",
+            "donde": "/Users/cagostino/code/doft-study07-worldline/specs/WORLDLINE_SCHEMA.md:48 vs /Users/cagostino/code/doft-study07-worldline/src/study07/engine/network.py:106-107 y recorder.py:55-58",
+            "severidad": "BAJO",
+            "evidencia": "network.py:107 self.last_drive0 = f0.copy() (sólo sub-paso 0); la regla 3 del schema (RK4 intermedio se reconstruye determinista) hace defendible la elección, pero el schema debe sellarla — el F2 ya tuvo que enmendar contrato por ambigüedades así.",
+            "parche": "Una línea en WORLDLINE_SCHEMA: 'drive = f_inter del sub-paso 0 (los f1..f3 se reconstruyen por regla 3)'."
+          },
+          {
+            "que": "events.jsonl del layout ('vacío en corridas naturales') no se crea nunca, ni vacío; nada lo lee/escribe. Ídem 'cursor de eventos' del CHECKPOINT_SCHEMA. Las intervenciones son F6 declarado en el roadmap del README (mitiga), pero el LAYOUT del schema aplica a toda corrida HOY y el lector no lo nota.",
+            "donde": "/Users/cagostino/code/doft-study07-worldline/src/study07/artifacts/recorder.py:31-33 vs /Users/cagostino/code/doft-study07-worldline/specs/WORLDLINE_SCHEMA.md:34 y CHECKPOINT_SCHEMA.md:3",
+            "severidad": "BAJO",
+            "evidencia": "grep 'events' en src/ = cero resultados; el run dir de los gates contiene manifest.json, worldline/, checkpoints/, COMPLETE — sin events.jsonl.",
+            "parche": "Recorder crea events.jsonl vacío (touch) — una línea — o el schema anota '(F6)' en esa fila del layout."
+          },
+          {
+            "que": "Cobertura del gate5 (kicks rederivables): sólo verifica el rng_state del CHUNK 0 — los estados de chunks ≥1 (los únicos que ejercitan la captura en _flush_chunk, línea 99) y el del chunk parcial de cierre quedan sin gate. NO es defecto de código: lo verifiqué yo — los 4 chunks rederivan sus kicks con residuo 0.0 desde su propio rng_state, incluido el parcial. Es el patrón F2 en miniatura: un gate verde que no cubre la rama que más puede romperse.",
+            "donde": "/Users/cagostino/code/doft-study07-worldline/tests/test_worldline_checkpoint.py:180-191 vs /Users/cagostino/code/doft-study07-worldline/src/study07/artifacts/recorder.py:99",
+            "severidad": "NOTA",
+            "evidencia": "EXP-1: chunk 0 ticks 1..15, chunk 1 ticks 16..31, chunk 2 ticks 32..47, chunk 3 tick 48 — todos rederivados del rng_state PROPIO del chunk, residuo max = 0.0 en los cuatro.",
+            "parche": "Extender gate5: iterar todos los chunks rederivando desde el rng_state de CADA uno (el loop del experimento sirve tal cual)."
+          },
+          {
+            "que": "CHECKPOINT_SCHEMA sigue siendo [BORRADOR — Fase 1] de 5 líneas mientras checkpoint.py declara implementarlo ('Checkpoint — CHECKPOINT_SCHEMA: continuación EXACTA'). Declarar F3 sería declarar conformidad contra un borrador que no fija qué viaja en el artefacto vs qué es responsabilidad del caller — el vacío exacto que permite los hallazgos 3 y 4 sin violar letra alguna.",
+            "donde": "/Users/cagostino/code/doft-study07-worldline/specs/CHECKPOINT_SCHEMA.md:1 vs /Users/cagostino/code/doft-study07-worldline/src/study07/artifacts/checkpoint.py:1",
+            "severidad": "NOTA",
+            "evidencia": "El schema entero: 5 líneas con tag [BORRADOR — Fase 1]. Compárese con WORLDLINE_SCHEMA (v1 sellado COA, 76 líneas). F1 selló uno de los dos schemas de F3.",
+            "parche": "Promover CHECKPOINT_SCHEMA a v1 sellado ANTES de declarar F3, fijando: contenido del artefacto (estado+buffer+RNG+tick+e_ref+engine params+hashes de linaje), responsabilidad del caller (specs por hash), y semántica del reloj en continuaciones."
+          },
+          {
+            "que": "COMPLETE: la atomicidad del rename es real y las dos preguntas del lente tienen respuesta favorable — (a) no puede haber COMPLETE.tmp huérfano de corrida anterior porque mkdir(exist_ok=False) sobre worldline/ impide reusar el run dir (verificado), (b) esa misma guarda protege de pisar corridas. Único residuo: no hay fsync antes del rename — ante corte de energía un COMPLETE podría quedar con contenido truncado en el peor caso del filesystem (durabilidad, no atomicidad de proceso). El lector lo atajaría (json inválido = excepción), o sea fail-loud igualmente.",
+            "donde": "/Users/cagostino/code/doft-study07-worldline/src/study07/artifacts/recorder.py:32,118-120",
+            "severidad": "NOTA",
+            "evidencia": "EXP-7: segundo WorldlineRecorder sobre el mismo run dir → FileExistsError. Rename POSIX mismo filesystem = atómico (darwin/APFS).",
+            "parche": "Opcional: os.fsync del tmp antes del rename. No bloquea nada."
+          }
+        ]
+      },
+      {
+        "hallazgos": [
+          {
+            "que": "LA TRAMPA DEL F2 SE REPITE: 4 mutantes de recorder VIVOS con gates 7/7 verdes. (A) rng_state de chunks>=1 reemplazado por el estado de OTRO generator: 7/7 verdes — gate5 sólo verifica el rng_state del chunk 0, que viene de un code path distinto (__init__, recorder.py:47) al de régimen permanente (_flush_chunk, recorder.py:99), que queda SIN verificar. (B) canal drive = ceros SIEMPRE: 7/7 verdes — el 'ledger causal' jamás se compara contra nada; es exactamente el 'film decorado' que gate5 dice matar, pero sólo lo mató para kicks. (C) kicks*0.5 a partir del tick 17: 7/7 verdes (ventana de gate5 = ticks 1..16). (D) estados+1e-9 a partir del tick 101: 7/7 verdes (gate2 corre exactamente 100). El CÓDIGO enviado es correcto (lo verifiqué por sonda), pero el gate NO PROTEGE el film: un recorder roto en los canales cuyo propósito es la verificación/continuación pasa verde — el estándar interno del programa ('VERIFICADO MATANDO', F2) no se cumple.",
+            "donde": "src/study07/artifacts/recorder.py:47 vs :99 (dos code paths de rng_state, sólo uno verificado); tests/test_worldline_checkpoint.py:181 (wl['rng_states_chunk'][0] — sólo chunk 0) y :183 (ventana 1..16); canal drive sin ningún assert en toda la suite",
+            "severidad": "BLOQUEA_F3",
+            "evidencia": "mutantes_f3.py + mutantes_f3b.py: baseline (7,0,0); mutante A → 'VIVO (gates 7/7 verdes con recorder roto)'; B → VIVO; C → VIVO; D → VIVO. (Mi primer intento de B/C 'murió' por IndexError propio, no por el gate — invalidado y re-corrido corrompiendo la fuente.) Precedente F2: la primera batería dejó 28/35 vivos y forzó PASADO CON ARREGLOS.",
+            "parche": "Gate5 debe iterar TODOS los chunks rederivando desde el rng_state PROPIO de cada chunk (mata A y C). Agregar un gate de replay-compare: re-integrar N ticks desde la fila 0 del film y comparar fila a fila estados+drive+kicks contra lo grabado, con chunk_ticks chico para cruzar >=3 fronteras (mata B y D). Costo: ~20 líneas de test, cero cambio de código de producción."
+          },
+          {
+            "que": "manifest.json queda FUERA del COMPLETE: adulterarlo tras el cierre no se detecta. El lector re-integra con el dt/seed/temperature/n_nodes del manifest sin cross-check; cambiar n_nodes silenciosamente DROPEA nodos enteros del film. La regla 2 del schema ('worldline INMUTABLE una vez COMPLETE') no tiene enforcement sobre el archivo que gobierna la re-integración.",
+            "donde": "src/study07/artifacts/recorder.py:116-120 (COMPLETE = sólo chunk_shas) y :129,147 (lector confía en manifest sin verificar hash ni consistencia con las formas de los arrays)",
+            "severidad": "ALTO",
+            "evidencia": "Sonda P4d: tras rec.close(), edité manifest.json (dt=123.456, seed=999999) → load_worldline ACEPTA y devuelve los valores adulterados sin error. Gate3b sólo cubre corrupción de chunks.",
+            "parche": "Incluir sha256 de manifest.json en el cuerpo de COMPLETE y verificarlo en load_worldline; además cross-checkear n_nodes/dims del manifest contra las formas reales de los arrays de cada chunk."
+          },
+          {
+            "que": "El checkpoint NO transporta ni verifica topología ni engine params: restore con aristas w_k*3 → ACEPTADO EN SILENCIO (continúa 'la madre' con otra física); k_global*5 → ACEPTADO EN SILENCIO. Sólo falla si el tau cambia la FORMA del buffer (tau*50 → ValueError correcto); un tau distinto con el mismo ceil pasa callado. Asimetría no declarada: dt/seed/temperature viajan en meta y SE USAN, pero k_global/coupling_gamma_c/tau_field/edges son carga del caller sin hash de linaje. El CHECKPOINT_SCHEMA (borrador) promete 'parámetros activos + linaje por hash' — no implementado. En el camino hija/reanudación esto envenena la fuente primaria con una continuación que CLAMA ser de la madre y no lo es.",
+            "donde": "src/study07/artifacts/checkpoint.py:31-39 (meta sin engine params ni edges) y :67-79 (network_from_checkpoint: edges/kwargs del caller sin cross-check); src/study07/engine/network.py:68-70 (única guarda = forma del buffer)",
+            "severidad": "ALTO",
+            "evidencia": "Sonda P2: 'P2a restore aristas w*3 → ACEPTADO EN SILENCIO'; 'P2b restore k_global*5 → ACEPTADO EN SILENCIO'; 'P2c tau*50 → rechazado fuerte (ValueError forma (4,3,2) != (126,3,2))'. Docstring declara 'responsabilidad del caller' para specs pero nada para edges/params.",
+            "parche": "Guardar en meta k_global/gamma_c/tau_field + hash de edges normalizados (y hash de specs si el caller lo da) y verificarlos en network_from_checkpoint — mismo trato que ya reciben dt/seed/temperature."
+          },
+          {
+            "que": "REANUDAR GRABANDO tras interrupción — EL camino de recuperación declarado (WORLDLINE_SCHEMA regla 1: 'se reanuda del último checkpoint') — NO existe como API ni tiene test. El recorder exige corrida nueva SIEMPRE (exist_ok=False), el hijo renumera ticks desde 0 (_tick_actual=0), nada registra parent_run_id/parent_tick automáticamente (manifest free-form), y las filas de la madre posteriores al checkpoint quedan colgadas en los restos sin COMPLETE. El empalme de films = aritmética manual sin contrato. La FÍSICA del empalme sí es exacta (medido: residuo 0), el problema es el artefacto/observación.",
+            "donde": "src/study07/artifacts/recorder.py:32 (corrida nueva SIEMPRE), :45 (_tick_actual=0), :103 (ck_{tick local}); grep de parent_run_id/events en src = cero hits",
+            "severidad": "MEDIO",
+            "evidencia": "Sonda P3: madre interrumpida al tick 20 con ck al 13 (mid-chunk); restos = ticks 0..15; hija desde el ck: ticks renumerados 0..7; estado hija@7 vs directa@20 residuo=0.000e+00 (física OK); filas 14,15 de la madre duplicadas/colgadas — empalme sin API ni test.",
+            "parche": "Declarar en NO-CUBIERTO al declarar F3; para F4: recorder acepta tick_offset + parent_run_id/parent_checkpoint_hash obligatorios en manifest de hija, y un lector de linaje que empalme madre+hija verificando el solape."
+          },
+          {
+            "que": "Worldline HIJA: API FUTURA no declarada como tal. parent_run_id, parent_checkpoint_hash y events.jsonl del layout del schema NO existen en el código (el recorder ni siquiera crea events.jsonl vacío); el manifest es dict libre — ninguno de los campos que WORLDLINE_SCHEMA declara obligatorios (git commit+dirty, entorno python/numpy exactos, topología completa, perfil, hashes de base externa) se valida ni se auto-puebla: los gates cierran films COMPLETE con manifest={'run_id': 'gate2'}. El claim del schema 'Pimienta A resuelto de nacimiento' es del papel, no del código; y la regla §48 del programa ('git-hash en JSONs') tampoco se cumple en estos JSONs.",
+            "donde": "src/study07/artifacts/recorder.py:49-60 (manifest sin validación de campos obligatorios); grep parent_run|events.jsonl en src/ = 0 hits; specs/WORLDLINE_SCHEMA.md:56-63 (manifiesto obligatorio) y :34 (events.jsonl)",
+            "severidad": "MEDIO",
+            "evidencia": "grep -rn 'parent_run|events' src → única mención: un docstring. Gates pasan manifest de un solo campo y el film resulta COMPLETE — un artefacto 'fuente primaria' sin entorno pineado no soporta el claim de replay del RNG.",
+            "parche": "Al declarar F3: listar hija+manifest-obligatorio como NO IMPLEMENTADO. Mínimo barato inmediato: el recorder auto-puebla git hash+dirty y versiones de python/numpy, y falla si faltan run_id/topología."
+          },
+          {
+            "que": "La escritura de chunks es la ÚNICA no atómica del pipeline (savez directo al nombre final, sin tmp+rename que sí tienen COMPLETE y checkpoint). Muerte/disco lleno a mitad de flush deja un chunk TRUNCADO con nombre válido. Sin COMPLETE el lector default lo rechaza (bien), pero allow_incomplete=True — cuyo propósito declarado es EXACTAMENTE la auditoría de restos post-interrupción — revienta con BadZipFile crudo sin diagnóstico: la herramienta para mirar los restos no sobrevive a los restos más probables.",
+            "donde": "src/study07/artifacts/recorder.py:92 (savez_compressed directo) y :152-159 (lector de restos sin manejo de chunk truncado)",
+            "severidad": "MEDIO",
+            "evidencia": "Sonda P6: truncar el último chunk a la mitad + load_worldline(allow_incomplete=True) → 'BadZipFile: File is not a zip file' (no RuntimeError, sin señalar qué chunk).",
+            "parche": "tmp+rename para chunks (cuidando el append .npz ya cazado en el checkpoint) — así todo archivo con nombre final es válido; y en modo restos capturar BadZipFile/zlib.error por chunk reportando 'chunk_XXXXX truncado' y devolviendo lo legible."
+          },
+          {
+            "que": "Cápsulas v4 REALES: nadie cargó jamás una history_column de cápsula. Gate4 prueba el MECANISMO (round-trip de buffer no-uniforme generado por el propio motor vía checkpoint propio), no la INGESTA del formato cápsula (orden de nodos/modos, convención de head, layout). history_init sólo chequea FORMA: un layout transpuesto o un head corrido pasaría la guarda y corrompería la causalidad en silencio. El NO-CUBIERTO de F2 ('restore desde cápsula espera el CHECKPOINT_SCHEMA en F3') sigue ABIERTO, pero la frase de bitácora/commit 'la API que las cápsulas v4 necesitan' invita a leerlo como saldado.",
+            "donde": "tests/test_worldline_checkpoint.py:100-110 (gate4: sin archivo de cápsula); src/study07/engine/network.py:65-72 (guarda = sólo forma); docs/bitacora/2026-07-29.md:89 (la frase ambigua)",
+            "severidad": "MEDIO",
+            "evidencia": "grep history_column/capsule en src = 0 hits (sólo un docstring); las cápsulas v4 (71M) quedaron locales en el freeze §93-e y ninguna entra a la suite. Riesgo latente real: la guarda de forma no distingue layouts.",
+            "parche": "En la bitácora de F3 redactar: 'gate4 cubre el mecanismo de restauración no-uniforme; la ingesta del FORMATO cápsula v4 (orden+head) sigue NO-CUBIERTA — pendiente con una cápsula real como fixture'."
+          },
+          {
+            "que": "CHECKPOINT_SCHEMA.md sigue siendo [BORRADOR — Fase 1] de 5 líneas y promete campos que el artefacto NO tiene: 'parámetros activos/cursor de eventos', 'linaje (código, config, inputs por hash)', 'reloj/edad por individuo' (sólo hay tick global). checkpoint.py declara implementarlo. Declarar F3 con el schema en borrador = el código implementa un contrato que no existe en versión sellada.",
+            "donde": "specs/CHECKPOINT_SCHEMA.md:1-5 vs src/study07/artifacts/checkpoint.py:1-5 y :31-43",
+            "severidad": "MEDIO",
+            "evidencia": "Lectura directa: el borrador exige linaje por hash y parámetros activos; meta del .npz contiene schema/n_nodes/dt/seed/temperature/tick/rng_state/e_ref_por_nodo y nada más.",
+            "parche": "Antes de declarar F3: promover CHECKPOINT_SCHEMA a v1 describiendo EXACTAMENTE lo implementado y moviendo linaje/params/edad a 'v2 pendiente' — o implementar el hash de linaje (se solapa con el hallazgo 3)."
+          },
+          {
+            "que": "checkpoint→restore con T=0 (caso determinista): NO cubierto por ningún gate (gate1 sólo T=0.05). Sondado: BIT-EXACTO (residuo estados=0, buffer=0, temperature restaurada=0). Riesgo teórico saldado por sonda, pero el caso base del programa merece su assert permanente.",
+            "donde": "tests/test_worldline_checkpoint.py:67-98 (gate1, sólo T>0); sonda P1",
+            "severidad": "BAJO",
+            "evidencia": "Sonda P1: 120 directa vs 60→ck→restore→60 con temperature=0.0 → residuo estados=0.000e+00, buffer=0.000e+00.",
+            "parche": "Parametrizar gate1 en T∈{0, 0.05} (dos líneas)."
+          },
+          {
+            "que": "Bordes de chunking NO cubiertos pero SANOS (medidos por sonda): chunk_ticks=1 (OK, chunk 0 lleva 2 filas por la fila 0 PRE-step), chunk_ticks>ticks (OK), frontera exacta con flush vacío en close (OK, early-return), corrida de 0 ticks (OK, film de 1 fila). También sano y no cubierto: runner con checkpoint_every (P7: escribe ck_10/20/30 y el ck@30 restaura con residuo 0) — ningún gate ejercita recorder.save_checkpoint ni el camino del runner.",
+            "donde": "src/study07/artifacts/recorder.py:79-98 y :101-104; src/study07/artifacts/runner.py:28-29; sondas P5/P7",
+            "severidad": "BAJO",
+            "evidencia": "Sonda P5: ct=1→6/6 filas OK; ct>ticks→OK; frontera exacta→16/16 OK; 0 ticks→1/1 OK. Sonda P7: residuo ck@30 vs directa@30 = 0.000e+00.",
+            "parche": "Un test paramétrico de bordes + que algún gate use run(..., checkpoint_every=N). O declararlos NO-CUBIERTOS tal cual con estas mediciones."
+          },
+          {
+            "que": "Dos recorders: mismo dir BLOQUEADO (FileExistsError) y dir de run COMPLETE inmutable-por-mkdir (bien, aunque sin test). PERO un recorder apuntado al dir PADRE (la colección runs/) es ACEPTADO y crea worldline/ ahí, contaminando el layout. Además el tmp del checkpoint (ck_XXX.tmp.npz) MATCHEA el glob natural ck_*.npz y sortea DESPUÉS del real: un descubridor de 'último checkpoint' tras un crash puede levantar un tmp truncado.",
+            "donde": "src/study07/artifacts/recorder.py:32-33; src/study07/artifacts/checkpoint.py:45; sondas P4a/P4b/P4c",
+            "severidad": "NOTA",
+            "evidencia": "P4a: FileExistsError. P4c: FileExistsError. P4b: 'ACEPTADO: crea worldline/ en el dir que CONTIENE runs — sin guarda'. El repo aún no tiene API de descubrimiento de checkpoints, así que el glob es riesgo futuro.",
+            "parche": "Guarda barata: rechazar out_dir que ya contenga subdirs con manifest.json. Tmp del checkpoint con prefijo que no matchee ck_*.npz (p.ej. _tmp_ck_....npz)."
+          },
+          {
+            "que": "Deriva menor spec↔código en WORLDLINE_SCHEMA: la tabla de canales lista `t` (tiempo) y el recorder sólo guarda `ticks` (t derivable de dt del manifest — aceptable, pero el schema dice otra cosa); el layout promete events.jsonl que no se crea (ya en hallazgo 5). Nada de esto rompe física; rompe la promesa de 'el schema ES lo implementado'.",
+            "donde": "specs/WORLDLINE_SCHEMA.md:46 (canal t) vs src/study07/artifacts/recorder.py:85 (sólo ticks)",
+            "severidad": "NOTA",
+            "evidencia": "Lectura directa de ambos archivos.",
+            "parche": "Enmendar la tabla del schema: 't = tick*dt, derivado, no almacenado'."
+          }
+        ],
+        "resumen": "LENTE 4 (qué NO cubren los gates F3) — veredicto: NO DECLARAR TODAVÍA. Baseline reproducido (F3 7/7, suite completa 17 passed, F2 intacta; todo read-only + sandbox). El hallazgo que bloquea es la repetición exacta de la trampa del F2: corrí 4 mutantes de recorder contra la suite y los 4 quedan VIVOS con 7/7 verdes — (A) rng_state basura en todos los chunks salvo el 0 (gate5 sólo verifica el chunk 0, cuyo rng_state viene de un code path DISTINTO al de régimen permanente), (B) canal drive=ceros siempre (el 'ledger causal' jamás se verifica: es el film-decorado que gate5 decía matar, pero sólo lo mató para kicks), (C) kicks corruptos fuera de la ventana 1..16, (D) estados corruptos fuera de los 100 ticks de gate2. El código enviado es correcto (verificado por sonda), pero el gate no protege el film — y el estándar del programa desde F2 es 'verificado matando'. Arreglo barato: gate5 sobre TODOS los chunks desde el rng_state propio de cada uno + un gate de replay-compare fila a fila (estados+drive+kicks) cruzando ≥3 fronteras de chunk. Dos ALTOS con parche barato: manifest.json queda FUERA del COMPLETE (adulterado tras el cierre → el lector re-integra con dt/seed falsos sin error; sonda P4d) y el checkpoint no transporta topología ni engine params (aristas w*3 y k_global*5 aceptados EN SILENCIO; sólo salva la guarda de forma del buffer cuando el tau cambia el delay; sonda P2). Del checklist del lente, lo sano MEDIDO: T=0 restore bit-exacto (residuo 0), bordes chunk_ticks∈{1, >ticks, frontera exacta, 0 ticks} todos OK, runner checkpoint_every restaura residuo 0, doble recorder mismo dir bloqueado, run COMPLETE inmutable-por-mkdir. Lo NO implementado que la bitácora debe declarar al pasar F3: reanudar-GRABANDO tras interrupción no tiene API (el camino de recuperación de la regla 1 del schema: la hija renumera desde 0, sin parent_run_id automático, empalme manual — física del empalme exacta, residuo 0); worldline HIJA/events.jsonl/manifest-obligatorio (git hash, entorno, topología) inexistentes en código — los gates cierran films COMPLETE con manifest de un campo; ingesta de cápsulas v4 reales sigue ABIERTA (gate4 cubre el mecanismo, no el formato; la guarda de history_init es sólo de forma); CHECKPOINT_SCHEMA sigue [BORRADOR] prometiendo campos que el artefacto no tiene; chunk write no atómico + el lector de restos revienta con BadZipFile crudo justo en su caso de uso. La lista NO-CUBIERTO para bitácora queda armada en los hallazgos, con severidad, evidencia numérica de sonda y parche por ítem. Sondas reproducibles en scratchpad: probe_f3_lens4.py, mutantes_f3.py, mutantes_f3b.py."
+      }
+    ]
+  },
+  "workflowProgress": [
+    {
+      "type": "workflow_phase",
+      "index": 1,
+      "title": "Ataque"
+    },
+    {
+      "type": "workflow_phase",
+      "index": 2,
+      "title": "Sello"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 1,
+      "label": "b1:test-del-test",
+      "phaseIndex": 1,
+      "phaseTitle": "Ataque",
+      "agentId": "a1849f0359226454b",
+      "model": "claude-fable-5",
+      "state": "done",
+      "startedAt": 1785413509648,
+      "queuedAt": 1785413503370,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "REFUTADO el 7/7 como evidencia suficiente: 4 mutantes del r…",
+      "promptPreview": "DOUBLE TAP — regla de COA. REPO: /Users/cagostino/code/doft-study07-worldline @ e235d4f (pusheado).\nORÁCULO read-only: /Users/cagostino/code/doft-study06-fundamental-lock-dynamics (congelado).\n\nQUÉ SE AUDITA — F3 candidata (gates 7/7 verdes, NO declarada):\n  src/study07/artifacts/recorder.py    <- worldline chunked, COMPLETE atómico, lector verificador\n  src/study07/artifacts/checkpoint.py  <- sav…",
+      "lastProgressAt": 1785414233049,
+      "tokens": 77609,
+      "toolCalls": 23,
+      "durationMs": 723400,
+      "resultPreview": "{\"hallazgos\":[{\"que\":\"El canal drive de la worldline tiene cobertura CERO en los gates: un recorder que graba drive=ceros (M6) o drive en float32 (M4c) pasa 7/7 verde. WORLDLINE_SCHEMA vende drive como 'el ledger causal sin re-derivar'; si F3 se declara con estos gates, un bug en drive envenena toda vista futura que lo consuma sin que ningún gate lo vea.\",\"donde\":\"src/study07/artifacts/recorder.py…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 2,
+      "label": "b2:mutacion",
+      "phaseIndex": 1,
+      "phaseTitle": "Ataque",
+      "agentId": "ace6432300cec2ed2",
+      "model": "claude-fable-5",
+      "state": "error",
+      "startedAt": 1785413511855,
+      "queuedAt": 1785413503370,
+      "attempt": 1,
+      "lastToolName": "Read",
+      "lastToolSummary": "/Users/cagostino/code/doft-study07-worldline/src/study07/ph…",
+      "promptPreview": "DOUBLE TAP — regla de COA. REPO: /Users/cagostino/code/doft-study07-worldline @ e235d4f (pusheado).\nORÁCULO read-only: /Users/cagostino/code/doft-study06-fundamental-lock-dynamics (congelado).\n\nQUÉ SE AUDITA — F3 candidata (gates 7/7 verdes, NO declarada):\n  src/study07/artifacts/recorder.py    <- worldline chunked, COMPLETE atómico, lector verificador\n  src/study07/artifacts/checkpoint.py  <- sav…",
+      "lastProgressAt": 1785413625365,
+      "error": "API Error: 500 Internal server error. This is a server-side issue, usually temporary — try again in a moment. If it persists, check https://status.claude.com.",
+      "tokens": 35487,
+      "toolCalls": 9,
+      "durationMs": 113510
+    },
+    {
+      "type": "workflow_agent",
+      "index": 3,
+      "label": "b3:schema-vs-codigo",
+      "phaseIndex": 1,
+      "phaseTitle": "Ataque",
+      "agentId": "a619c903c06692645",
+      "model": "claude-fable-5",
+      "state": "done",
+      "startedAt": 1785413514538,
+      "queuedAt": 1785413503370,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "LENTE 3 (¿el código cumple los schemas, cláusula por cláusu…",
+      "promptPreview": "DOUBLE TAP — regla de COA. REPO: /Users/cagostino/code/doft-study07-worldline @ e235d4f (pusheado).\nORÁCULO read-only: /Users/cagostino/code/doft-study06-fundamental-lock-dynamics (congelado).\n\nQUÉ SE AUDITA — F3 candidata (gates 7/7 verdes, NO declarada):\n  src/study07/artifacts/recorder.py    <- worldline chunked, COMPLETE atómico, lector verificador\n  src/study07/artifacts/checkpoint.py  <- sav…",
+      "lastProgressAt": 1785414157322,
+      "tokens": 71773,
+      "toolCalls": 22,
+      "durationMs": 642784,
+      "resultPreview": "{\"resumen\":\"LENTE 3 (¿el código cumple los schemas, cláusula por cláusula?) sobre F3 candidata @ e235d4f. Corrí los gates F3 (7/7) y la suite completa (17 passed, conformidad F2 intacta) + 8 experimentos de refutación en sandbox (script: /private/tmp/claude-501/-Users-cagostino-code-doft-study06-fundamental-lock-dynamics/a013d8a0-cafd-49d8-9f07-ba0ef540402e/scratchpad/audit_f3_lente3.py). LO QUE S…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 4,
+      "label": "b4:cobertura-honesta",
+      "phaseIndex": 1,
+      "phaseTitle": "Ataque",
+      "agentId": "abebea190fc792056",
+      "model": "claude-fable-5",
+      "state": "done",
+      "startedAt": 1785413511071,
+      "queuedAt": 1785413503370,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "LENTE 4 (qué NO cubren los gates F3) — veredicto: NO DECLAR…",
+      "promptPreview": "DOUBLE TAP — regla de COA. REPO: /Users/cagostino/code/doft-study07-worldline @ e235d4f (pusheado).\nORÁCULO read-only: /Users/cagostino/code/doft-study06-fundamental-lock-dynamics (congelado).\n\nQUÉ SE AUDITA — F3 candidata (gates 7/7 verdes, NO declarada):\n  src/study07/artifacts/recorder.py    <- worldline chunked, COMPLETE atómico, lector verificador\n  src/study07/artifacts/checkpoint.py  <- sav…",
+      "lastProgressAt": 1785414228626,
+      "tokens": 79599,
+      "toolCalls": 23,
+      "durationMs": 717555,
+      "resultPreview": "{\"hallazgos\":[{\"que\":\"LA TRAMPA DEL F2 SE REPITE: 4 mutantes de recorder VIVOS con gates 7/7 verdes. (A) rng_state de chunks>=1 reemplazado por el estado de OTRO generator: 7/7 verdes — gate5 sólo verifica el rng_state del chunk 0, que viene de un code path distinto (__init__, recorder.py:47) al de régimen permanente (_flush_chunk, recorder.py:99), que queda SIN verificar. (B) canal drive = ceros …"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 5,
+      "label": "juez:sello",
+      "phaseIndex": 2,
+      "phaseTitle": "Sello",
+      "agentId": "a2f6075d77be6e686",
+      "model": "claude-fable-5",
+      "state": "done",
+      "startedAt": 1785414244585,
+      "queuedAt": 1785414236138,
+      "attempt": 1,
+      "lastToolName": "Bash",
+      "lastToolSummary": "grep -n \"NO-CUBIERTO\\|NO CUBIERTO\" /Users/cagostino/code/do…",
+      "promptPreview": "DOUBLE TAP — regla de COA. REPO: /Users/cagostino/code/doft-study07-worldline @ e235d4f (pusheado).\nORÁCULO read-only: /Users/cagostino/code/doft-study06-fundamental-lock-dynamics (congelado).\n\nQUÉ SE AUDITA — F3 candidata (gates 7/7 verdes, NO declarada):\n  src/study07/artifacts/recorder.py    <- worldline chunked, COMPLETE atómico, lector verificador\n  src/study07/artifacts/checkpoint.py  <- sav…",
+      "lastProgressAt": 1785414804164,
+      "tokens": 89372,
+      "toolCalls": 22,
+      "durationMs": 559578,
+      "resultPreview": "Ambos repos intactos (git limpio, cero escrituras fuera del sandbox). Verificación completa. Veredicto para bitácora:\n\n---\n\n# DOUBLE TAP F3 — VEREDICTO DEL JUEZ (repo @ e235d4f, sandbox propio, todo re-ejecutado por mano del juez)\n\nBaseline reproducido en copia bit-idéntica: gates F3 **7/7**, suite completa **17 passed** (F2 intacta). El 7/7 queda **REFUTADO como evidencia suficiente**: 5 mutantes…"
+    }
+  ],
+  "totalTokens": 353840,
+  "totalToolCalls": 99
+}

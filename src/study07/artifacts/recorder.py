@@ -15,6 +15,22 @@ import numpy as np
 
 from ..engine.network import Network
 
+# Claves que el CALLER debe aportar (PROVENANCE_CONTRACT): sin ellas el artefacto nace huérfano.
+CLAVES_OBLIGATORIAS = ("run_id", "spec_tipo", "hashes_base_externa")
+
+
+def _git_info(repo_root: Path) -> Dict:
+    """git commit + dirty del código que corre — parte del manifiesto (A2). Sin git: declarado."""
+    import subprocess
+    try:
+        commit = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=repo_root,
+                                capture_output=True, text=True, timeout=10).stdout.strip()
+        dirty = bool(subprocess.run(["git", "status", "--porcelain"], cwd=repo_root,
+                                    capture_output=True, text=True, timeout=10).stdout.strip())
+        return {"commit": commit or "desconocido", "dirty": dirty}
+    except Exception:
+        return {"commit": "sin_git", "dirty": None}
+
 
 def _flat(state) -> np.ndarray:
     return np.concatenate([state.x, state.v, state.z, state.b, state.e])
@@ -46,18 +62,38 @@ class WorldlineRecorder:
         # el estado del RNG al INICIO del chunk (replay/continuación por chunk)
         self._rng_state_chunk = json.dumps(net.noise_rng.bit_generator.state, default=str)
 
+        faltan = [k for k in CLAVES_OBLIGATORIAS if k not in manifest]
+        if faltan:
+            raise ValueError(f"manifiesto sin claves obligatorias {faltan} — un artefacto sin "
+                             "run_id/spec_tipo/hashes_base_externa nace huérfano "
+                             "(PROVENANCE_CONTRACT; double tap F3 A2)")
+        if manifest["spec_tipo"] not in ("M1", "M2"):
+            raise ValueError(f"spec_tipo={manifest['spec_tipo']!r}: debe ser M1 o M2")
+        import platform
         manifest = dict(manifest)
         manifest.update({
             "schema": "study07_worldline_v1",
             "n_nodes": self.n_nodes, "dims": self.dims,
+            "por_nodo": [{"n_modes": sp.n_modes, "n_z": sp.n_z, "n_layers": sp.n_layers}
+                         for sp in net.specs],
             "dt": net.dt, "seed": net.seed, "temperature": net.temperature,
+            "k_global": net.k_global, "gamma_c": net.gamma_c,
+            "topologia": {"edges_ij": net.edge_ij.tolist(), "w_k": net.edge_w_k.tolist(),
+                          "w_gamma": net.edge_w_g.tolist(), "tau": net.edge_tau.tolist()},
+            "perfil": manifest.get("perfil", "conformidad"),
+            "entorno": {"python": platform.python_version(), "numpy": np.__version__,
+                        "machine": platform.machine()},
+            "git": _git_info(Path(__file__).resolve().parents[3]),
             "chunk_ticks": self.chunk_ticks,
             "semantica": ("fila 0 del chunk 0 = estado PRE-step; estados[tick] = POST step "
                           "numero tick; drive[k] = fuerza KV del sub-paso 0 del step k; "
                           "noise_kick[k] = incremento estocastico aplicado en el step k; "
-                          "rng_state = estado del generator al INICIO del chunk"),
+                          "rng_state = estado del generator al INICIO del chunk; "
+                          "t = tick * dt (derivado, no almacenado)"),
         })
-        (self.dir / "manifest.json").write_text(json.dumps(manifest, indent=1, default=str))
+        cuerpo = json.dumps(manifest, indent=1, default=str)
+        (self.dir / "manifest.json").write_text(cuerpo)
+        self._manifest_sha = hashlib.sha256(cuerpo.encode("utf-8")).hexdigest()
         # fila 0: PRE-step
         for j, st in enumerate(net.states):
             self._rows[j].append(_flat(st).copy())
@@ -89,7 +125,9 @@ class WorldlineRecorder:
             arrays[f"estados_nodo{j}"] = np.stack(self._rows[j])
             arrays[f"kicks_nodo{j}"] = np.stack(self._kicks[j])
         path = self.dir / "worldline" / f"chunk_{self._chunk_idx:05d}.npz"
-        np.savez_compressed(path, **arrays)
+        tmp = path.with_name(path.stem + ".tmp.npz")   # savez appendea .npz: el tmp lo trae
+        np.savez_compressed(tmp, **arrays)
+        tmp.rename(path)                               # rename atómico: nunca un chunk a medias
         self._chunk_shas.append(hashlib.sha256(path.read_bytes()).hexdigest())
         self._chunk_idx += 1
         self._rows = [[] for _ in range(self.n_nodes)]
@@ -114,7 +152,8 @@ class WorldlineRecorder:
             agregado.update(bytes.fromhex(sha))
         total = agregado.hexdigest()
         cuerpo = json.dumps({"ticks": self._tick_actual, "chunks": len(self._chunk_shas),
-                             "chunk_shas": self._chunk_shas, "sha_total": total}, indent=1)
+                             "chunk_shas": self._chunk_shas, "sha_total": total,
+                             "manifest_sha": self._manifest_sha}, indent=1)
         tmp = self.dir / "COMPLETE.tmp"
         tmp.write_text(cuerpo)
         tmp.rename(self.dir / "COMPLETE")          # rename atómico en el mismo filesystem
@@ -126,7 +165,8 @@ def load_worldline(run_dir: Path, allow_incomplete: bool = False) -> Dict:
     """Lector: verifica COMPLETE + hashes de cada chunk, reensambla sin pérdida ni duplicado.
     Un film sin COMPLETE levanta fail-loud salvo pedido EXPLÍCITO (auditoría de restos)."""
     run_dir = Path(run_dir)
-    manifest = json.loads((run_dir / "manifest.json").read_text())
+    manifest_txt = (run_dir / "manifest.json").read_text()
+    manifest = json.loads(manifest_txt)
     complete = run_dir / "COMPLETE"
     if not complete.exists():
         if not allow_incomplete:
@@ -136,6 +176,10 @@ def load_worldline(run_dir: Path, allow_incomplete: bool = False) -> Dict:
         marca = None
     else:
         marca = json.loads(complete.read_text())
+        sha_man = hashlib.sha256(manifest_txt.encode("utf-8")).hexdigest()
+        if marca.get("manifest_sha") != sha_man:
+            raise RuntimeError("manifest.json fue ALTERADO después del COMPLETE (inmutabilidad "
+                               "post-cierre, WORLDLINE_SCHEMA regla 2 / double tap F3 A3)")
     chunks = sorted((run_dir / "worldline").glob("chunk_*.npz"))
     if marca is not None:
         if len(chunks) != marca["chunks"]:
@@ -149,8 +193,15 @@ def load_worldline(run_dir: Path, allow_incomplete: bool = False) -> Dict:
     drive, ticks = [], []
     kicks = [[] for _ in range(n)]
     rng_states = []
+    chunks_malos = []
     for path in chunks:
-        fx = np.load(path, allow_pickle=False)
+        try:
+            fx = np.load(path, allow_pickle=False)
+        except Exception as exc:                       # A5: restos legibles hasta el chunk roto
+            if marca is not None:
+                raise
+            chunks_malos.append((path.name, repr(exc)))
+            break
         ticks.append(np.asarray(fx["ticks"]))
         drive.append(np.asarray(fx["drive"]))
         rng_states.append(str(fx["rng_state_json"]))
@@ -161,7 +212,13 @@ def load_worldline(run_dir: Path, allow_incomplete: bool = False) -> Dict:
     esperado = np.arange(len(ticks))
     if not np.array_equal(ticks, esperado):
         raise RuntimeError("ticks no consecutivos: pérdida o duplicado entre chunks")
-    return {"manifest": manifest, "ticks": ticks,
+    # A3: el manifiesto declarado debe corresponder a las formas reales
+    if len(estados) != int(manifest["n_nodes"]):
+        raise RuntimeError("n_nodes del manifiesto no coincide con los canales del film")
+    for j, e in enumerate(estados):
+        if e and e[0].shape[1] != manifest["dims"][j]:
+            raise RuntimeError(f"dims[{j}] del manifiesto no coincide con el film")
+    return {"manifest": manifest, "ticks": ticks, "chunks_malos": chunks_malos,
             "estados": [np.concatenate(e) for e in estados],
             "drive": np.concatenate(drive) if drive else np.zeros((0, n)),
             "kicks": [np.concatenate(k) for k in kicks],

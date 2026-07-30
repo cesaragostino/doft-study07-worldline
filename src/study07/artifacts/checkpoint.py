@@ -14,7 +14,28 @@ from typing import Dict, Sequence
 import numpy as np
 
 from ..engine.network import Network
-from ..physics.state import NodeSpec, NodeState
+from ..physics.state import Layer, NodeSpec, NodeState
+
+
+def spec_fingerprint(spec: NodeSpec) -> str:
+    """Huella de la CONSTITUCIÓN (sin e_ref, que muta por política/checkpoint). Una continuación
+    con constitución distinta debe FALLAR FUERTE, no divergir en silencio (double tap F3 A4:
+    gamma×1.5 era aceptado con divergencia 1.1e-06 y cero excepción)."""
+    cuerpo = {
+        "modes": [(m.layer.name, m.index, m.omega0, m.mass, m.gamma) for m in spec.modes],
+        "intra": [(pr.i_idx, pr.j_idx, pr.k0, pr.layer.name) for pr in spec.intra_pairs],
+        "direct": [(lk.deep_idx, lk.shallow_idx, lk.g0, lk.shallow_layer.name)
+                   for lk in spec.direct_links],
+        "mem": {layer.name: {c: getattr(spec.layer_mem[layer], c).tolist()
+                             for c in ("tau0", "beta_tau", "a", "beta", "g", "kappa")}
+                for layer in spec.layer_mem},
+        "mem_order": [l.name for l in spec.mem_layer_order],
+        "W": spec.W.tolist(),
+        "struct": {l.name: (spec.struct.tau_e[l], spec.struct.tau_b[l], spec.struct.alpha_b[l])
+                   for l in spec.layers_present},
+        "emission_scale": spec.emission_scale,
+    }
+    return hashlib.sha256(json.dumps(cuerpo, sort_keys=True).encode("utf-8")).hexdigest()
 
 
 def save_checkpoint(path: Path, net: Network, tick: int, extra_meta: Dict | None = None) -> Path:
@@ -32,6 +53,12 @@ def save_checkpoint(path: Path, net: Network, tick: int, extra_meta: Dict | None
         "schema": "study07_checkpoint_v1",
         "n_nodes": len(net.specs), "dt": net.dt, "seed": net.seed,
         "temperature": net.temperature, "tick": int(tick),
+        # A4: los parámetros del motor y la topología VIAJAN — restaurar sin ellos producía
+        # k_global=0.0 silencioso con divergencia 3.6e-04 (double tap F3)
+        "k_global": net.k_global, "gamma_c": net.gamma_c,
+        "edges": {"ij": net.edge_ij.tolist(), "w_k": net.edge_w_k.tolist(),
+                  "w_gamma": net.edge_w_g.tolist(), "tau": net.edge_tau.tolist()},
+        "spec_fingerprints": [spec_fingerprint(sp) for sp in net.specs],
         "rng_state": net.noise_rng.bit_generator.state,
         # e_ref vive en el spec (mutable por política SOLO en el nacimiento): viaja en el
         # checkpoint para que la reconstrucción no dependa de re-correr la política
@@ -64,16 +91,29 @@ def load_checkpoint(path: Path) -> Dict:
             "sha256": hashlib.sha256(Path(path).read_bytes()).hexdigest()}
 
 
-def network_from_checkpoint(specs: Sequence[NodeSpec], ck: Dict, edges, **kwargs) -> Network:
-    """Reconstruye la red para CONTINUAR. Los specs se reconstruyen de la constitución (por hash,
-    responsabilidad del caller — PROVENANCE_CONTRACT); el checkpoint aporta estado + historia +
-    RNG + e_ref. kwargs = los mismos engine params de la corrida madre."""
-    from ..physics.state import Layer
+def network_from_checkpoint(specs: Sequence[NodeSpec], ck: Dict) -> Network:
+    """Reconstruye la red para CONTINUAR — TODO sale de la meta del checkpoint (parámetros,
+    topología) y la constitución se VERIFICA por huella fail-loud. Cero kwargs: una continuación
+    con otros parámetros no es una continuación, es otra corrida (se construye Network directo
+    y se declara hija con su propio linaje)."""
     meta = ck["meta"]
+    if len(specs) != int(meta["n_nodes"]):
+        raise ValueError(f"specs: {len(specs)} != n_nodes {meta['n_nodes']} del checkpoint")
+    for j, sp in enumerate(specs):
+        fp = spec_fingerprint(sp)
+        if fp != meta["spec_fingerprints"][j]:
+            raise ValueError(
+                f"nodo {j}: la CONSTITUCIÓN no es la de la corrida madre "
+                f"({fp[:12]} != {meta['spec_fingerprints'][j][:12]}) — una continuación con "
+                "otra física no puede ser silenciosa (double tap F3 A4)")
     for sp, erefs in zip(specs, meta["e_ref_por_nodo"]):
         for lname, val in erefs.items():
             sp.struct.e_ref[Layer[lname]] = float(val)
+    ed = meta["edges"]
+    edges = [{"i": int(ij[0]), "j": int(ij[1]), "w_k": wk, "w_gamma": wg, "tau": tv}
+             for ij, wk, wg, tv in zip(ed["ij"], ed["w_k"], ed["w_gamma"], ed["tau"])]
     return Network(specs, ck["states"], edges, dt=float(meta["dt"]), seed=int(meta["seed"]),
                    temperature=float(meta["temperature"]),
+                   k_global=float(meta["k_global"]), coupling_gamma_c=float(meta["gamma_c"]),
                    history_init=(ck["buffer"], ck["head"]),
-                   rng_state=meta["rng_state"], **kwargs)
+                   rng_state=meta["rng_state"])

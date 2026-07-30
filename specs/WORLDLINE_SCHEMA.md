@@ -31,7 +31,7 @@ runs/<run_id>/
   manifest.json        # TODO lo necesario para re-integrar: ver "Manifiesto"
   worldline/           # chunks del film (chunk_00000.npz, ...)
   checkpoints/         # CHECKPOINT_SCHEMA: continuación exacta (float64 + buffers + RNG)
-  events.jsonl         # timeline de intervenciones (vacío en corridas naturales)
+  events.jsonl         # timeline de intervenciones — LLEGA CON F6 (declarado pendiente)
   COMPLETE             # sha256 del film completo; SOLO tras cierre atómico + verificación
 
 views/<worldline_hash>/<instrument_id>/<config_hash>/
@@ -43,9 +43,9 @@ views/<worldline_hash>/<instrument_id>/<config_hash>/
 
 | Canal | Qué | Por qué |
 |---|---|---|
-| `t`, `tick` | reloj | dt CONFIGURADO (jamás re-inferido — PHYSICS_CONTRACT §5) |
+| `tick` | reloj (t = tick·dt DERIVADO, no almacenado) | dt CONFIGURADO (jamás re-inferido) |
 | `x, v, z, b, e` por nodo | estado causal completo | cláusula 2 de COA: medir al individuo EMBEBIDO |
-| `drive[n]` | fuerza KV aplicada por nodo | el ledger causal sin re-derivar |
+| `drive[n]` | fuerza KV del **sub-paso 0** del step (convención sellada) | el ledger causal sin re-derivar |
 | `noise_kick[n_modos]` | incremento estocástico aplicado (si T>0) | replay exacto sin depender del stream |
 | `rng_state` (por chunk) | estado del bit_generator al inicio del chunk | continuación/verificación |
 
@@ -64,7 +64,7 @@ si es hija · estado de finalización.
 
 ## Reglas de integridad
 
-1. Chunks con hash individual; `COMPLETE` = hash del conjunto. Una interrupción deja chunks
+1. Chunks con hash individual (escritos tmp+rename: jamás un chunk a medias); `COMPLETE` = hash del conjunto + hash del manifiesto (adulterar el manifiesto post-cierre = rechazo). COMPLETE prueba CIERRE ÍNTEGRO, no autenticidad: el sha_total lo pinea el catálogo/manifiesto EXTERNO (quien tenga el hash detecta cualquier reemplazo coherente). Una interrupción deja chunks
    válidos y NINGÚN `COMPLETE` — la corrida se reanuda del último checkpoint o se descarta
    entera, jamás se publica a medias.
 2. La worldline es INMUTABLE una vez `COMPLETE`. Corrección de instrumento ⇒ nueva vista.

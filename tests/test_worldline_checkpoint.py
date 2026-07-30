@@ -19,6 +19,9 @@ from pathlib import Path
 
 import numpy as np
 
+MAN = {"run_id": "test", "spec_tipo": "M1",
+       "hashes_base_externa": {"fixture_f6": "local"}}
+
 from study07.artifacts.checkpoint import (load_checkpoint, network_from_checkpoint,
                                           save_checkpoint)
 from study07.artifacts.recorder import WorldlineRecorder, load_worldline
@@ -83,10 +86,8 @@ class TestCheckpointRestore(unittest.TestCase):
                 sp, _ = parse_theta_v2(theta, emission_scale=1.0 / max(len(theta["modes"]), 1))
                 specs2.append(sp)
             ep = meta2["engine_params"]
-            cont = network_from_checkpoint(
-                specs2, ck, meta2["edges"], k_global=float(ep["kappa_global"]),
-                coupling_gamma_c=float(ep["coupling_gamma_c"]),
-                tau_field=float(ep.get("tau_field", 0.0)))
+            # A4: TODO sale de la meta del checkpoint; la constitución se verifica por huella
+            cont = network_from_checkpoint(specs2, ck)
         for _ in range(60):
             cont.step()
         for j in range(3):
@@ -119,7 +120,7 @@ class TestWorldline(unittest.TestCase):
         pre = [_flat(s).copy() for s in net.states]
         memoria = [[p] for p in pre]
         with tempfile.TemporaryDirectory() as td:
-            rec = WorldlineRecorder(Path(td) / "run", net, {"run_id": "gate2"}, chunk_ticks=32)
+            rec = WorldlineRecorder(Path(td) / "run", net, dict(MAN), chunk_ticks=32)
             for _ in range(100):
                 net.step()
                 rec.record_step()
@@ -137,7 +138,7 @@ class TestWorldline(unittest.TestCase):
     def test_gate3_interrupcion_no_publica_complete(self):
         net, _, _ = _f6_net()
         with tempfile.TemporaryDirectory() as td:
-            rec = WorldlineRecorder(Path(td) / "run", net, {"run_id": "gate3"}, chunk_ticks=8)
+            rec = WorldlineRecorder(Path(td) / "run", net, dict(MAN), chunk_ticks=8)
             for _ in range(20):
                 net.step()
                 rec.record_step()
@@ -151,7 +152,7 @@ class TestWorldline(unittest.TestCase):
     def test_gate3b_chunk_corrupto_se_detecta(self):
         net, _, _ = _f6_net()
         with tempfile.TemporaryDirectory() as td:
-            rec = WorldlineRecorder(Path(td) / "run", net, {"run_id": "g3b"}, chunk_ticks=8)
+            rec = WorldlineRecorder(Path(td) / "run", net, dict(MAN), chunk_ticks=8)
             for _ in range(20):
                 net.step()
                 rec.record_step()
@@ -171,7 +172,7 @@ class TestWorldline(unittest.TestCase):
         T = float(meta["engine_params"]["temperature"])
         dt = float(meta["dt"])
         with tempfile.TemporaryDirectory() as td:
-            rec = WorldlineRecorder(Path(td) / "run", net, {"run_id": "gate5"}, chunk_ticks=16)
+            rec = WorldlineRecorder(Path(td) / "run", net, dict(MAN), chunk_ticks=16)
             for _ in range(48):
                 net.step()
                 rec.record_step()
@@ -179,7 +180,7 @@ class TestWorldline(unittest.TestCase):
             wl = load_worldline(Path(td) / "run")
         rng = np.random.default_rng()
         rng.bit_generator.state = json.loads(wl["rng_states_chunk"][0])
-        # rederivar los kicks de los ticks 1..16 (chunk 0 tiene filas 0..16; fila 0 sin kick)
+        # rederivar kicks del chunk 0 (filas 0..15 con chunk_ticks=16; fila 0 = PRE-step sin kick)
         for tick in range(1, 17):
             for j, sp in enumerate(specs):
                 gamma = np.array([m.gamma for m in sp.modes])
@@ -194,7 +195,7 @@ class TestWorldline(unittest.TestCase):
         net, specs, meta = _f6_net()
         net.states[0].x[:] = 1e200     # bomba: overflow en pocos pasos
         with tempfile.TemporaryDirectory() as td:
-            rec = WorldlineRecorder(Path(td) / "run", net, {"run_id": "gate6"}, chunk_ticks=8)
+            rec = WorldlineRecorder(Path(td) / "run", net, dict(MAN), chunk_ticks=8)
             with self.assertRaises(FloatingPointError):
                 run(net, 600, recorder=rec, finite_check_every=16)
             self.assertFalse((Path(td) / "run" / "COMPLETE").exists())
