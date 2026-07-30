@@ -337,7 +337,9 @@ def correr_campana(spec: Mapping[str, Any], base_dir: Path,
                         f"{u['run_id']}: COMPLETE de OTRA spec "
                         f"({str(man.get('campana_spec_sha256'))[:12]} != {spec_sha[:12]}) "
                         "— una campaña no pisa otra (F7)")
-                load_worldline(run_dir)        # A1: la reusa se VERIFICA (chunks+manifiesto)
+                # A1: la reusa se VERIFICA — load_run dentro de _vistas_y_metricas relee
+                # COMPLETE + chunks + manifiesto (la llamada explícita previa era
+                # redundante: mutante equivalente en la re-matanza)
                 fila = _vistas_y_metricas(run_dir, views_root,
                                           [c["theta"] for c in u["constituyentes"]],
                                           float(u["engine_params"]["dt"]))

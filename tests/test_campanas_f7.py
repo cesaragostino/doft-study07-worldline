@@ -290,6 +290,16 @@ class TestCampanasF7(unittest.TestCase):
         self.assertEqual({u["run_id"]: u["estado"] for u in l2["unidades"]},
                          {"u1_transported": "reusada", "u2_fresh": "reusada",
                           "u3_mixta": "fallida"})
+        # ATRIBUCIÓN mentida en un NO-población (A6/J4): theta y cápsula consistentes entre
+        # sí pero block_id etiquetado con OTRO bloque — A9 no aplica (no es población), el
+        # único guardián es el worker: debe caer como fallida con el error declarado
+        s2 = self._spec()
+        s2["unidades"][2]["constituyentes"][0]["block_id"] = self.bids[1]   # miente
+        ledger2 = self._correr(self.tmp / "c_swap", spec=s2)
+        fila_sw = next(u for u in ledger2["unidades"] if u["run_id"] == "u3_mixta")
+        self.assertEqual(fila_sw["estado"], "fallida")
+        self.assertIn("swapeada", fila_sw["error"],
+                      "la atribución mentida de un no-población pasó sin ruido (A6/J4)")
 
     # ── 7 · archivado atómico verificado ─────────────────────────────────────
 
