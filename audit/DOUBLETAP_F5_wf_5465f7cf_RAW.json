@@ -1,0 +1,422 @@
+{
+ "summary": "Double tap de F5: ingesta de capsulas + composicion concurrente — atacar antes de declarar",
+ "agentCount": 5,
+ "logs": [],
+ "result": {
+  "veredicto": "Verification complete. All work ran in the sandbox copy; both real repos verified clean. Final verdict follows.\n\n# DOUBLE TAP F5 — VEREDICTO DEL JUEZ\n\nCandidata @ 3792ff6 · entorno pinned verificado (numpy 2.3.4 / x86_64) · baseline reproducido: 41 passed · todo el trabajo en copia `scratchpad/judge_f5/repo`.\n\n## 1. Veredicto único: **F5 PASADA CON ARREGLOS — NO DECLARAR todavía**\n\nLa FÍSICA del transporte está bien y lo verifiqué por vía independiente: composición desde las 2 cápsulas reales == oráculo con d=0.0 exacto (mi arnés sombra de J1 reproduce la trayectoria limpia contra el fixture; c1 re-midió los 1500 ticks completos: max|d| global = 0.000e+00). El claim nuclear (\"las 150 cápsulas entran al motor nuevo\") queda EN PIE. Pero el patrón F2/F3/F4 se repite por cuarta vez consecutiva: los gates están verdes sin custodiar lo que declaran. Verifiqué por re-ejecución propia (con controles que debían morir y murieron) los 2 hallazgos clase BLOQUEA y los 7 ALTO; **ninguno se degradó — todos reproducidos, varios con números bit-idénticos a los de los lentes**. Por el estándar de la casa (F4: cero mutantes vivos antes de declarar), F5 no se declara hasta ejecutar A1–A10 y re-matar TODA la población de mutantes vivos contra el código arreglado.\n\n**Arreglos requeridos (A1–A6 bloquean la declaración; A7–A10 pre-declaración):**\n\n- **A1 [BLOQUEA]** `tests/test_capsulas_f5.py:187-195` — gate4 compara 7/1500 ticks. VERIFICADO POR MÍ: corrupción x+=1.0 en tick 12 curada bit-exacto en tick 90 ⇒ divergencia real 4.159e+02 en [12,90) y los 7 muestreados dan 0.0 ⇒ gate VERDE. Control válido: sin curar, d=1.605e+02 cazada en tick 100. Parche: sacar la comparación del `if tick in (...)` y comparar CADA tick 1..1500 (el fixture ya trae los 1501 estados; costo segundos).\n- **A2 [BLOQUEA→ALTO]** `tests/test_capsulas_f5.py:92-116` + `src/study07/compat/study06_capsule.py` — 8 ramas del lector borrables con suite verde (causa raíz: tampers de gate1 rompen specimen_id de paso + assertRaises sin regex). VERIFICADO POR MÍ con 3 mutantes representativos, cada uno 41 passed + forjador re-sellado que CARGA OK bajo el mutante y RECHAZA con el mensaje de SU rama con código intacto: JM1 contenido (z adulterado, solo file-sha reparado), JM2 naturalidad (temperature=0.5 + specimen_id recomputado), JM3 esquema v1 (harvest_tick borrado + specimen_id recomputado). Parche: por rama, tamper RE-SELLADO (patrón gate1b) + assertRaisesRegex('natural'|'esquema v1'|'CONTENIDO'|'history_head difiere'|'fields'|...); incluir el caso re-serialización (savez_compressed, mismos arrays) para separar file-sha de content-sha (c2-M1).\n- **A3 [BLOQUEA]** `src/study07/artifacts/composer.py:111-125` + gate5b — el lado FRESH de la mezcla (LA capacidad nueva de F5) no tiene ningún gate de contenido. VERIFICADO POR MÍ: JM5 (ring del fresh puesto a cero) ⇒ 41 passed con física distinta: max|sana−mutante| = 7.440e-08 en 50 ticks = ~1900× el TOL 3.86e-11 (número idéntico al de c4). JM4 (birth_state con idx=0 fijo) ⇒ 41 passed; estado fresh == birth_state(idx=0) con d=0.0 y difiere del correcto idx=1 en 1.641e-02. Parche: extender la verificación post-copia a nodos fresh (columna == relleno uniforme de la emisión inicial) + ancla bit-exacta del estado fresh en gate5b.\n- **A4 [ALTO]** `src/study07/compat/study06_v4.py:118` + `study06_capsule.py:107-121` + `composer.py:47-51` — la rama fresh acepta genomas que el oráculo RECHAZA. VERIFICADO POR MÍ contra el validador REAL del oráculo (import read-only, sin bytecode): theta f8 con S2 en modes pero fuera de memory ⇒ oráculo RECHAZA ('memory.layer_order.missing.S2'), study07 genome_sha256 ACEPTA, parse ACEPTA (n_z 4 vs 7), compone mixto y corre 30 ticks finito. Control: theta sano ACEPTADO por el oráculo (arnés válido). Confirmé leyendo el oráculo que su genome_sha256 llama `validate_theta_internal(require_v2_state=True)` — study07 lo omite. Parche: exigir capas de modes ⊆ layer_order + completitud v2; llamar genome_sha256 en la rama nacimiento (cierra también naturalidad-fresh: _mem_force_scale hoy pasa) y sellar genome_hash en el recibo del fresh.\n- **A5 [ALTO]** `src/study07/artifacts/recorder.py:68` + `composer.py:126-129` — procedencia no exigida. VERIFICADO POR MÍ: film desde las 2 cápsulas reales, `hashes_base_externa={}` y SIN 'composicion' ⇒ COMPLETE=True, cero rastro de specimen_id/capsule_sha256 en el artefacto. Control válido: sin run_id el recorder rechaza. Parche: recibo adherido a la red y EXIGIDO por el recorder (composicion + capsule_sha256 de cada nodo-cápsula en hashes_base_externa); enmienda a WORLDLINE_SCHEMA.\n- **A6 [ALTO]** gate6/inventario — VERIFICADO POR MÍ: 148/150 filas basura + sidecar recomputado ⇒ gate6 1 passed en 0.15s y los 8 gates verdes; control válido (sin refrescar sidecar: 1 failed). **HALLAZGO NUEVO DEL JUEZ que lo agrava:** `data/inventario_v4.json` NO está versionado (`data/*` en .gitignore; `git ls-files` solo trae el tool) — el artefacto que gate6 audita es un archivo local no rastreado: un clon fresco de 3792ff6 ni siquiera pasa gate6, y el sellado \"8/8\" no es reproducible desde el repo. Parche: versionar inventario+sidecar como los fixtures (lección §90-g B1), sellar `INVENTARIO_SHA_SELLADO` y `F8_SHA_SELLADA` como constantes en el test (verifiqué: F8_SHA_SELLADA=None es constante muerta; f7 sí cumple el patrón triple en test_instruments.py:50,84), y validar estructura de las 150 filas.\n- **A7 [MEDIO]** `tests/test_conformance_oracle.py:230` — OLA_SCOPE excluye `artifacts/` (verificado en el código: tupla sin artifacts), justo donde vive el composer que maneja `source`. Agregar 'artifacts'.\n- **A8 [MEDIO]** `tools/inventario_v4.py:101` — oracle_tag HARDCODEADO Y FALSO, VERIFICADO POR MÍ: HEAD del oráculo = 39f8df6, `git tag --points-at HEAD` = vacío, el tag apunta a ca437b7. Medir el tag, no asumirlo (\"asumir números es asumir física\").\n- **A9 [MEDIO]** `composer.py:126-128` — recibo sin `topology_quench` / `stationary_claim_exclusion_ticks` / set_digest (higiene de claims del receipt del oráculo :1025-1056) + enmienda F5 a WORLDLINE_SCHEMA para 'composicion'.\n- **A10 [MEDIO]** tests negativos para las verificaciones defensivas del composer (formas/capas e_ref/post-copia — c1-M10/11/12, c2-M16), flags read-only (c2-M22), capas no transportables en genome_sha256 (c2-M24), y sub-caso unitario de quench con head≠0 sintético (c2-M6: las 150 cápsulas tienen head=0 — el re-base nunca se ejercita).\n\n**Condición dura:** tras aplicar A1–A10, re-correr la población COMPLETA de mutantes vivos (11 de c1, 12 reales de c2, 2 sondas de c4, JM1–JM5 del juez) contra el código arreglado: **0 vivos** o F5 no se declara. c2-M14/M17 quedan EXENTOS (equivalentes verificados: head_idx nace 0 en delay.py:20; Network copia estados en network.py:32).\n\n## 2. Tabla de mutantes\n\n| Quién | Probados | Muertos | Vivos | Nota |\n|---|---|---|---|---|\n| JUEZ (independiente) | 6 código + 2 sondas datos + 3 experimentos | JM6 control quench-flip (2 failed) · control sidecar (1 failed) · 3 controles de arnés (forjador vs intacto, oráculo vs sano, recorder sin run_id) | JM1, JM2, JM3, JM4, JM5 (todos 41 passed) + sonda inventario (8 passed con 148 filas basura) | 5/5 vivos reportados por lentes CONFIRMADOS; todos los controles murieron ⇒ arnés válido |\n| c1 | 14 | 3 (M9 quench-flip, M13 e_ref-idx0, M14 head=1) | 11 | mecanismo causal (specimen_id enmascara + assertRaises sin regex) confirmado por el juez |\n| c2 | 25 | 11 | 14 (12 agujeros reales + 2 equivalentes M14/M17) | JM1≈M2, JM2≈M8, JM3≈M9, JM4=M18 confirmados |\n| c4 | 2 sondas | — | 2 (ring fresh, inventario) | JM5=c4-M1 confirmado con número idéntico (7.440e-08); sonda inventario confirmada |\n\nLo que SÍ protege (consenso de los 4 lentes + mis controles): gate1b (re-sellar todo + regex, el patrón a copiar), gate2 (ancla de genoma contra sellos del oráculo — referencia independiente real), gate3 (flip/off-by-one/extrapolación del quench mueren), gate4 contra corrupción PERSISTENTE y e_ref adulterado, el check interno post-copia (mata M13/M16-inyección), rechazos de gate7, la cadena blocks_sha256 inventario==f8==f7, y el entorno pinned en modo 0.0 exacto.\n\n## 3. Transcripción y contratos por cláusula\n\n| Cláusula | Veredicto | Evidencia |\n|---|---|---|\n| Transcripción del lector (orden/semántica de checks) | CUMPLE | c3 cotejó línea por línea; 9/9 sha de claves de source decodifican exacto; única diferencia declarada (RuntimeError vs SpecimenCapsuleError) |\n| Transcripción de genome_sha256 | **PARCIAL** | el oráculo llama validate_theta_internal(require_v2_state=True) (leído por el juez en specimen_capsule.py:99-104); study07 lo omite ⇒ A4 |\n| Física del transporte (estado+buffer+1500 ticks) | CUMPLE | 0.000e+00 exacto; re-medición completa de c1 + arnés sombra del juez |\n| Cláusula 1 (source OPACO, motor sin niveles) | PARCIAL | mecanismo sellado correcto y gate de palabra mata en compat; pero la rama de esquema es borrable (A2) y artifacts/ fuera del scope (A7) |\n| Naturalidad heredada | PARCIAL | cápsula: shipped OK pero rama borrable (A2); fresh: NO gateada (A4) |\n| PROVENANCE_CONTRACT | **INCUMPLE** | film huérfano COMPLETE verificado por el juez (A5); inventario no versionado (A6) |\n| Quench espejo del restore | CUMPLE (con resto) | bit-exacto vs f8; head≠0 y canonical_ring_exact inejercitados (A10 / NO-CUBIERTO) |\n| Mezcla cápsula+fresh declarada | PARCIAL | declarada honestamente, pero su mitad fresh sin ningún ancla (A3) |\n| Inventario 150 / cadena | PARCIAL | cadena f7==f8==inventario cierra; 2/150 ancladas en suite; 148 a tiempo-de-herramienta; artefacto fuera de git; oracle_tag falso (A6/A8) |\n| Entorno pinned / niveles de gate | CUMPLE | exact-0 activo, degradación a TOL declarada por print |\n\n## 4. NO-CUBIERTO consolidado (va a la bitácora §8 — F5 no tenía lista propia)\n\n1. Lado fresh de la mezcla: ring inicial + acople cápsula→fresh en la ventana del delay — cero gates de contenido hasta A3.\n2. 148/150 filas del inventario: contenido verificado solo a tiempo-de-herramienta (declararlo en el docstring de gate6 tras A6).\n3. Camino `canonical_ring_exact` (tau=2.0, delay igual) sin test ni fixture; modo `exact_reconstruction/raw_ring_exact` del oráculo NO implementado — declarar fuera de alcance.\n4. Quench con head≠0: población real 150/150 con history_head=0 — solo cubrible con unit sintético (A10).\n5. `preserve_serialized` inalcanzable desde componer_red (política fresh fija por firma).\n6. Bordes: delay-0 descarta 25000 pasos de biografía en silencio; cápsula duplicada legal sin marca (espejo fiel del oráculo, pero doctrina de clones §47 pediría declararla); theta sin Q cae al fallback de phase sin registro en la vista.\n7. Termalización futura de composiciones (F6/F7) sin vía declarada (T=0 solo custodiado en la puerta).\n8. Passports v4: identidad hasheada en el inventario, contenido fuera de alcance de F5 — entran con el explorer/pasaporte 3 caras.\n9. Solo 2/150 cápsulas ejercitan el motor en suite; las 150 solo vía tool.\n10. Tools sin study07_commit propio (mitigado: artefactos commiteados… salvo el inventario — ver A6).\n\n## Repos intactos — verificado al cierre\n\n- `/Users/cagostino/code/doft-study07-worldline`: `git status` limpio @ 3792ff6. Cero escrituras.\n- `/Users/cagostino/code/doft-study06-fundamental-lock-dynamics` (oráculo): `git status` limpio @ 39f8df6. Mi único acceso fue lectura + import con `PYTHONDONTWRITEBYTECODE=1`; los `__pycache__` presentes (gitignorados) tienen mtime ANTERIOR a esta sesión (00:04 / 11:20) — no son míos. Ningún archivo R_f leído.\n- Copia de trabajo restaurada: `git status` limpio, inventario sha `dbb6a1cee91233d4` == repo real, F5 de nuevo 8 passed tras la matanza.\n- Artefactos del juez: `scratchpad/judge_f5/{exp_gate4_sampling.py, exp_provenance.py, exp_fresh_genome.py, demo_forjador.py, demo_mezcla.py, mutar.py}`.",
+  "revs": [
+   {
+    "resumen": "LENTE c1 (test-del-test) sobre F5 candidata @ 3792ff6: la FISICA esta bien — re-medi la trayectoria COMPLETA (1500 ticks x 2 nodos, no solo los muestreados) y da max|d|=0.0 exacto con 0 ticks distintos de cero, entorno pinned activo (numpy 2.3.4/x86_64 == meta). Pero el patron F2/F3/F4 SE REPITE: los gates estan verdes sin proteger lo que declaran. Matanza: 14 mutantes, 11 VIVOS (8 en el lector compat, 3 en el composer; todos confirmados vivos tambien con la suite completa de 41) + 2 agujeros probados por experimento ejecutado: (1) gate4 muestrea 7 de 1500 ticks — una falla intermitente con divergencia 4.16e+02 en la ventana [12,90) pasa VERDE con los 7 puntos en 0.0 exacto, aunque el fixture contiene los 1501 estados para comparar todo; (2) gate6 pasa con 148/150 filas basura + strings de verificacion adulteradas (sidecar recomputado, 1 passed en 0.15s). Causa raiz de los 8 vivos del lector: los tampers de gate1 rompen specimen_id/hashes de paso, asi que CUALQUIER check caza y el assertRaises sin regex queda verde — las ramas de naturalidad, esquema-sellado de source (el mecanismo de la clausula 1), content-sha, file-sha, head-consistencia, node_count, fields y dt/delay se pueden BORRAR con suite verde. Lo que SI protege (medido): gate3 mata el flip de indice del quench, gate4 mata e_ref mal cableado, head_idx!=0 y corrupcion persistente (control: d=1.6e+02 cazado en tick 100), gate2 ancla el genoma contra sellos del oraculo (referencia independiente real), y la cadena blocks_sha256 inventario==f8==f7 cruza fixtures de fases distintas. Margen gate5 medido: ratio real 1.33e9 vs umbral 1e3 (holgura 1.3e6x, direccionalmente valido). Por el estandar de la casa (F4: no declarar hasta re-matanza con 0 vivos), F5 NO debe declararse sin los arreglos. Repos verificados read-only al cierre: git status limpio en ambos (study07 @ 3792ff6, oraculo @ 39f8df6); todo el trabajo corrio en copia en scratchpad/c1/.",
+    "hallazgos": [
+     {
+      "que": "gate4 declara 'TRAYECTORIA 1500 ticks bit-exacta' pero compara solo 7 ticks (1,2,10,100,500,1000,1500): ventanas de 89-499 ticks sin monitorear (1493/1500 = 99.5% de la trayectoria). Una falla intermitente que se cura dentro de una ventana pasa el gate en verde. El fixture f8 CONTIENE los 1501 estados por nodo (estados_nodo{j} shape (1501,33)) — comparar todo cuesta cero.",
+      "donde": "tests/test_capsulas_f5.py:189",
+      "severidad": "BLOQUEA_F5",
+      "evidencia": "exp_gate4_sampling.py (scratchpad c1): corrupcion x+=1.0 en tick 12, curada bit-exacto en tick 90 via sombra deepcopy -> divergencia MAXIMA real en ventana [12,90) = 4.159e+02, y los 7 ticks muestreados dan d=0.0 EXACTO -> 'VEREDICTO gate4: VERDE (la falla PASA)'. CONTROL: la misma corrupcion SIN curar da d=1.605e+02 en tick 100 -> gate4 la caza. Ademas exp_traj_completa.py: la trayectoria real completa SI es conforme (max|d| global = 0.000e+00, 0 ticks con d!=0) — el agujero es del gate, no de la fisica.",
+      "parche": "tests/test_capsulas_f5.py:189 — sacar la comparacion del `if tick in (...)`: comparar `_flat(net.states[j]) - fx[f'estados_nodo{j}'][tick]` en CADA tick 1..1500 (dejar el print solo en los muestreados). Costo medido: la comparacion completa corre en segundos."
+     },
+     {
+      "que": "8 ramas de validacion del lector se pueden BORRAR con la suite (41 tests) en verde: content_sha256, consistencia history_head manifiesto/arrays, file-sha del state.npz, naturalidad (natural_unintervened/temperature!=0), esquema sellado de claves de source (el mecanismo de la clausula 1), source_node_count<=0, state_artifact.fields, dt<=0/delay<0. Causa raiz: los tampers de gate1 rompen specimen_id (que hashea source) o el CRC del npz de paso, asi que otra rama caza el mismo tamper, y gate1 usa assertRaises(RuntimeError) SIN regex — no localiza cual check disparo. Ej. concreto: una capsula SELLADA legitimamente con temperature=0.5 (specimen_id valido) seria aceptada si la rama de naturalidad se rompe por regresion, y nada lo detectaria.",
+      "donde": "tests/test_capsulas_f5.py:92-116 (assertRaises sin regex) / src/study07/compat/study06_capsule.py:184-209,278-287",
+      "severidad": "BLOQUEA_F5",
+      "evidencia": "mutantes.py (scratchpad c1, una mutacion por vez + restore + purga __pycache__): M1-content-sha, M2-head-consist, M3-node-count, M4-file-sha, M5-naturalidad, M6-source-schema, M7-fields-contract, M8-dt-delay -> los 8 'VIVE (f5 verde: 8 passed) · VIVE TAMBIEN con la suite completa'. Controles del harness validos: M9-quench-flip muere en gate3 (1 failed en 0.21s). RAW en tasks/biy9gxb2a.output.",
+      "parche": "tests/test_capsulas_f5.py gate1: por cada rama, construir el tamper RE-SELLANDO todo lo demas (recomputar sha256/content_sha256/specimen_id como ya hace gate1b) para que la rama auditada sea la UNICA que caza, y usar assertRaisesRegex con un fragmento distintivo del mensaje de cada raise (p.ej. 'natural', 'esquema v1', 'CONTENIDO', 'history_head difiere', 'fields'). Son ~6 casos nuevos con el patron ya existente de gate1b."
+     },
+     {
+      "que": "gate6 no verifica el CONTENIDO de las 150 filas del inventario: solo cuenta (len==150, block_ids unicos, verificacion.n==150) y cruza las 2 filas del fixture. 148 filas pueden ser basura total (genome_hash/specimen_id/capsule_sha256 falsos, dt=-1, delay=0) y las strings de verificacion ('genoma_triple: 150/150') son AUTO-REPORTADAS por la misma herramienta que genera el JSON y su sidecar — el gate compara la salida del tool consigo misma (referencia no independiente). El claim central de F5 ('las 150 capsulas entran al motor nuevo') descansa en una corrida del tool no reproducible en la suite.",
+      "donde": "tests/test_capsulas_f5.py:243-264 / data/inventario_v4.json / tools/inventario_v4.py:107-112",
+      "severidad": "ALTO",
+      "evidencia": "exp_gate6_inventario.py (scratchpad c1, sobre repo2): 148/148 filas no-fixture adulteradas (genome_hash='sha256:000...', specimen_id basura, dt=-1.0, delay_steps=0) + strings de verificacion puestas en '0/150 NADA VERIFICA' + sidecar recomputado -> test_gate6 '1 passed in 0.15s' -> 'VEREDICTO gate6: VERDE con 148 filas basura'.",
+      "parche": "tests/test_capsulas_f5.py gate6: validar la ESTRUCTURA de las 150 filas (claves completas, hashes con formato sha256:[0-9a-f]{64}, dt==float(meta['dt']) uniforme, delay_steps==25000, specimen_id unicos, capsule_sha256 unicos, harvest_tick>0) + sellar el sha del inventario como constante en el test (patron F7_SHA_SELLADA) para que regenerarlo exija re-sellar a la vista — el contenido pleno solo lo verifica el tool contra el oraculo, DECLARARLO en el docstring del gate."
+     },
+     {
+      "que": "Las 3 verificaciones defensivas del composer que su docstring promete ('formas y capas de e_ref [:740-760] · verificacion post-copia [:791-813]') no tienen ningun test negativo: se pueden borrar con la suite completa en verde. gate7 solo ejercita genoma/temperature/dt/emission_scale.",
+      "donde": "src/study07/artifacts/composer.py:69-77,113-125 / tests/test_capsulas_f5.py:268-293",
+      "severidad": "MEDIO",
+      "evidencia": "mutantes.py: M10-formas ('if False' en el check de shapes x/v/z/b/e), M11-capas-eref (check capas e_ref vs spec neutralizado), M12-postcopy (verificacion post-copia neutralizada) -> los 3 'VIVE (f5 verde) · VIVE TAMBIEN con la suite completa'. En contraste M13-eref-idx0 (e_ref siempre indice 0 — fisica adulterada) MUERE en gate4 y M14-head-idx=1 MUERE: la fisica persistente si esta protegida.",
+      "parche": "tests/test_capsulas_f5.py gate7: agregar 3 rechazos — (a) capsula con arrays['x'] de shape adulterada re-sellada (regex 'de la cápsula'), (b) e_ref_keys con capa renombrada re-sellada (regex 'capas de e_ref'), (c) para post-copia: monkeypatch de Network que corrompa states tras __init__ y assertRaisesRegex('post-composición')."
+     },
+     {
+      "que": "F8_SHA_SELLADA=None es una constante MUERTA: no se usa en ninguna linea del repo. El patron de la casa (test_instruments.py:49-50, 'patron f1-f5: regenerar exige re-sellar aca, a la vista') exige triple ancla bytes==sidecar==constante-en-el-test; f8 solo tiene bytes==sidecar, y ambos los escribe el mismo tool (gen_f8_transport.py:139-141), asi que una regeneracion silenciosa de la referencia pasa sin tocar ningun test. El comentario 'se sella tras el primer gen' quedo incumplido: el gen ya corrio (el fixture existe y los gates estan verdes).",
+      "donde": "tests/test_capsulas_f5.py:40",
+      "severidad": "MEDIO",
+      "evidencia": "grep -rn F8_SHA_SELLADA --include='*.py' -> UNICA aparicion es su definicion (tests/test_capsulas_f5.py:40); setUpClass:57-60 solo compara contra el sidecar. Contraste: test_instruments.py:84 usa 'sha_f7 == sidecar == F7_SHA_SELLADA'. sha256 actual medido del f8: d501cca05179f16fd1b32e0bb7dc3c39a7b03d9b398edd99eb9303e6a250fd93.",
+      "parche": "tests/test_capsulas_f5.py:40 F8_SHA_SELLADA = 'd501cca05179f16fd1b32e0bb7dc3c39a7b03d9b398edd99eb9303e6a250fd93' y en setUpClass:59 cambiar a `if not (sha_f8 == sidecar == F8_SHA_SELLADA):` (mismo patron que f7)."
+     },
+     {
+      "que": "gate5: los umbrales 1e3x son holgados 6 ordenes de magnitud respecto del margen real (valido direccionalmente, pero un bug que pierda el 99.9% de la energia importada pasaria); el assert de fase shape==(301,2) es solo estructura (una vista de ceros pasa); y NINGUN valor de las vistas del film compuesto se ancla contra referencia en F5 (canales r/omega/z/theta/j y e_capa completo sin comparar). Mitigado: los instrumentos en si estan anclados por VALOR contra f7 en test_instruments (gates A/A2/B), y la mezcla (b) esta DECLARADA sin referencia del oraculo.",
+      "donde": "tests/test_capsulas_f5.py:218-222,235-236",
+      "severidad": "BAJO",
+      "evidencia": "exp_gate5_margen.py (scratchpad c1): e0[ignitor].sum()=2.368e+04 vs e0[callado].sum()=1.780e-05 -> ratio real 1.330e+09 = 1.3e6x el umbral 1e3; mezcla: e_capsula=1.617e+04 vs e_fresh=1.874e-02 -> ratio 8.6e+05. Claves de v_fase sin comparar con nada: j/omega/omega_valid/r/theta/ticks/z; de v_e: e_capa (salvo ratio fila 0) y ticks.",
+      "parche": "tests/test_capsulas_f5.py:221 — ademas del ratio, anclar un escalar reproducible del film compuesto (p.ej. sha o suma exacta de e_capa fila 0 y fila final, sellados tras el primer run pinned), o al menos subir el umbral al orden medido (1e8) con el margen DECLARADO en el mensaje."
+     },
+     {
+      "que": "Caminos jamas ejercitados que quedan declarados como capacidad: (a) el quench 'canonical_ring_exact' (source_delay == target_delay) — en f8 ambos nodos truncan 25000->250, gate4 asserta exactamente ['truncate_recent_full_rate_exact']*2, asi que la rama exacta del composer:106-108 nunca corre en ningun test; (b) TODAS las ramas de _validar_arrays (dtype, finitud, ndim, formas, e_ref unico, shape del ring, head fuera de rango) carecen de test directo — solo alcanzables con una capsula RE-SELLADA con arrays invalidos (harvester hostil/buggy), que ningun test construye.",
+      "donde": "src/study07/artifacts/composer.py:106-108 / src/study07/compat/study06_capsule.py:213-254",
+      "severidad": "NOTA",
+      "evidencia": "grep 'canonical_ring_exact' tests/ -> solo aparece negado en el assert de gate4 (test_capsulas_f5.py:184-185: ambos nodos truncate); f8 meta: delay capsulas 25000, receptor 250. Para _validar_arrays: los mutantes M1-M8 muestran que ni siquiera las ramas de _validar_manifiesto (mas superficiales) estan gateadas individualmente.",
+      "parche": "Test nuevo barato: quench_column(arrays, 25000) == rotacion pura del ring (comparable contra np.roll del ring original, sin oraculo) cubre la rama exacta; para _validar_arrays, 2-3 tampers re-sellados representativos (head fuera de rango, e_ref duplicado) con assertRaisesRegex."
+     },
+     {
+      "que": "LO QUE SI PROTEGE (medido, para el veredicto honesto): gate3 mata el flip de indice del quench en 0.21s; gate4 mata e_ref mal cableado (M13), head_idx!=0 (M14) y corrupcion PERSISTENTE de estado (control: d=1.605e+02 cazado en tick 100); gate2 ancla el genoma de los 2 thetas contra genome_hash SELLADO por el oraculo (referencia independiente real, no self-compare); gate1b es el mejor test del archivo (re-sella TODOS los hashes y deja que la fisica delate, con regex); la cadena blocks_sha256 inventario==f8==f7 cruza fixtures de fases distintas; el entorno esta pinned (exact-0 activo, no degradado a TOL); y la fisica de F5 es conforme: trayectoria completa re-medida independientemente = 0.0 exacto en los 1500 ticks.",
+      "donde": "tests/test_capsulas_f5.py:118-165",
+      "severidad": "NOTA",
+      "evidencia": "mutantes.py: M9 'muere en f5: 1 failed, 3 passed in 0.21s' (gate3), M13 y M14 'muere en f5: 1 failed, 4 passed' (gate4); exp_gate4_sampling.py control persistente d=1.605e+02 en tick 100 -> cazado; exp_traj_completa.py: max|d| global 0.000e+00, 0/1500 ticks con d!=0; baseline restaurado tras la matanza: 8 passed (rc=0).",
+      "parche": "Ninguno — conservar gate1b como patron para los arreglos del hallazgo 2 (re-sellar todo y localizar por regex)."
+     }
+    ]
+   },
+   {
+    "resumen": "LENTE c2 (MUTACION) sobre study07 @ 3792ff6, copia en scratchpad, entorno PINNED (numpy 2.3.4/x86_64, gates en modo 0.0 exacto). 25 mutantes (los 18 obligatorios + M19-M25 propios), UNO por vez con restore+purga de __pycache__ entre corridas; cada VIVO re-confirmado contra la suite COMPLETA (41 tests). RESULTADO: 11 MUERTOS / 14 VIVOS, de los cuales 2 son mutantes EQUIVALENTES (M14: head_idx ya nace 0 en delay.py:20; M17: Network copia estados en network.py:32) => 12 agujeros reales de gate. El patron F2/F3/F4 se REPITE: la fisica esta bien (verifique quench correcto para todo head 0..10 por propiedad; conformidad bit-exacta intacta) pero los gates tienen agujeros. TEMA DOMINANTE: el gate 1 adultera el manifiesto SIN recomputar specimen_id, asi que TODA validacion de _validar_manifiesto queda enmascarada por el check de specimen_id (M8, M25, M9 vivos: un forjador que recomputa specimen_id — codigo publico — pasa naturalidad y esquema si esos checks regresionan); el hash de CONTENIDO y el de ARCHIVO no son separables con el ataque byte-flip del gate (M2, M1 vivos); la mitad FRESH de la mezcla capsula+fresh (LA capacidad nueva declarada de F5) no tiene ancla bit-exacta (M18 vivo: semilla de nodo equivocada pasa); head!=0 es inejercitable con los fixtures (M6 vivo; verifique 150/150 capsulas del oraculo con history_head=0) y la aplicacion de e_ref es invisible con capsulas naturales (M12 vivo; sellado==genoma bit-igual, y e_ref SI entra en la dinamica via rhs.py:101). GATES QUE SI PROTEGEN (muertos): specimen_id recomputado (M3), invariante de emision (M4), direccion de truncado y off-by-one del quench via ancla bit-exacta f8 (M5, M7), canonicalizacion del hash de genoma (M10), rechazo _mem_force_scale (M11), pisado de historia (M13 — muere por el check INTERNO post-copia, gate4 tambien lo cazaria), check de genoma (M15), prohibicion de extrapolar (M20), e_ref con VALORES cambiados (M21 — trayectoria 1500 ticks), guard T!=0 en caso mixto (M23). VEREDICTO: ningun hallazgo invalida la fisica transportada (el codigo shipped dispara todos los checks; los CARGA-OK son bajo mutantes hipoteticos), por eso no marco BLOQUEA_F5 — pero los 4 ALTO son exactamente la clase de agujero que el DOUBLE TAP existe para cerrar ANTES de declarar F5. Los dos repos reales quedaron intactos (git status limpio en ambos: study07 @ 3792ff6, oraculo @ 39f8df6) y las dos copias de trabajo restauradas limpias.",
+    "hallazgos": [
+     {
+      "que": "M2 VIVO: el check del hash de CONTENIDO (study06_capsule.py:283-285) se puede eliminar y los 8 gates F5 + la suite completa quedan verdes. El unico ataque de bytes del gate 1 (flip en state.npz) lo caza el hash de ARCHIVO, asi que el hash de contenido no tiene test discriminante.",
+      "donde": "tests/test_capsulas_f5.py:88-93",
+      "severidad": "ALTO",
+      "evidencia": "Mutante 'if contenido != ...' -> 'if False': pytest tests/test_capsulas_f5.py = 8 passed; suite completa = 41 passed (VIVO_FULL). Demostracion del agujero: z+1.0 en state.npz + reparar SOLO state_artifact.sha256 (content_sha256 y specimen_id intactos) => codigo INTACTO 'RECHAZO: hash de CONTENIDO del estado no coincide'; MUTADO 'CARGA OK' con estado z corrupto.",
+      "parche": "tests/test_capsulas_f5.py: agregar caso en test_gate1 (tras :93): adulterar z en state.npz, reescribir npz, reparar man['state_artifact']['sha256'] SOLO, y assertRaisesRegex(RuntimeError, 'CONTENIDO')."
+     },
+     {
+      "que": "M8 y M25 VIVOS: las DOS mitades del gate de naturalidad (study06_capsule.py:199-201, natural_unintervened y temperature) se pueden eliminar por separado y todo queda verde. Los casos del gate 1 adulteran source SIN recomputar specimen_id, asi que el rechazo que ven proviene del check de specimen_id (razon equivocada), no de la naturalidad.",
+      "donde": "tests/test_capsulas_f5.py:102-109",
+      "severidad": "ALTO",
+      "evidencia": "M8 (quitar mitad natural_unintervened) y M25 (quitar mitad temperature): F5 8 passed y suite completa 41 passed en ambos. Bajo M8 sin reparar specimen_id: 'RECHAZO: specimen_id ... != recomputado' (el gate ve RuntimeError y pasa); con specimen_id recomputado (cap6.specimen_id(man), codigo publico): 'CARGA OK' de una capsula natural_unintervened=False. Codigo intacto la rechaza en ambos casos.",
+      "parche": "tests/test_capsulas_f5.py:107: tras man['source'][clave]=valor agregar man['specimen_id']=cap6.specimen_id(man) y cambiar a assertRaisesRegex(RuntimeError, 'natural') — asi el UNICO guardian posible es el check de naturalidad."
+     },
+     {
+      "que": "M9 VIVO: el check del esquema sellado por sha256 de las claves de source (study06_capsule.py:184-190, clausula 1 de procedencia OPACA) se puede eliminar y todo queda verde — mismo enmascaramiento por specimen_id que M8.",
+      "donde": "tests/test_capsulas_f5.py:111-116",
+      "severidad": "ALTO",
+      "evidencia": "Mutante 'faltan_src = []': F5 8 passed, suite completa 41 passed. Demostracion: del man['source']['harvest_tick'] + man['specimen_id']=cap6.specimen_id(man) => INTACTO 'RECHAZO: source no cumple el esquema v1'; MUTADO 'CARGA OK' con source incompleto.",
+      "parche": "tests/test_capsulas_f5.py:113-114: tras borrar harvest_tick, recomputar man['specimen_id']=cap6.specimen_id(man) y usar assertRaisesRegex(RuntimeError, 'esquema v1')."
+     },
+     {
+      "que": "M18 VIVO: el composer con birth_state(spec, seed, idx=0) SIEMPRE (semilla del nodo equivocada) pasa los 8 gates. La mitad FRESH de la mezcla capsula+fresh — LA capacidad nueva declarada de F5 — no tiene ancla bit-exacta: el gate 5(b) solo chequea magnitud de energia (1e3x) y finitud a 50 ticks.",
+      "donde": "src/study07/artifacts/composer.py:48",
+      "severidad": "ALTO",
+      "evidencia": "Mutante idx=idx -> idx=0: F5 8 passed, suite completa 41 passed. Composicion mixta capsula+fresh: bajo el mutante el nodo fresh 1 == birth_state(idx=0) con max|d|=0.000e+00 y difiere de birth_state(idx=1) en max|d|=3.913e-03; intacto es exactamente al reves. Los otros usos de birth_state en la suite (conformance F2, instruments) no pasan por el composer.",
+      "parche": "tests/test_capsulas_f5.py:231-236 (gate5b): agregar assert bit-exacto del estado fresh: parse_theta_v2(thetas[1],...) + birth_state(sp, seed=meta['seed'], idx=1) y comparar campo a campo contra net2.states[1] con d==0.0."
+     },
+     {
+      "que": "M1 VIVO: el check del hash de ARCHIVO del state.npz (study06_capsule.py:278-281) se puede eliminar y todo queda verde. El byte-flip del gate 1 tambien corrompe el contenido, asi que archivo y contenido no son separables con ese ataque; una re-serializacion (mismos arrays, otros bytes) no tiene test.",
+      "donde": "tests/test_capsulas_f5.py:88-93",
+      "severidad": "MEDIO",
+      "evidencia": "Mutante 'if real != esperado' -> 'if False': F5 8 passed, suite completa 41 passed. Demostracion: np.savez_compressed con los MISMOS arrays (bytes cambiaron=True, contenido igual=True) sin tocar el manifiesto => INTACTO 'RECHAZO: hash del state artifact'; MUTADO 'CARGA OK'. Nota: np.savez sin comprimir reproduce los bytes originales byte-exactos (el npz del oraculo es savez sin comprimir).",
+      "parche": "tests/test_capsulas_f5.py: caso nuevo en gate1: re-serializar state.npz con savez_compressed (mismos arrays) sin tocar capsule.json => assertRaisesRegex(RuntimeError, 'hash del state artifact')."
+     },
+     {
+      "que": "M6 VIVO: quench_column ignorando history_head (head=0 fijo) pasa todo, porque las 2 capsulas del fixture f8 Y las 150 de la poblacion completa tienen history_head=0. El re-base del ring — nucleo de la transcripcion del oraculo :926-937 — esta inejercitado para head!=0: un quench roto pasaria los gates con cualquier capsula futura cosechada en otro tick.",
+      "donde": "src/study07/compat/study06_capsule.py:308",
+      "severidad": "MEDIO",
+      "evidencia": "Mutante head=0: F5 8 passed, suite completa 41 passed. Conteo sobre el oraculo (solo capsule.json, read-only): heads {0: 150} de 150/150. Unit sintetico ring(11,2) head=4 target=5: intacto max|d|=0.0 vs re-base cronologico manual; mutado max|d|=1.947. El codigo intacto cumple col[0]==ring[head] y re-base exacto para todo head 0..10.",
+      "parche": "tests/test_capsulas_f5.py test_gate3 (tras :163): sub-caso unitario sintetico sin oraculo: ring aleatorio con head en {1..N}, assert quench_column == re-base cronologico calculado a mano y col[0]==ring[head]."
+     },
+     {
+      "que": "M12 VIVO: el composer SIN aplicar el e_ref de la capsula al spec (composer.py:81-83) pasa los 8 gates, porque en las capsulas naturales el e_ref sellado es bit-igual al default constitutivo del genoma (theta.struct_params[capa].e_ref, study06_v4.py:134-138) — la aplicacion es un no-op indistinguible con estos fixtures, aunque e_ref SI entra en la dinamica (rhs.py:101: db depende de e - e_ref).",
+      "donde": "src/study07/artifacts/composer.py:81-83",
+      "severidad": "MEDIO",
+      "evidencia": "Mutante (bucle vaciado): F5 8 passed, suite completa 41 passed. Verificado: default_parse == sellado_capsula bit-igual en las 2 capsulas f8 (p.ej. S2=0.20047955913515275). Kill-test demostrado: capsula en memoria con e_ref_values*2 => intacto aplica 2x sellado (True); mutado False. Contraste: M21 (valores INVERTIDOS) SI muere en gate4 => la trayectoria es sensible a e_ref cuando difiere.",
+      "parche": "tests/test_capsulas_f5.py: test nuevo: componer con cap modificada en memoria (arrays copiados, e_ref_values*2 — el composer no re-hashea e_ref) y assert spec.struct.e_ref == 2x sellado por capa."
+     },
+     {
+      "que": "M16 VIVO: la verificacion POST-COPIA entera (composer.py:113-125, espejo del oraculo :791-813) se puede eliminar y todo queda verde. El check SI tiene valor real: hoy es quien mata a M13 (RuntimeError interno antes del gate) y caza degradacion del buffer en runtime.",
+      "donde": "src/study07/artifacts/composer.py:113-125",
+      "severidad": "MEDIO",
+      "evidencia": "Mutante (bucle de verificacion vaciado): F5 8 passed, suite completa 41 passed. Inyeccion de falla (mock de HistoryBuffer con buffer.astype(float32) persistente): INTACTO 'RECHAZO: post-composicion: historia del nodo 0 difiere del quench'; MUTADO 'PASA SIN ERROR' con corrupcion silenciosa max|d|=9.526e-07. M13 verificado: muere por este check interno ('post-composicion: historia del nodo 0 difiere'), gate4 lo cazaria igual via buffer_post_restore.",
+      "parche": "tests/test_capsulas_f5.py: test de inyeccion: mock.patch.object(study07.engine.network, 'HistoryBuffer', subclase-float32) y assertRaisesRegex(RuntimeError, 'post-composici') sobre componer_red."
+     },
+     {
+      "que": "M19 VIVO: el check de consistencia history_head manifiesto vs array (study06_capsule.py:286-287) se puede eliminar y todo queda verde. Sin el, una capsula cuyo manifiesto MIENTE el head carga OK y la mentira viaja al recibo del film via el source opaco (procedencia envenenada; la fisica no se afecta porque el quench usa el head del array).",
+      "donde": "src/study07/compat/study06_capsule.py:286-287",
+      "severidad": "MEDIO",
+      "evidencia": "Mutante 'if False': F5 8 passed, suite completa 41 passed. Demostracion: man['source']['history_head']=7 (array trae 0) + specimen_id recomputado => INTACTO 'RECHAZO: history_head difiere entre manifiesto y state artifact'; MUTADO 'CARGA OK'.",
+      "parche": "tests/test_capsulas_f5.py: caso forjado en gate1: history_head=7 en source + specimen_id recomputado => assertRaisesRegex(RuntimeError, 'history_head difiere')."
+     },
+     {
+      "que": "M22 VIVO: quitar el sellado read-only de los arrays (study06_capsule.py:252-253 setflags) pasa todo. El contrato del lector declara 'arrays read-only' y nada lo pina: con el mutante, cualquier consumidor puede corromper in-place el dict sellado que la verificacion post-copia y una segunda composicion reutilizan.",
+      "donde": "src/study07/compat/study06_capsule.py:252-253",
+      "severidad": "BAJO",
+      "evidencia": "Mutante: F5 8 passed, suite completa 41 passed. Tras load: writeable=True y x[0]+=1.0 corrompe el sellado en silencio; intacto: ValueError 'assignment destination is read-only'.",
+      "parche": "tests/test_capsulas_f5.py gate1: assert not a.flags.writeable para cada array de cap['arrays']."
+     },
+     {
+      "que": "M24 VIVO: el rechazo de capas no transportables en genome_sha256 (study06_capsule.py:117-120) no tiene test. Guardia redundante parse_theta_v2 protege el camino del composer ('capa desconocida'), pero los usos directos de genome_sha256 (inventario, tooling) quedan sin proteccion.",
+      "donde": "src/study07/compat/study06_capsule.py:117-120",
+      "severidad": "BAJO",
+      "evidencia": "Mutante 'capas_malas = []': F5 8 passed, suite completa 41 passed. theta con modes[0].layer='S3': intacto 'RECHAZO: genoma con capas no transportables [S3]'; mutado 'ACEPTA sha256:c553fd7...'. parse_theta_v2 con S3 rechaza en ambos ('capa desconocida S3').",
+      "parche": "tests/test_capsulas_f5.py gate2 (tras :152): theta adulterado con layer='S3' => assertRaisesRegex(cap6.genome_sha256, 'no transportables')."
+     },
+     {
+      "que": "M14 y M17 VIVOS pero EQUIVALENTES (no son agujeros): M14 porque HistoryBuffer nace con head_idx=0 (delay.py:20) y gate4:182 asserta la propiedad; M17 porque Network SIEMPRE copia los estados a la entrada (network.py:32 'self.states=[s.copy() for s in states]') — sin el .copy() del composer no hay aliasing observable.",
+      "donde": "src/study07/artifacts/composer.py:78-80",
+      "severidad": "NOTA",
+      "evidencia": "Ambos: F5 8 passed y suite completa 41 passed. M17 verificado en runtime bajo el mutante: net.states[0].x IS arrays['x'] = False (Network ya copio), 3 steps OK, sin aliasing post-step. Las lineas del composer son cinturon-y-tiradores redundantes hoy; documentarlo, no exige kill-test.",
+      "parche": "Opcional: comentario en composer.py:78-80 y :111 declarando la redundancia intencional con network.py:32 y delay.py:20 (o dejar como esta)."
+     },
+     {
+      "que": "POSITIVO — 11/25 mutantes MUERTOS: los gates SI protegen specimen_id recomputado (M3->gate1), invariante de emision con hashes reparados (M4->gate1b), direccion del truncado y off-by-one del quench contra el ancla bit-exacta f8 (M5,M7->gate3), canonicalizacion del hash de genoma (M10->gate2), rechazo de _mem_force_scale (M11->gate2), pisado de historia (M13->check interno post-copia + gate4), check de genoma del composer (M15->gate7), prohibicion de extrapolar (M20->gate3), e_ref con valores CAMBIADOS via trayectoria 1500 ticks (M21->gate4), y el guard T!=0 en composicion mixta (M23->gate7, el cambio any->all muere).",
+      "donde": "tests/test_capsulas_f5.py:79-293",
+      "severidad": "NOTA",
+      "evidencia": "Driver c2: cada MUERTO con su gate asesino registrado (pytest -x -q -rf); p.ej. M5/M7/M20 -> test_gate3_quench_reproduce_al_oraculo, M21 -> test_gate4_composicion_conforme_al_oraculo. Corridas una por vez con restore + purga de __pycache__; arboles limpios verificados tras cada mutante y al cierre (study07 @ 3792ff6 y oraculo @ 39f8df6 con git status limpio).",
+      "parche": "Sin accion: es la mitad sana del tap. Mantener el ancla f8 bit-exacta como esta."
+     }
+    ]
+   },
+   {
+    "resumen": "DOUBLE TAP lente c3 (contrato vs codigo) sobre F5 candidata @ 3792ff6. LO QUE SI ESTA BIEN, verificado ejecutando: (1) la transcripcion del lector es fiel — cotejadas TODAS las citas linea por linea contra el oraculo (json_safe/canonical/stable_dumps/digest/specimen_id/validaciones/load/quench: mismo orden de checks, misma semantica; unica diferencia observable RuntimeError vs SpecimenCapsuleError, declarada); (2) los 9 sha256 de claves de source decodifican EXACTO al set del oraculo :570-574 (incluida la clave de nivel opaca) y los checks :588-593 (natural/temperature/node_count/node_index) estan todos; (3) el gate de palabra SI corre sobre compat/study06_capsule.py (enumerado en scope, mutante 'ola_level' MUERE); (4) la aplicacion de e_ref esta protegida por el ancla fisica: mutante x1.001 muere en gate4; (5) emission_scale=1/n_modes esta respaldado por PHYSICS_CONTRACT (poblacion v4 sellada con mean=0.1) y es fail-loud; (6) masas=1.0 del selector f8: MEDIDO ahora, 150/150 cierto; (7) checks del oraculo ausentes que NO importan en red recien construida: rollback, _ensure_natural_deterministic del receptor, re-hash post-restore. LOS AGUJEROS (patron F2/F3/F4 confirmado — la fisica bien, los gates con huecos): DOS ALTOS con mutante vivo ejecutado: (A) un film compuesto desde 2 capsulas REALES queda COMPLETE y catalogable con hashes_base_externa={} y SIN el recibo de composicion — el recorder valida solo PRESENCIA de claves y nada ata el recibo del composer al manifiesto (violacion directa de PROVENANCE_CONTRACT); (B) la rama FRESH del composer acepta genomas que el oraculo RECHAZA — theta con capa en modes pero ausente de memory.layer_order pasa parse+compone+integra 30 ticks con fisica silenciosamente distinta (n_z 4 vs 7), porque genome_sha256 de study07 omite validate_theta_internal(require_v2_state=True) y parse_theta_v2 tiene el hueco del hermano de §7.1; ademas la naturalidad NO se gatea en fresh (_mem_force_scale escondido pasa: genome_sha256 nunca se llama en la rama nacimiento). Para capsulas REALES ambos son inertes (el hash ata el theta al genoma sellado por el oraculo) — el riesgo vive exactamente en la MEZCLA capsula+fresh, la capacidad nueva de F5. MEDIOS: gate de palabra NO cubre artifacts/ (mutante 'ola_level' en composer.py sobrevive los 5 gates de arquitectura); inventario_v4.json sella un oracle_tag HARDCODEADO Y FALSO (el tag apunta a ca437b7, no al oracle_commit 39f8df6 medido — ningun tag apunta a HEAD); el recibo del composer pierde stationary_claim_exclusion_ticks/topology_quench/set_digest del receipt del oraculo; WORLDLINE_SCHEMA SI necesita enmienda F5 por 'composicion' (hoy es clave ad-hoc del caller, ni el schema ni el recorder la conocen). Nada BLOQUEA_F5: el claim nuclear (las 150 capsulas entran al motor nuevo, conformidad 0.000e+00) quedo verificado y en pie; los arreglos son pre-declaracion, como los A1-A10 de F4. Suite base 41 passed reproducida; copia de trabajo en scratchpad; ambos repos verificados limpios (git status) al cierre.",
+    "hallazgos": [
+     {
+      "que": "PROCEDENCIA NO EXIGIDA: un film compuesto desde capsulas reales se sella COMPLETE sin rastro de su origen. WorldlineRecorder valida solo la PRESENCIA de run_id/spec_tipo/hashes_base_externa (un dict VACIO pasa) y 'composicion' no es obligatoria — el recibo que componer_red devuelve no viaja al manifiesto salvo buena voluntad del caller (gate5 lo pasa a mano). Violacion directa de PROVENANCE_CONTRACT: 'TODA salida de corrida sella los hashes de su base externa (catalogo consumido, capsulas)'.",
+      "donde": "/Users/cagostino/code/doft-study07-worldline/src/study07/artifacts/recorder.py:68 (+composer.py:126-129)",
+      "severidad": "ALTO",
+      "evidencia": "e5_provenance.py: componer_red con las 2 capsulas f8 reales -> WorldlineRecorder(manifest={'run_id':'huerfano','spec_tipo':'M1','hashes_base_externa':{}}) -> run 100 ticks -> close(). Salida: film COMPLETE=True; hashes_base_externa sellado = {} (VACIO: paso); 'composicion' en manifiesto: False; claves capsula en manifiesto: [] — cero specimen_id/capsule_sha256 en el artefacto final.",
+      "parche": "composer.py:129 — adjuntar el recibo a la red (p.ej. net.composicion = recibo); recorder.py:68-74 — si la red trae composicion, EXIGIR manifest['composicion']==recibo y que hashes_base_externa contenga el capsule_sha256 de cada nodo-capsula (cruce contra por_nodo, fail-loud); rechazar hashes_base_externa vacio siempre. Gate nuevo: film desde componer_red sin recibo => excepcion."
+     },
+     {
+      "que": "La rama FRESH acepta genomas que el oraculo RECHAZA e integra fisica silenciosamente distinta: genome_sha256 de study07 omite validate_theta_internal(require_v2_state=True) (oraculo :100-104) y parse_theta_v2 no exige que toda capa presente en modes este en memory.layer_order (hueco hermano del defecto §7.1 ya corregido). Un theta con S2 en modes pero sin memoria S2 (layer_order/layers/W coherentes) pasa TODO study07, compone mezclado con una capsula real y corre — el oraculo lo rechaza como genoma ('memory.layer_order.missing.S2'). Para capsulas es inerte (el hash ata el theta al genoma validado al sellar); el mutante vive SOLO en la capacidad nueva de F5 (mezcla capsula+fresh) donde no hay manifiesto que lo contradiga.",
+      "donde": "/Users/cagostino/code/doft-study07-worldline/src/study07/compat/study06_v4.py:118 (+study06_capsule.py:107-121)",
+      "severidad": "ALTO",
+      "evidencia": "e3_genoma.py sobre theta real f8 mutado (S2 fuera de layer_order/layers, W 2x2): 'oraculo: RECHAZA (capsule requires a complete theta_internal_v2)' | 's07.genome: ACEPTA' | 's07.parse: ACEPTA'. e4_fresh.py: componer_red([capsula_real, theta_mutado_fresh]) compone y corre 30 ticks sin excepcion, finito=True, n_z del fresh=4 vs 7 del theta real — fisica distinta, silenciosa. Tambien confirmado: sin memory / sin modes / adaptive_couplings / struct sin e_ref los rechaza parse (ok), pero genome_sha256 solo los acepta.",
+      "parche": "study06_v4.py:118-121 — exigir ademas: toda capa de layers_present debe estar en mem_layer_order (RECHAZO si falta); study06_capsule.py:111 — agregar a genome_sha256 los checks de completitud v2 del oraculo (modes no vacio, memory y struct_params presentes con e_ref, adaptive_couplings ausente). Gate nuevo en test_capsulas_f5: el theta S2-sin-memoria debe morir en componer_red."
+     },
+     {
+      "que": "NATURALIDAD NO GATEADA EN FRESH: componer_red solo llama genome_sha256 (que trae el gate de _mem_force_scale y familia) en la rama capsula; un theta fresh con _mem_force_scale escondido en memory.layers.Q pasa parse_theta_v2 (ignora claves desconocidas) y compone mezclado con capsulas reales sin excepcion — el propio genome_sha256 de study07 lo rechazaria si se llamara. Ademas el recibo por_nodo de un nacimiento no lleva NINGUNA identidad del genoma (solo seed/idx/e_ref_policy): la constitucion fresh queda sin hash en el recibo (el film la cubre via spec_fingerprints del recorder, pero el recibo standalone es anonimo).",
+      "donde": "/Users/cagostino/code/doft-study07-worldline/src/study07/artifacts/composer.py:47",
+      "severidad": "MEDIO",
+      "evidencia": "e4_fresh.py: genome_sha256(theta_sucio) => RuntimeError 'genoma con overrides de laboratorio'; el MISMO theta como {'capsula': None} en componer_red junto a caps[0] real => compone y corre 30 ticks sin excepcion. recibo por_nodo[1] = {'target_node_index':1,'origen':'nacimiento','seed':7,'idx':1,'e_ref_policy':'receiver_initial_energy'} — sin genome_hash.",
+      "parche": "composer.py:47-51 — en la rama cap is None: calcular genoma=genome_sha256(theta) (aplica naturalidad+v2 del hallazgo anterior) y registrarlo en el origen: {'origen':'nacimiento', 'genome_hash': genoma, ...}. Gate: theta con _mem_force_scale como fresh debe morir."
+     },
+     {
+      "que": "GATE DE PALABRA con agujero de scope: OLA_SCOPE=('physics','engine','compat','instruments') EXCLUYE artifacts/ — precisamente donde vive composer.py, el modulo que maneja la procedencia 'source' OPACA (clausula 1). Un 'ola_level' insertado en composer.py sobrevive los 5 gates de TestArquitectura; el mismo string en compat muere. Hoy artifacts/ esta limpio (grep con el regex del gate: 0 matches), pero nada lo protege. Contra-verificado: compat/study06_capsule.py SI esta en el scope (14 archivos enumerados) y su mutante muere.",
+      "donde": "/Users/cagostino/code/doft-study07-worldline/tests/test_conformance_oracle.py:230",
+      "severidad": "MEDIO",
+      "evidencia": "Enumeracion del scope: 14 archivos, 'compat/study06_capsule.py en scope: True', 'artifacts/composer.py en scope: False'. Mutante 1 ('# ola_level' en compat/study06_capsule.py): test_niveles FAILED (gate protege). Mutante 2 (mismo string en artifacts/composer.py): pytest TestArquitectura => 5 passed (mutante VIVO). Ambos restaurados, git status limpio.",
+      "parche": "test_conformance_oracle.py:230 — OLA_SCOPE = ('physics','engine','compat','instruments','artifacts'). De paso borrar el regex muerto de la linea 244 (lo pisa la 245). Verificado que artifacts/ pasa limpio hoy: el cambio no rompe nada."
+     },
+     {
+      "que": "inventario_v4.json sella una CLAIM DE PROCEDENCIA NO MEDIDA Y FALSA: 'oracle_tag': 'study06-freeze-20260729' esta HARDCODEADO junto al oracle_commit medido (39f8df6), pero el tag apunta a ca437b7 (dos commits antes: el freeze §93-d; 39f8df6 es §93-f) y NINGUN tag apunta al HEAD leido. El dato queda mitigado porque blocks/catalogos van pinneados por sha256 de contenido medido, pero el campo tag miente tal como esta escrito — la clase exacta de defecto de la directiva 'descreer, medir solo el numero' y de la regla COA 'asumir numeros es asumir fisica'.",
+      "donde": "/Users/cagostino/code/doft-study07-worldline/tools/inventario_v4.py:101",
+      "severidad": "MEDIO",
+      "evidencia": "git -C <oraculo> rev-parse --short HEAD => 39f8df6; git tag --points-at HEAD => (vacio); git rev-parse study06-freeze-20260729^{commit} => ca437b7. inventario_v4.json base = {'oracle_commit':'39f8df6','oracle_dirty':false,'oracle_tag':'study06-freeze-20260729',...}.",
+      "parche": "inventario_v4.py:101 — medir el tag: tags=git tag --points-at HEAD (registrar lista, aunque sea vacia) o git describe --tags --exact-match con fallo declarado; regenerar inventario_v4.json + sidecar. Nota relacionada: gen_f6_from_oracle.py:111 hardcodea oracle_commit '39f8df6' (scope F3; hoy coincide, pero mismo patron)."
+     },
+     {
+      "que": "El recibo del composer pierde los campos de HIGIENE DE CLAIMS del receipt del oraculo: sin stationary_claim_exclusion_ticks (el oraculo lo fija = delay_steps del receptor cuando topology_quench, :1037), sin flag topology_quench (:939-942), sin capsule_set_digest/receipt_id/checks. Tras el quench los primeros target_delay ticks corren sobre historia empalmada truncada — nada en el film compuesto declara esa ventana de exclusion para claims estacionarios. Conectado: WORLDLINE_SCHEMA NO conoce 'composicion' (la enmienda F4 agrego por_nodo/spec_fingerprints; F5 no enmendo nada) — SI necesita enmienda antes de declarar F5.",
+      "donde": "/Users/cagostino/code/doft-study07-worldline/src/study07/artifacts/composer.py:126",
+      "severidad": "MEDIO",
+      "evidencia": "Cotejo directo composer.py:126-128 (recibo = schema/n_nodes/temperature/target_delay_steps/por_nodo) vs oraculo specimen_capsule.py:1025-1056 (receipt con capsule_set_digest, topology_quench, stationary_claim_exclusion_ticks=delay_steps, checks{...}, receipt_id). grep 'composicion' specs/WORLDLINE_SCHEMA.md => 0 matches; en gate5 'composicion' entra como clave libre del caller.",
+      "parche": "composer.py:126-128 — agregar al recibo: topology_quench (algun capsule.engine_contract.topology_hash != hash del receptor), stationary_claim_exclusion_ticks=target_delay si hay capsulas, y un set_digest sha256 canonico de por_nodo. specs/WORLDLINE_SCHEMA.md — enmienda F5: 'composicion' obligatoria en manifiesto de corrida compuesta, con su ventana de exclusion declarada."
+     },
+     {
+      "que": "Los tools no registran el commit/dirty de STUDY07 mismo (el codigo generador): inventario_v4.py y gen_f8_transport.py miden oracle_commit+oracle_dirty y entorno (numpy/python/machine) pero no su propia version — el recorder de films SI lo hace (_git_info, A2 de F3). Mitigado: fixture e inventario van commiteados, la version del generador se recupera del historial git del artefacto.",
+      "donde": "/Users/cagostino/code/doft-study07-worldline/tools/inventario_v4.py:97",
+      "severidad": "BAJO",
+      "evidencia": "inventario_v4.json claves top = [base, entorno, poblacion, schema, verificacion]; base solo trae oracle_commit/oracle_dirty. gen_f8 meta idem (oracle_commit/oracle_dirty/numpy/python/machine, sin study07_commit). recorder.py:25-35 en cambio mide git del repo propio para cada film.",
+      "parche": "inventario_v4.py:97 y gen_f8_transport.py:109 — agregar 'study07_commit'/'study07_dirty' con el mismo subprocess sobre STUDY07 (cwd=STUDY07); regenerar inventario+sidecar y f8+sidecar en la misma sesion pinned (o diferir a la proxima regeneracion declarandolo)."
+     },
+     {
+      "que": "Fallback silencioso en el cruce de catalogos: si el CSV no tuviera columna 'block_id', col_bid cae SIN AVISO a la primera columna alfabetica (sorted(catalogo[0])[0]) y el cruce de poblaciones compararia contra la columna equivocada. Hoy inofensivo: el header REAL empieza con block_id (verificado).",
+      "donde": "/Users/cagostino/code/doft-study07-worldline/tools/inventario_v4.py:47",
+      "severidad": "BAJO",
+      "evidencia": "head -1 dof_dna_catalog_by_block_id.csv => 'block_id,origin_run_id,run_id,...' (la columna existe; el fallback no se activa hoy). Lectura directa de la linea 47: col_bid = 'block_id' if 'block_id' in catalogo[0] else sorted(catalogo[0])[0].",
+      "parche": "inventario_v4.py:47 — reemplazar el fallback por fail-loud: if 'block_id' not in catalogo[0]: raise SystemExit('catalogo sin columna block_id')."
+     },
+     {
+      "que": "GATES QUE SI PROTEGEN (verificado ejecutando, para el registro honesto): (1) los 9 sha256 sellados de claves de source decodifican EXACTO al set del oraculo :570-574 incluida 'ola_level' como la opaca — la decision 'source opaco' NO pierde ninguna validacion de :588-593 (natural/temperature/count/index presentes en study06_capsule.py:199-205); (2) el orden de checks del load es identico al oraculo (9 pasos, misma secuencia; unica diferencia observable: RuntimeError vs SpecimenCapsuleError); (3) la aplicacion de e_ref esta cubierta por el ancla fisica: mutante e_ref x1.001 en composer muere en gate4 (el check post-restore explicito del oraculo es redundante aca); (4) emission_scale=1/n_modes hardcodeado esta respaldado por PHYSICS_CONTRACT ('poblacion v4 sellada con mean, scale 0.1') y es fail-loud (gate7 lo mata); (5) 'masas=1.0 en los 150' de gen_f8: MEDIDO ahora, cierto (150 bloques, unica masa 1.0; ademas solo afecta seleccion, no fisica); (6) checks del oraculo ausentes que NO importan en red recien construida: rollback (no hay blanco vivo que corromper), _ensure_natural_deterministic del receptor (Network de study07 no tiene conceptos de intervencion), verificacion de head post-copy (asignado incondicional dos lineas antes); (7) suite base 41 passed reproducida en la copia; ambos repos limpios al cierre (git status vacio en study07 y oraculo).",
+      "donde": "/Users/cagostino/code/doft-study07-worldline/src/study07/compat/study06_capsule.py:42",
+      "severidad": "NOTA",
+      "evidencia": "sha256 de los 9 nombres => 9/9 OK contra _SOURCE_CLAVES_SHA (incluida ola_level=a7282362...). Mutante e_ref x1.001: 'FAILED test_gate4_composicion_conforme_al_oraculo, 1 failed 7 passed'. Masas: '150 bloques; masas distintas observadas: [1.0]'. Suite: '41 passed in 67.55s'. git status --short vacio en /Users/cagostino/code/doft-study07-worldline y en el oraculo.",
+      "parche": "Sin parche — registro de coberturas confirmadas para el veredicto del tap."
+     }
+    ]
+   },
+   {
+    "resumen": "LENTE c4 (cobertura honesta) sobre F5 @ 3792ff6. Baseline 41 passed reproducido (numpy 2.3.4/x86_64 pinned). DOS SONDAS DESTRUCTIVAS VIVAS: (M1) borrar el ring inicial del nodo FRESH en la mezcla cápsula+fresh deja la suite 41/41 verde con física distinta (max|d|=7.44e-08 a 50 ticks, 1900× el TOL 3.86e-11) — la capacidad NUEVA insignia de F5 tiene su lado fresh sin ningún gate de contenido; (M2) genome_hash y capsule_sha256 FALSOS en una fila no-fixture del inventario + sidecar refrescado pasan 8/8 gates — en suite sólo 2/150 filas se verifican contra algo externo, el resto es sidecar autorreferencial (y F8_SHA_SELLADA=None rompe el patrón de constante sellada f1-f7). Huecos ejecutados sin mutar: camino canonical_ring_exact alcanzable (tau=2.0 ⇒ ceil(24999.999999999996)=25000) y corre SIN test ni referencia del oráculo (etiqueta sí fiel a specimen_capsule.py:969-974; modo exact_reconstruction/raw_ring_exact NO implementado y NO declarado fuera de alcance); film compuesto COMPLETE y observable SIN la clave composicion (el recibo es voluntario); el genoma del nodo fresh NO es citable (spec_fingerprint no está indexado en el inventario); preserve_serialized inalcanzable desde componer_red; delay-0 descarta 25000 pasos de biografía en silencio; cápsula duplicada legal sin declaración (espeja al oráculo); theta sin Q cae al fallback todos-los-modos de phase sin declaración en la vista; net.temperature mutable post-composición (guard sólo en la puerta) y la termalización futura de composiciones (F6/F7) sin declarar; passports: sólo passport_sha256 en el inventario, nunca parseados, ausentes de fixtures, sin declaración de alcance; y F5 (bitácora §8) NO tiene lista NO-CUBIERTO propia (F4 §7 sí la tuvo). LISTA NO-CUBIERTO CONSOLIDADA PARA LA BITÁCORA: 1) física del lado fresh en la mezcla (ring inicial + acople cápsula→fresh en la ventana del delay) — cero gates de contenido [mutante vivo]; 2) 148/150 filas del inventario sin verificación en suite + f8 sin constante sellada [sonda viva]; 3) camino canonical_ring_exact sin test/fixture; modo exact_reconstruction sin implementar ni declarar; 4) recibo de composición voluntario en el manifiesto; 5) genoma fresh no citable; 6) preserve_serialized inalcanzable en composición; 7) bordes: delay-0 (descarte total de biografía), clon de cápsula, theta sin Q; 8) termalización de composiciones sin declarar; 9) passports sin declaración de alcance; 10) sólo 2/150 cápsulas ejercitan el motor en suite (las 150 sólo a tiempo de herramienta). VERIFICADO AL CIERRE: copia restaurada (diff limpio vs repo), suite 41 passed de nuevo, git status limpio en ambos repos (study07 @ 3792ff6, oráculo @ 39f8df6, cero escrituras).",
+    "hallazgos": [
+     {
+      "que": "MUTANTE VIVO c4-M1: la mezcla cápsula+fresh no gatea el contenido del ring del nodo fresh — borrarlo (buffer[:,idx,:]=0 para origen nacimiento, post-quench) deja la suite 41/41 verde con física medible distinta. La verificación post-copia del composer (:113-125) salta los nodos fresh y el gate 5b sólo chequea etiquetas de origen, un cociente de energía y finitud a 50 ticks. La docstring promete 'la semántica fresh del oráculo' (relleno uniforme con la emisión inicial) pero nada la custodia en la mezcla — exactamente el patrón F2/F3/F4 (física bien, gate con agujero) en la capacidad NUEVA insignia de F5.",
+      "donde": "src/study07/artifacts/composer.py:111-125 (verificación post-copia sólo cápsulas) + tests/test_capsulas_f5.py:224-239 (gate5b sin chequeo de buffer)",
+      "severidad": "BLOQUEA_F5",
+      "evidencia": "Mutación en copia: tras net.history.head_idx=0 agregué 'if cons.get(\"capsula\") is None: net.history.buffer[:,idx,:]=0.0'; purga pycache; PYTHONPATH=src:tests pytest tests/ -q → '41 passed'. Trayectoria mixta 50 ticks mutante vs sano (misma semilla/edges de f8): max|sano−mutante| = 7.440e-08 (TOL físico 3.8579e-11) → mutante NO-equivalente con suite verde. Restore verificado por diff contra el repo.",
+      "parche": "composer.py:113-125: extender el lazo de verificación post-copia a los nodos fresh (columna == relleno uniforme de emitted_xv(spec, birth_state) — la fila que Network ya computó en xv_init) y test_capsulas_f5.py gate5b: assert np.array_equal del buffer del fresh contra el relleno esperado + assert de la columna cápsula en la mezcla."
+     },
+     {
+      "que": "SONDA VIVA c4-M2: en suite sólo 2/150 filas del inventario se verifican contra algo real — adulterar genome_hash Y capsule_sha256 de una fila no-fixture (block ea49ca8c…) y refrescar el sidecar pasa 8/8 gates. La integridad in-suite es autorreferencial (JSON↔sidecar regenerables juntos); la verificación de contenido (carga 150/150, genoma triple) vive SOLO en tools/inventario_v4.py a tiempo de generación. Agravante: F8_SHA_SELLADA=None — f8 no tiene constante sellada en el test (desviación del patrón f1-f7 que el propio F4-A6 instauró; f7 sí la tiene en test_instruments.py:50), declarada sólo en un comentario.",
+      "donde": "tests/test_capsulas_f5.py:40 (F8_SHA_SELLADA=None) y :243-264 (gate6 verifica sidecar+2 filas+cadena blocks)",
+      "severidad": "ALTO",
+      "evidencia": "En copia: fila no-fixture del JSON con genome_hash='sha256:'+'0'*64 y capsule_sha256='sha256:'+'f'*64, sidecar recomputado; pytest tests/test_capsulas_f5.py -q → '8 passed'. Grep confirma que la suite nunca ejecuta tools/inventario_v4.py (solo lee el JSON). La cadena blocks_sha256 inventario==f8==f7 SÍ está anclada (f7 constante sellada) pero pinea el catálogo de bloques, no los state.npz de las 148 cápsulas restantes. Restaurado y re-verificado.",
+      "parche": "test_capsulas_f5.py:40: sellar F8_SHA_SELLADA con el sha real (patrón f7) y agregar INVENTARIO_SHA_SELLADO como constante cotejada en gate6 junto al sidecar; documentar en bitácora que la verificación de contenido 150/150 es de tiempo-de-herramienta y que regenerar inventario/f8 exige re-sellar constantes a la vista del diff."
+     },
+     {
+      "que": "El camino canonical_ring_exact (delay receptor == source, tau=2.0) es ALCANZABLE y corre, pero no tiene NI test NI referencia del oráculo (f8 sólo ancla delay 250 = truncate). La aritmética 2.0/8e-5 = 24999.999999999996 → ceil = 25000 lo habilita exacto. La etiqueta es fiel a la lógica del oráculo (verifiqué specimen_capsule.py:969-974: mismo criterio en modo topology_quench) — lo que falta es el ancla y el gate. Además el tercer modo del oráculo (exact_reconstruction → raw_ring_exact) NO está implementado y no aparece en ninguna declaración de fuera-de-alcance.",
+      "donde": "src/study07/artifacts/composer.py:106-108",
+      "severidad": "MEDIO",
+      "evidencia": "grep canonical_ring_exact: 1 hit (composer.py:107), 0 en tests. Sonda: componer_red con tau=2.0 sobre las 2 cápsulas f8 → compone OK, target_delay=25000, history_operation=['canonical_ring_exact']×2, head=0, buffer==quench_column(25000) (y == ring sellado: estas cápsulas tienen head=0), 3 ticks finitos. tau=2.5 → RuntimeError 'extrapolar está prohibido' (esa mitad sí protege). Oráculo :969-974 leído: mismas etiquetas/criterio.",
+      "parche": "test_capsulas_f5.py: gate de borde que compone a tau=2.0, asserta la etiqueta + buffer==quench_column(source_delay) + head=0; declarar en bitácora §8 (NO-CUBIERTO F5) que exact_reconstruction/raw_ring_exact queda fuera de alcance de F5 y que el camino igual-delay no tiene fixture del oráculo (o generar un f8b con tau=2.0 desde el oráculo)."
+     },
+     {
+      "que": "El recibo de composición es VOLUNTARIO: un film de corrida compuesta se graba, cierra COMPLETE y es observable SIN la clave 'composicion' — el recorder no sabe que la red vino de cápsulas y CLAVES_OBLIGATORIAS no la incluye. La procedencia del transporte (capsule_sha256, specimen_id, history_operation) puede nacer ausente del artefacto; el cumplimiento de PROVENANCE depende de la disciplina del caller (gate5 la pasa a mano). Con recibo presente el manifiesto SÍ trae lo esencial de re-integración (topología/dt/seed/k_global auto-inyectados: verificado).",
+      "donde": "src/study07/artifacts/recorder.py:22 (CLAVES_OBLIGATORIAS) + src/study07/artifacts/composer.py:36 (la promesa 'el recibo va al manifiesto')",
+      "severidad": "MEDIO",
+      "evidencia": "Sonda ejecutada: componer_red todo-cápsulas → WorldlineRecorder con manifest={'run_id','spec_tipo','hashes_base_externa'} SIN 'composicion' → run 10 ticks, close(), api.load_run → complete=True, 'composicion' in manifest = False. Ningún gate lo exige.",
+      "parche": "Enmienda a WORLDLINE_SCHEMA: 'composicion' obligatoria cuando algún nodo es de origen cápsula; enforcement práctico: que componer_red anexe el recibo a un atributo del net (p.ej. net.composicion_recibo) y WorldlineRecorder lo vuelque/exija si existe; gate en test_capsulas_f5 que un film compuesto sin recibo sea rechazo."
+     },
+     {
+      "que": "El genoma del nodo FRESH no es CITABLE en el recibo ni en el manifiesto: la entrada 'nacimiento' sólo lleva {target_node_index, origen, seed, idx, e_ref_policy} — sin genome_hash ni block_id. El manifiesto trae spec_fingerprints[idx], pero esa huella es otro dominio de hash NO indexado en inventario_v4.json (que indexa genome_hash): una [M2] futura sólo puede identificar la constitución del fresh recomputando fingerprints sobre los 150 candidatos (búsqueda, no cita). Viola el espíritu de 'composicion: elementos EXPLÍCITOS por hash' del EXPERIMENT_CONTRACT.",
+      "donde": "src/study07/artifacts/composer.py:49-51",
+      "severidad": "MEDIO",
+      "evidencia": "Sonda: recibo de mezcla impreso — entrada fresh = {\"target_node_index\":1,\"origen\":\"nacimiento\",\"seed\":2026,\"idx\":1,\"e_ref_policy\":\"receiver_initial_energy\"}; claves de fila del inventario: sin spec_fingerprint (sí genome_hash); manifest por_nodo[1] sólo trae layout (capas_por_modo/n_modes/...), no identidad del genoma.",
+      "parche": "composer.py:49-51: agregar 'genome_hash': genome_sha256(theta) a la entrada de origen 'nacimiento' (la función ya está importada); opcional: que inventario_v4.py agregue spec_fingerprint por fila para cerrar el índice cruzado."
+     },
+     {
+      "que": "preserve_serialized es INALCANZABLE desde componer_red: la firma no tiene parámetro de política, :48 llama birth_state con el default y :51 sella 'receiver_initial_energy' hard-coded. El contrato §7.2 dice que la política 'se DECLARA por corrida'; en composición no es declarable. f6 usa receiver_initial_energy, así que preserve_serialized no se ejercita end-to-end en NINGÚN fixture (esto último ya declarado como resto F2/F3 en NO-CUBIERTO F4 #8 — lo nuevo es que F5 agregó una API que estructuralmente no puede declararla).",
+      "donde": "src/study07/artifacts/composer.py:32-34,48-51",
+      "severidad": "BAJO",
+      "evidencia": "inspect.signature(componer_red) = [constituyentes, edges, dt, seed, k_global, coupling_gamma_c, tau_field, temperature] — sin e_ref_policy; grep preserve_serialized en composer.py = 0 hits; f6 meta: e_ref_policy='receiver_initial_energy'. Los nodos cápsula sí preservan e_ref serializado (:81-83) — política heterogénea implícita por origen, registrada por nodo en el recibo.",
+      "parche": "componer_red(..., e_ref_policy='receiver_initial_energy') pasado a birth_state y volcado al recibo; mientras tanto, sumar a la lista NO-CUBIERTO de F5 que en composición la política fresh es fija."
+     },
+     {
+      "que": "Bordes del composer sin test ni declaración, todos ejecutados: (a) 1 nodo con cápsula y sin aristas → delay 0 → el ring de 25000 pasos se trunca a 1 fila (la biografía causal completa se DESCARTA en silencio, recibo dice truncate_recent_full_rate_exact), corre finito; (b) la MISMA cápsula en dos nodos → clon silenciosamente legal, estados idénticos, specimen_id repetido en el recibo sin marca (el oráculo :839-842 tampoco lo rechaza — espejo fiel, pero la doctrina de clones §47 de study06 pediría declararlo); (c) theta sin capa Q como fresh → compone, corre, y phase cae al fallback todos-los-modos (phase.py:51, transcripto del oráculo) SIN declaración en el manifiesto de la vista.",
+      "donde": "src/study07/artifacts/composer.py:98-110 (delay 0 y duplicados) + src/study07/instruments/phase.py:50-51 (fallback sin Q)",
+      "severidad": "BAJO",
+      "evidencia": "Sondas ejecutadas: (a) componer_red([cap], []) → target_delay=0, buffer (1,1,2), 5 ticks finitos; (b) misma cápsula en nodos 0 y 1 → compone OK, specimen_ids iguales onion-d2e14889…, estados idénticos, 5 ticks finitos; (c) theta sintético solo-S1 + cápsula → compone, film 40 ticks, phase.run OK con theta (41,2) sin ninguna marca del fallback. Oráculo :839-854 leído: rechaza índices de nodo duplicados, no cápsulas duplicadas.",
+      "parche": "Declarar los tres en la lista NO-CUBIERTO de F5; opcional código: warning/campo en el recibo cuando target_delay==0 con cápsula (descarte total de historia) y cuando specimen_id se repite; phase.py: registrar 'fallback_sin_Q': [nodos] en el manifiesto de la vista cuando qi.size==0."
+     },
+     {
+      "que": "T=0 forzado: el guard vive SOLO en la puerta del composer — net.temperature=0.05 asignado después de componer termaliza sin resistencia, con el noise_rng seedeado de cero ('el RNG que no viaja' arranca fresco en silencio). Y no hay declaración en ningún spec/bitácora de CÓMO F6/F7 deberán termalizar una composición (la vía checkpoint→continuación con T>0 existe y tampoco está guardada ni declarada).",
+      "donde": "src/study07/artifacts/composer.py:39-41 (único guard) + src/study07/engine/network.py:126-135 (kick FDT sin conciencia de origen)",
+      "severidad": "NOTA",
+      "evidencia": "Sonda: componer con cápsulas a T=0, luego net.temperature=0.05, net.step() → OK, |kick| max = 8.564e-03. Grep en specs/docs: la restricción T=0 está declarada ('el RNG no viaja') pero ninguna línea declara la vía futura de termalización de composiciones.",
+      "parche": "Una línea en bitácora §8 / PHYSICS_CONTRACT: 'termalizar una composición = corrida nueva o continuación declarada desde checkpoint (rng_state fresco declarado en el manifiesto); mutar temperature en caliente queda fuera de contrato'. No amerita guard de código (toda mutación de atributo es fuera de contrato en Python)."
+     },
+     {
+      "que": "Passports: F5 los ignora SIN declararlo. Sólo existen como passport_sha256 por fila del inventario (identidad, nunca contenido); gen_f8 copia sólo capsule.json+state.npz (los fixtures no traen passport.json); cero menciones en specs/docs/tests/src; y el EXPERIMENT_CONTRACT sí los nombra como parte de la cosecha del explorer ('COSECHA checkpoints+pasaportes'). Ni la bitácora §8 ni ningún NO-CUBIERTO los declara fuera de alcance de F5 — que además no tiene lista NO-CUBIERTO propia (F4 §7 sí consolidó la suya).",
+      "donde": "docs/bitacora/2026-07-30.md:102-143 (§8 sin NO-CUBIERTO ni passports) + tools/inventario_v4.py:79 (único uso)",
+      "severidad": "NOTA",
+      "evidencia": "grep -rn passport en specs/docs/src/tests = 0 hits (solo tools/inventario_v4.py:79 y el JSON); ls tests/fixtures/f8_capsulas/*/ = capsule.json + state.npz solamente; EXPERIMENT_CONTRACT.md:23 nombra 'checkpoints+pasaportes'; §8 de la bitácora carece de sección NO-CUBIERTO.",
+      "parche": "Agregar a la bitácora §8 la lista NO-CUBIERTO de F5 (la consolidada en el resumen de este tap) con la línea explícita: 'passports v4: identidad hasheada en el inventario, contenido fuera de alcance de F5 — entran con el explorer/pasaporte 3 caras'."
+     }
+    ]
+   }
+  ]
+ },
+ "workflowProgress": [
+  {
+   "type": "workflow_phase",
+   "index": 1,
+   "title": "Ataque"
+  },
+  {
+   "type": "workflow_phase",
+   "index": 2,
+   "title": "Sello"
+  },
+  {
+   "type": "workflow_agent",
+   "index": 1,
+   "label": "c1:test-del-test",
+   "phaseIndex": 1,
+   "phaseTitle": "Ataque",
+   "agentId": "ad94ac4dcb81f39bf",
+   "model": "claude-fable-5",
+   "state": "done",
+   "startedAt": 1785421651178,
+   "queuedAt": 1785421648043,
+   "attempt": 1,
+   "lastToolName": "StructuredOutput",
+   "lastToolSummary": "LENTE c1 (test-del-test) sobre F5 candidata @ 3792ff6: la F…",
+   "promptPreview": "DOUBLE TAP — regla de COA. REPO: /Users/cagostino/code/doft-study07-worldline @ 3792ff6 (pusheado).\nORACULO read-only: /Users/cagostino/code/doft-study06-fundamental-lock-dynamics (congelado, tag study06-freeze-20260729). NUNCA leer archivos R_f.\n\nQUE SE AUDITA — F5 candidata (gates 8/8 verdes, NO declarada): las 150 capsulas v4 de Study06\nentran al motor nuevo.\n- src/study07/compat/study06_capsul…",
+   "lastProgressAt": 1785423067108,
+   "tokens": 103413,
+   "toolCalls": 41,
+   "durationMs": 1415930,
+   "resultPreview": "{\"resumen\":\"LENTE c1 (test-del-test) sobre F5 candidata @ 3792ff6: la FISICA esta bien — re-medi la trayectoria COMPLETA (1500 ticks x 2 nodos, no solo los muestreados) y da max|d|=0.0 exacto con 0 ticks distintos de cero, entorno pinned activo (numpy 2.3.4/x86_64 == meta). Pero el patron F2/F3/F4 SE REPITE: los gates estan verdes sin proteger lo que declaran. Matanza: 14 mutantes, 11 VIVOS (8 en …"
+  },
+  {
+   "type": "workflow_agent",
+   "index": 2,
+   "label": "c2:mutacion",
+   "phaseIndex": 1,
+   "phaseTitle": "Ataque",
+   "agentId": "a0306e29255e7d21c",
+   "model": "claude-fable-5",
+   "state": "done",
+   "startedAt": 1785421650953,
+   "queuedAt": 1785421648043,
+   "attempt": 1,
+   "lastToolName": "StructuredOutput",
+   "lastToolSummary": "LENTE c2 (MUTACION) sobre study07 @ 3792ff6, copia en scrat…",
+   "promptPreview": "DOUBLE TAP — regla de COA. REPO: /Users/cagostino/code/doft-study07-worldline @ 3792ff6 (pusheado).\nORACULO read-only: /Users/cagostino/code/doft-study06-fundamental-lock-dynamics (congelado, tag study06-freeze-20260729). NUNCA leer archivos R_f.\n\nQUE SE AUDITA — F5 candidata (gates 8/8 verdes, NO declarada): las 150 capsulas v4 de Study06\nentran al motor nuevo.\n- src/study07/compat/study06_capsul…",
+   "lastProgressAt": 1785423364288,
+   "tokens": 135623,
+   "toolCalls": 61,
+   "durationMs": 1713335,
+   "resultPreview": "{\"resumen\":\"LENTE c2 (MUTACION) sobre study07 @ 3792ff6, copia en scratchpad, entorno PINNED (numpy 2.3.4/x86_64, gates en modo 0.0 exacto). 25 mutantes (los 18 obligatorios + M19-M25 propios), UNO por vez con restore+purga de __pycache__ entre corridas; cada VIVO re-confirmado contra la suite COMPLETA (41 tests). RESULTADO: 11 MUERTOS / 14 VIVOS, de los cuales 2 son mutantes EQUIVALENTES (M14: he…"
+  },
+  {
+   "type": "workflow_agent",
+   "index": 3,
+   "label": "c3:contrato-vs-codigo",
+   "phaseIndex": 1,
+   "phaseTitle": "Ataque",
+   "agentId": "a02ecd784b0df7c3c",
+   "model": "claude-fable-5",
+   "state": "done",
+   "startedAt": 1785421650633,
+   "queuedAt": 1785421648043,
+   "attempt": 1,
+   "lastToolName": "StructuredOutput",
+   "lastToolSummary": "DOUBLE TAP lente c3 (contrato vs codigo) sobre F5 candidata…",
+   "promptPreview": "DOUBLE TAP — regla de COA. REPO: /Users/cagostino/code/doft-study07-worldline @ 3792ff6 (pusheado).\nORACULO read-only: /Users/cagostino/code/doft-study06-fundamental-lock-dynamics (congelado, tag study06-freeze-20260729). NUNCA leer archivos R_f.\n\nQUE SE AUDITA — F5 candidata (gates 8/8 verdes, NO declarada): las 150 capsulas v4 de Study06\nentran al motor nuevo.\n- src/study07/compat/study06_capsul…",
+   "lastProgressAt": 1785422579220,
+   "tokens": 146411,
+   "toolCalls": 52,
+   "durationMs": 928587,
+   "resultPreview": "{\"resumen\":\"DOUBLE TAP lente c3 (contrato vs codigo) sobre F5 candidata @ 3792ff6. LO QUE SI ESTA BIEN, verificado ejecutando: (1) la transcripcion del lector es fiel — cotejadas TODAS las citas linea por linea contra el oraculo (json_safe/canonical/stable_dumps/digest/specimen_id/validaciones/load/quench: mismo orden de checks, misma semantica; unica diferencia observable RuntimeError vs Specimen…"
+  },
+  {
+   "type": "workflow_agent",
+   "index": 4,
+   "label": "c4:cobertura-honesta",
+   "phaseIndex": 1,
+   "phaseTitle": "Ataque",
+   "agentId": "a034cbe3e00732fd8",
+   "model": "claude-fable-5",
+   "state": "done",
+   "startedAt": 1785421650517,
+   "queuedAt": 1785421648043,
+   "attempt": 1,
+   "lastToolName": "StructuredOutput",
+   "lastToolSummary": "LENTE c4 (cobertura honesta) sobre F5 @ 3792ff6. Baseline 4…",
+   "promptPreview": "DOUBLE TAP — regla de COA. REPO: /Users/cagostino/code/doft-study07-worldline @ 3792ff6 (pusheado).\nORACULO read-only: /Users/cagostino/code/doft-study06-fundamental-lock-dynamics (congelado, tag study06-freeze-20260729). NUNCA leer archivos R_f.\n\nQUE SE AUDITA — F5 candidata (gates 8/8 verdes, NO declarada): las 150 capsulas v4 de Study06\nentran al motor nuevo.\n- src/study07/compat/study06_capsul…",
+   "lastProgressAt": 1785422616877,
+   "tokens": 129150,
+   "toolCalls": 44,
+   "durationMs": 966360,
+   "resultPreview": "{\"resumen\":\"LENTE c4 (cobertura honesta) sobre F5 @ 3792ff6. Baseline 41 passed reproducido (numpy 2.3.4/x86_64 pinned). DOS SONDAS DESTRUCTIVAS VIVAS: (M1) borrar el ring inicial del nodo FRESH en la mezcla cápsula+fresh deja la suite 41/41 verde con física distinta (max|d|=7.44e-08 a 50 ticks, 1900× el TOL 3.86e-11) — la capacidad NUEVA insignia de F5 tiene su lado fresh sin ningún gate de conte…"
+  },
+  {
+   "type": "workflow_agent",
+   "index": 5,
+   "label": "juez:sello",
+   "phaseIndex": 2,
+   "phaseTitle": "Sello",
+   "agentId": "a612642d688b6c329",
+   "model": "claude-fable-5",
+   "state": "done",
+   "startedAt": 1785423368038,
+   "queuedAt": 1785423366029,
+   "attempt": 1,
+   "lastToolName": "Bash",
+   "lastToolSummary": "stat -f '%Sm %N' /Users/cagostino/code/doft-study06-fundame…",
+   "promptPreview": "DOUBLE TAP — regla de COA. REPO: /Users/cagostino/code/doft-study07-worldline @ 3792ff6 (pusheado).\nORACULO read-only: /Users/cagostino/code/doft-study06-fundamental-lock-dynamics (congelado, tag study06-freeze-20260729). NUNCA leer archivos R_f.\n\nQUE SE AUDITA — F5 candidata (gates 8/8 verdes, NO declarada): las 150 capsulas v4 de Study06\nentran al motor nuevo.\n- src/study07/compat/study06_capsul…",
+   "lastProgressAt": 1785424407012,
+   "tokens": 107534,
+   "toolCalls": 32,
+   "durationMs": 1038974,
+   "resultPreview": "Verification complete. All work ran in the sandbox copy; both real repos verified clean. Final verdict follows.\n\n# DOUBLE TAP F5 — VEREDICTO DEL JUEZ\n\nCandidata @ 3792ff6 · entorno pinned verificado (numpy 2.3.4 / x86_64) · baseline reproducido: 41 passed · todo el trabajo en copia `scratchpad/judge_f5/repo`.\n\n## 1. Veredicto único: **F5 PASADA CON ARREGLOS — NO DECLARAR todavía**\n\nLa FÍSICA del t…"
+  }
+ ],
+ "totalTokens": 622131,
+ "totalToolCalls": 230
+}
