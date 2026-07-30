@@ -1,0 +1,138 @@
+{
+  "block_id": "92466fe3a8cf6cc3c0e4d778b7ba4256c2593913",
+  "engine_contract": {
+    "delay_steps": 25000,
+    "dt": 8e-05,
+    "emission_scale": 0.1,
+    "engine_params": {
+      "T_ticks": 0,
+      "W": 1,
+      "coupling_damp_ratio": 0.0,
+      "dt": 8e-05,
+      "e_ref_policy": "preserve_serialized",
+      "emission_norm": "mean",
+      "integration_clock_policy": "require_configured_dt",
+      "kappa_global": 0.0,
+      "tau_field": 2.0,
+      "temperature": 0.0
+    },
+    "gamma_c": 0.0,
+    "k_global": 0.0,
+    "topology_hash": "sha256:7f575b8a18510498da3da6023cde58ea521e8a7b95fb81bbcd2393e884a08931"
+  },
+  "genome_hash": "sha256:ad885f7ded7a6ebf2c850fb369b4cc6c724f2f0bbc3053fc7c6617c3f5fd01e0",
+  "lineage": {
+    "code_hash": "ff9b7fdef14ff2d0673d0cd724d50a1595226ae150e95d5846e83fc95eb638be",
+    "config_hash": "eac04c6c636fecbf80adcc8084804a9590b143e03a900da9e90d0abfa2443ff4",
+    "engine_code_fingerprint": {
+      "components": {
+        "analysis": {
+          "path": "paper5/ola1/analysis.py",
+          "sha256": "sha256:0df10586a59579203ec170fd341377cca729c8d75c8e34c34014181c3ea1ef9f"
+        },
+        "configuration": {
+          "path": "paper5/ola1/config.py",
+          "sha256": "sha256:e7fcf49a7457f1068e59fef3250760c5b00b9716827238714400e75c279ca186"
+        },
+        "couplings": {
+          "path": "paper5/ola1/couplings.py",
+          "sha256": "sha256:f43667e0964a278cf55b08818ebe7742a56d27af3763fe122cef255dc3961377"
+        },
+        "dynamics": {
+          "path": "paper5/ola1/simulation.py",
+          "sha256": "sha256:c19ff3e206a89966362bba0603e4f7ddc01e666bc1170a84fce2a3a6a1ff66bd"
+        },
+        "families": {
+          "path": "paper5/ola1/families.py",
+          "sha256": "sha256:ac64f622b8e759cdc04a228080128c398c5ee2c6541f56192af43454a0cc3f59"
+        },
+        "generation": {
+          "path": "paper5/ola1/sweep.py",
+          "sha256": "sha256:eabe412ae72c3b0bf7cd2be020ecc202007dda3570c77eec9650e1099930fb69"
+        },
+        "layers": {
+          "path": "paper5/ola1/layers.py",
+          "sha256": "sha256:a680faca3034efe7ed904e292ac4ff975b0e3d93b74add93e19d2a273370a5ec"
+        },
+        "orchestration": {
+          "path": "paper5/ola1/run_sweep.py",
+          "sha256": "sha256:ff9b7fdef14ff2d0673d0cd724d50a1595226ae150e95d5846e83fc95eb638be"
+        },
+        "schema_validation": {
+          "path": "paper5/schema_validation.py",
+          "sha256": "sha256:852fc35a89f7639f26c66cd6d1b38f9071d8c1c39f00032dfa0f10f463897e68"
+        },
+        "transport_capture": {
+          "path": "paper5/olar/specimen_capsule.py",
+          "sha256": "sha256:7f2094a1809f5bdd2ec688ada1155613096b27c05fbd07d069835c0382f61380"
+        }
+      },
+      "schema_version": "ola1_engine_code_fingerprint_v1",
+      "sha256": "sha256:e094c6ba3fdae9f565fba5430ee16ae6871fe94ca3a47535cfe0671fda9a99fa"
+    },
+    "inputs_hash": "47d692fd54665a52c5bf67cbe93af6b205d0607bc451f86cfcda81a6f0911d58",
+    "reference_population": {
+      "constitutive_match": true,
+      "path": "/Users/cagostino/code/doft-study06-fundamental-lock-dynamics/data/config/ola1v4_etapa0/bundle_full/inputs/ola1_reference_runs_full.jsonl",
+      "row_count": 150,
+      "schema_version": "ola1_reference_population_v1",
+      "sha256": "sha256:4e067ecbc2f045f15f213839f6eadda2ea5cfe9eab321e86a21abc49882dea4d",
+      "source_block_id": "2a4b7c703e468de0aaa1f00b3d154fc813c6b01f",
+      "source_genome_sha256": "sha256:ad885f7ded7a6ebf2c850fb369b4cc6c724f2f0bbc3053fc7c6617c3f5fd01e0",
+      "source_run_id": "14",
+      "source_seed_u32": 116768708
+    },
+    "run_idx": 14,
+    "run_session_id": "3c3a358bfcb447f6b375ab732b9744aa",
+    "seed": 116768708
+  },
+  "schema_version": "onion_specimen_capsule_v1",
+  "source": {
+    "harvest_semantics": "post_step_final",
+    "harvest_tick": 4999999,
+    "history_head": 0,
+    "integration_clock": {
+      "actual_horizon": 400.00000000000006,
+      "cap_applied": false,
+      "configured_horizon": 400.00000000000006,
+      "dt_used": 8e-05,
+      "omega_max": 104.01189127876543,
+      "policy": "require_configured_dt",
+      "requested_dt": 8e-05,
+      "schema_version": "ola1_integration_clock_v1",
+      "stability_limit": 0.00048071426627551155,
+      "total_steps": 5000000
+    },
+    "natural_unintervened": true,
+    "ola_level": 1,
+    "producer_engine": "paper5.ola1.simulation",
+    "simulation_contract": {
+      "clamp_tanh_arg": 5.0,
+      "eps_amp": 0.1,
+      "eps_k": 0.1,
+      "eps_omega": 0.1,
+      "eps_tau": 0.1,
+      "temperature": 0.0
+    },
+    "source_node_count": 1,
+    "source_node_index": 0,
+    "source_run_id": "3c3a358bfcb447f6b375ab732b9744aa:14",
+    "temperature": 0.0
+  },
+  "specimen_id": "onion-7cd9bc049d06946846f37848",
+  "state_artifact": {
+    "content_sha256": "sha256:95df54500511c513dff87764efd18a220951c8ed9ed039ac94e20effa757bb93",
+    "fields": [
+      "x",
+      "v",
+      "z",
+      "b",
+      "e",
+      "e_ref",
+      "history_column",
+      "history_head"
+    ],
+    "path": "state.npz",
+    "sha256": "sha256:bc25274694b5c4cfb5d5ae1374a127a6872a87f28ce6644717d84fad2d099e93"
+  }
+}
