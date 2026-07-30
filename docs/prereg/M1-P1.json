@@ -1,0 +1,72 @@
+{
+ "prereg": "M1-P1",
+ "titulo": "El fuego importado y el lock del par, medidos como vistas",
+ "spec_tipo": "M1",
+ "fecha": "2026-07-30",
+ "porque": "Primera prueba FISICA end-to-end de Study07 sobre hardware real: ejercita el pipeline completo validado en F1-F6 (inventario -> capsulas -> composicion concurrente -> film -> checkpoints -> vistas offline -> archivado externo) y produce los primeros numeros fisicos propios del programa. Pregunta [M1]: que hace el fuego importado (E mecanica ~1.75e4 sellada en la capsula del ignitor) al entrar a un par acoplado con un companero frio, y como se compara la formacion de lock del par transported contra su control apareado fresh (mismos genomas, nacimiento termico). El microscopio con porque declarado; el numero es el veredicto.",
+ "constituyentes": {
+  "ignitor": {
+   "block_id": "1bc9dcccf3bd7b83b9c0d10e3be64222215d90e6",
+   "e_mecanica_capsula": 17538.95237422262,
+   "capsule_json_sha256": "2e4aad25bcaa774e1f078dfc6ee99206641200d1b102798ae3832b2a044809bf",
+   "state_npz_sha256": "e10db107a00765b4e1eb90e925fccb0c4081c59147389d43fb278feacf7db820"
+  },
+  "companero": {
+   "block_id": "92466fe3a8cf6cc3c0e4d778b7ba4256c2593913",
+   "e_mecanica_capsula": 1.6860381237327366e-05,
+   "capsule_json_sha256": "7ac42131315466478fe22e557a154a1abc08e1998e84fef0aab4c08e9e63ab59",
+   "state_npz_sha256": "bc25274694b5c4cfb5d5ae1374a127a6872a87f28ce6644717d84fad2d099e93"
+  },
+  "fuente_capsulas": "tests/fixtures/f8_capsulas (verbatim de la base v4, hashes arriba)",
+  "thetas": "embebidos en f8 (verificados contra genome_hash por el composer)"
+ },
+ "hashes_base_externa_declarados": {
+  "blocks_canonical_sha256": "adf8d436ef5da468a8ecaecf4c170e983b36f1599e439f8e23502b9801a5da9a",
+  "inventario_v4_sha256": "1fb29af2e58475c2175dd5d8bb7ad4090fb386cbf21bec01f653dc04b4e28a67"
+ },
+ "topologia": {
+  "descripcion": "PAR (la topologia lock-amigable de la campana OLA2-C1 de Study06)",
+  "edges": [{"i": 0, "j": 1, "w_k": 1.0, "w_gamma": 1.0, "tau": 0.02}],
+  "delay_steps_receptor": 250
+ },
+ "engine_params": {
+  "dt": 8e-05,
+  "temperature": 0.0,
+  "kappa_global": 0.7,
+  "coupling_gamma_c": 0.15,
+  "emission_norm": "mean",
+  "tau_field": 0.0,
+  "nota": "los mismos de f8 (el punto anclado bit-exacto al oraculo en gate4 F5)"
+ },
+ "corridas": {
+  "transported": "composicion TODO-capsulas (topology_quench): ignitor nodo 0 + companero nodo 1, ambos con biografia completa (estado + e_ref + ring re-basado)",
+  "fresh": "mismos genomas, ambos nodos NACIMIENTO (x0/v0 ~ N(0,1e-3) del rng derivado por nodo, e_ref_policy receiver_initial_energy) — el control apareado de §53"
+ },
+ "horizonte": {"ticks": 250000, "dt": 8e-05, "t_final_ut": 20.0,
+              "nota": "20 u.t. cubre con margen la escala t~18 en que OLA2-C1 vio a la red apagar el fuego (config DISTINTA: referencia cualitativa, no comparable)"},
+ "checkpoint_every": 50000,
+ "seed": 2026,
+ "n_por_brazo": 1,
+ "perfil": "conformidad (float64 completo, sin decimacion)",
+ "metricas_definidas_antes_de_correr": {
+  "E_total_nodo(t)": "suma sobre capas de e_capa[t, nodo, :] (vista layer_energy, stride 1)",
+  "fuego_t_half": "primer tick con E_total_nodo0 <= 0.5*E_total_nodo0[0] (primera cruzada simple, declarado; solo brazo transported)",
+  "fuego_t_dec10": "primer tick con E_total_nodo0 <= 0.1*E_total_nodo0[0]",
+  "transferencia_E_max_n1": "max_t E_total_nodo1(t) + tick del maximo (cuanto del fuego aparece en el companero)",
+  "R(t)": "vista phase_lock stride 1; R_final = media de R en el ultimo 10% (25000 ticks); t_lock = primer tick k con R[k:k+1000] >= 0.99 SOSTENIDO",
+  "delta_R_final": "R_final_transported - R_final_fresh",
+  "omega_valid_frac": "fraccion de ticks con omega valido (r_min 0.08)"
+ },
+ "exclusiones_y_honestidad": {
+  "stationary_claim_exclusion_ticks": 250,
+  "nota_1": "ningun claim ESTACIONARIO dentro de la ventana del delay post-quench (recibo de composicion); las metricas de fuego son TRANSITORIOS y se reportan como tales",
+  "nota_2": "las referencias de Study06 (§53 fuego importado / §59-§61 la red apaga el fuego t~18, delta R -0.02..-0.05) son CONTEXTO CUALITATIVO de otra config (topologias, horizontes y protocolos distintos): CERO claims de reproduccion cuantitativa",
+  "nota_3": "n=1 por brazo: P1 es el primer numero, no un censo — sin barras de error, sin generalizacion a la poblacion; el census [M2] llega con F7",
+  "nota_4": "sin umbrales de exito/fracaso pre-declarados: [M1] microscopio — el numero es el veredicto (regla COA: descreer, medir solo el numero)"
+ },
+ "archivado": {
+  "destino": "/Volumes/ExternalDisk/doft-study07-worldline/corridas/m1p1",
+  "verificacion": "sha256 por archivo copiado contra el original ANTES de declarar archivado; NADA se borra localmente (regla COA: cero operaciones destructivas sin charla previa)"
+ },
+ "protocolo": "commit de este prereg + runner ANTES de correr; un nohup para el batch entero; PYTHONPATH=src; resultado a RESUMEN.json + bitacora §12 con veredicto honesto"
+}
