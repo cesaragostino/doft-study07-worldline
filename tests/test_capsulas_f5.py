@@ -119,8 +119,12 @@ class TestCapsulasF5(unittest.TestCase):
             ("esquema_source", lambda m: m["source"].pop("harvest_tick"), "esquema v1"),
             ("head_miente", lambda m: m["source"].update(history_head=7),
              "history_head difiere"),
+            # regex al MENSAJE EXACTO de la rama: con el check borrado, la rama vecina
+            # (index fuera de range(0)) también nombra source_node_count y enmascaraba
             ("node_count", lambda m: m["source"].update(source_node_count=0),
-             "source_node_count"),
+             "source_node_count debe ser positivo"),
+            ("node_index", lambda m: m["source"].update(source_node_index=99),
+             "source_node_index inconsistente"),
             ("dt_invalido", lambda m: m["engine_contract"].update(dt=-1.0),
              "dt o delay_steps"),
             ("fields_contrato", lambda m: m["state_artifact"]["fields"].append("zz"),
