@@ -102,10 +102,13 @@ def main():
         for j, o in enumerate(net.oscillators):
             estados[j][tick] = flat(o)
 
-    oracle_commit = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=ORACLE,
-                                   capture_output=True, text=True).stdout.strip()
-    oracle_dirty = bool(subprocess.run(["git", "status", "--porcelain"], cwd=ORACLE,
-                                       capture_output=True, text=True).stdout.strip())
+    def _git(repo, *args):
+        return subprocess.run(["git", *args], cwd=repo,
+                              capture_output=True, text=True).stdout.strip()
+    oracle_commit = _git(ORACLE, "rev-parse", "--short", "HEAD")
+    oracle_dirty = bool(_git(ORACLE, "status", "--porcelain"))
+    study07_commit = _git(STUDY07, "rev-parse", "--short", "HEAD")
+    study07_dirty = bool(_git(STUDY07, "status", "--porcelain"))
     meta = {
         "schema": "study07_transporte_referencia_v1",
         "fuente": ("oraculo: DifferentialNetwork + restore_specimen_capsules("
@@ -124,6 +127,7 @@ def main():
         "blocks_sha256": hashlib.sha256(
             (BASE / "simple_blocks_canonical.json").read_bytes()).hexdigest(),
         "oracle_commit": oracle_commit, "oracle_dirty": oracle_dirty,
+        "study07_commit": study07_commit, "study07_dirty": study07_dirty,
         "numpy": np.__version__, "python": platform.python_version(),
         "machine": platform.machine(),
         "nota": ("fila 0 = estado POST-restore PRE-step; buffer_post_restore = ring del "

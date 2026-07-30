@@ -106,18 +106,35 @@ def _stable_dumps(obj: Any, float_fmt: str = ".12g") -> str:
 
 def genome_sha256(theta_internal: Mapping[str, Any]) -> str:
     """Huella del genoma constitutivo [oráculo :99-118]. Validación previa: schema v2, capas
-    Q/S1/S2 solamente, y NATURALIDAD del genoma — un theta con overrides de laboratorio
-    (_mem_force_scale y familia) no es un espécimen natural y se RECHAZA acá mismo."""
+    Q/S1/S2 solamente, NATURALIDAD del genoma — un theta con overrides de laboratorio
+    (_mem_force_scale y familia) no es un espécimen natural y se RECHAZA acá mismo — y
+    COMPLETITUD v2 (paridad con validate_theta_internal(require_v2_state=True) del oráculo
+    :100-104, double tap F5 A4): sin ella, study07 aceptaba y componía genomas que el oráculo
+    rechaza (S2 en modes fuera de memory.layer_order ⇒ física silenciosamente distinta)."""
     if theta_internal.get("schema_version") != "theta_internal_v2":
         raise RuntimeError("cápsula: el genoma debe ser theta_internal_v2 (legacy: RECHAZO)")
     malas = sorted(k for k in CLAVES_LABORATORIO if _contiene_clave(theta_internal, k))
     if malas:
         raise RuntimeError(f"genoma con overrides de laboratorio {malas}: no es un espécimen "
                            "natural (gate de naturalidad heredado del oráculo :294-309)")
-    capas_malas = sorted({str(m.get("layer")) for m in theta_internal.get("modes") or []
+    modos = theta_internal.get("modes") or []
+    capas_malas = sorted({str(m.get("layer")) for m in modos
                           if isinstance(m, Mapping) and m.get("layer") not in {"Q", "S1", "S2"}})
     if capas_malas:
         raise RuntimeError(f"genoma con capas no transportables {capas_malas}")
+    if not modos:
+        raise RuntimeError("genoma v2 incompleto: sin modos")
+    memoria = theta_internal.get("memory")
+    struct = theta_internal.get("struct_params")
+    if not (isinstance(memoria, dict) and memoria and isinstance(struct, dict) and struct):
+        raise RuntimeError("genoma v2 incompleto: sin memoria o struct_params serializados "
+                           "(el oráculo lo RECHAZA: require_v2_state)")
+    orden = {str(n) for n in (memoria.get("layer_order") or [])}
+    fuera = sorted({str(m.get("layer")) for m in modos if isinstance(m, Mapping)} - orden)
+    if fuera:
+        raise RuntimeError(f"genoma v2 incompleto: capas {fuera} en modes FUERA de "
+                           "memory.layer_order — el oráculo lo RECHAZA "
+                           "(validate_theta_internal; double tap F5 A4)")
     return f"sha256:{_hash_text(_canonical_json(theta_internal))}"
 
 

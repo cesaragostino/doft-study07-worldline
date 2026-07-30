@@ -74,6 +74,14 @@ si es hija · estado de finalización.
 de los chunks MÁS el manifiesto que los instrumentos leen. NOTA v1: la ruta de vistas usa el
 hash truncado `[:16]` (declarado; colisión accidental implausible en catálogos de este tamaño).
 
+**Enmienda F5 (composición — double tap A5/A9):** cuando la red del film nació de
+`componer_red`, el manifiesto DEBE llevar la clave `composicion` con el recibo EXACTO
+(schema `study07_composicion_v1`: origen por nodo cápsula/nacimiento con sus huellas,
+`topology_quench`, `stationary_claim_exclusion_ticks` = delay del receptor — ningún claim
+estacionario vale dentro de esa ventana —, `set_digest`), y `hashes_base_externa` DEBE citar
+el `capsule_sha256` de cada nodo-cápsula. El recorder lo EXIGE (el recibo viaja adherido a la
+red): un film compuesto sin su procedencia no se graba.
+
 ## Reglas de integridad
 
 1. Chunks con hash individual (escritos tmp+rename: jamás un chunk a medias); `COMPLETE` = hash del conjunto + hash del manifiesto (adulterar el manifiesto post-cierre = rechazo). COMPLETE prueba CIERRE ÍNTEGRO, no autenticidad: el sha_total lo pinea el catálogo/manifiesto EXTERNO (quien tenga el hash detecta cualquier reemplazo coherente). Una interrupción deja chunks

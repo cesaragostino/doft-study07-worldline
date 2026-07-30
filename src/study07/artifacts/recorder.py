@@ -72,6 +72,23 @@ class WorldlineRecorder:
                              "(PROVENANCE_CONTRACT; double tap F3 A2)")
         if manifest["spec_tipo"] not in ("M1", "M2"):
             raise ValueError(f"spec_tipo={manifest['spec_tipo']!r}: debe ser M1 o M2")
+        # PROCEDENCIA EXIGIDA (double tap F5 A5): una red COMPUESTA lleva su recibo adherido;
+        # el film debe declararlo EXACTO y citar el capsule_sha256 de cada nodo-cápsula en
+        # hashes_base_externa — sin eso, el film compuesto se sellaba COMPLETE y huérfano.
+        recibo = getattr(net, "composicion_recibo", None)
+        if recibo is not None:
+            if manifest.get("composicion") != recibo:
+                raise ValueError("la red viene de una COMPOSICIÓN: el manifiesto debe llevar "
+                                 "el recibo exacto en 'composicion' "
+                                 "(PROVENANCE_CONTRACT / double tap F5 A5)")
+            declarados = {str(v) for v in manifest["hashes_base_externa"].values()}
+            faltan = [o["target_node_index"] for o in recibo["por_nodo"]
+                      if o["origen"] == "capsula"
+                      and o["capsule_sha256"] not in declarados]
+            if faltan:
+                raise ValueError(f"hashes_base_externa sin el capsule_sha256 de los "
+                                 f"nodos-cápsula {faltan}: un film compuesto sin sus "
+                                 "cápsulas citadas nace huérfano (double tap F5 A5)")
         import platform
         manifest = dict(manifest)
         manifest.update({

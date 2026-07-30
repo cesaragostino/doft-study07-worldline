@@ -44,8 +44,10 @@ def main():
     blocks = {b["block_id"]: b for b in (raw["blocks"] if "blocks" in raw else raw)}
     with open(BASE / "dof_dna_catalog_by_block_id.csv") as f:
         catalogo = list(csv.DictReader(f))
-    col_bid = "block_id" if "block_id" in catalogo[0] else sorted(catalogo[0])[0]
-    bids_catalogo = {row[col_bid] for row in catalogo}
+    if "block_id" not in catalogo[0]:
+        raise SystemExit("catálogo sin columna block_id: el cruce no puede adivinar la "
+                         "columna (double tap F5 — el fallback silencioso era mentira)")
+    bids_catalogo = {row["block_id"] for row in catalogo}
     bids_runs = set()
     with open(BASE / "runs_full.jsonl") as f:
         for linea in f:
@@ -90,15 +92,21 @@ def main():
     assert set(bids_caps) == set(blocks) == bids_catalogo == bids_runs, (
         "cruce de poblaciones FALLA: capsulas/blocks/catalogo/runs no coinciden")
 
-    oracle_commit = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=ORACLE,
-                                   capture_output=True, text=True).stdout.strip()
-    oracle_dirty = bool(subprocess.run(["git", "status", "--porcelain"], cwd=ORACLE,
-                                       capture_output=True, text=True).stdout.strip())
+    def _git(repo, *args):
+        return subprocess.run(["git", *args], cwd=repo,
+                              capture_output=True, text=True).stdout.strip()
+    oracle_commit = _git(ORACLE, "rev-parse", "--short", "HEAD")
+    oracle_dirty = bool(_git(ORACLE, "status", "--porcelain"))
+    # el tag se MIDE, no se asume («asumir números es asumir física» — double tap F5 A8:
+    # el tag del freeze apunta a un ancestro del HEAD, no al HEAD)
+    tags_head = [t for t in _git(ORACLE, "tag", "--points-at", "HEAD").splitlines() if t]
     inventario = {
         "schema": "study07_inventario_v4_v1",
         "base": {"ruta": "data/processed/ola1_v4_c1/ola1 (repo congelado del oraculo)",
                  "oracle_commit": oracle_commit, "oracle_dirty": oracle_dirty,
-                 "oracle_tag": "study06-freeze-20260729",
+                 "oracle_tags_en_head": tags_head,
+                 "study07_commit": _git(STUDY07, "rev-parse", "--short", "HEAD"),
+                 "study07_dirty": bool(_git(STUDY07, "status", "--porcelain")),
                  "blocks_sha256": sha(BASE / "simple_blocks_canonical.json"),
                  "catalogo_by_block_sha256": sha(BASE / "dof_dna_catalog_by_block_id.csv"),
                  "catalogo_sha256": sha(BASE / "dof_dna_catalog.csv"),

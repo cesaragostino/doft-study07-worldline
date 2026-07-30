@@ -227,7 +227,9 @@ class TestArquitectura(unittest.TestCase):
     # compat/ EXCLUIDO del gate de IO POR ESCRITO: su trabajo es leer disco (lector explícito).
     # compat/ INCLUIDO en el gate de "ola" (es parte de src/study07).
     IO_SCOPE = ("physics", "engine")
-    OLA_SCOPE = ("physics", "engine", "compat", "instruments")
+    # artifacts/ INCLUIDO (double tap F5 A7): ahí vive el composer que maneja la
+    # procedencia opaca — justo donde un literal de nivel dolería más.
+    OLA_SCOPE = ("physics", "engine", "compat", "instruments", "artifacts")
     IMPORTS_PROHIBIDOS = {"matplotlib", "pandas", "h5py", "PIL", "paper5", "olar"}
     CALLS_PROHIBIDAS = {"open", "load", "save", "savez", "savez_compressed", "savetxt",
                         "read_text", "write_text", "dump", "loadtxt"}
@@ -241,7 +243,6 @@ class TestArquitectura(unittest.TestCase):
     def test_niveles_no_existen_en_el_motor(self):
         """Cláusula 1 de COA. Regex con límite de palabra REAL: caza ola/olas/ola1/OLA_level,
         no caza «sola» ni «interpolación»."""
-        rx = re.compile(r"(?i)(?<![A-Za-z])olas?(?![a-ce-z])")   # permite seguir dígito o _? no:
         rx = re.compile(r"(?i)(?<![A-Za-z])ola(?:s\b|\b|\d|_)")
         for p in self._archivos(self.OLA_SCOPE):
             m = rx.search(p.read_text())

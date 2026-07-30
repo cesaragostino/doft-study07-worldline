@@ -20,20 +20,25 @@ Verificaciones fail-loud por nodo-cápsula (espejo del oráculo):
 """
 from __future__ import annotations
 
+import hashlib
+import json
 from typing import Any, Dict, List, Mapping, Sequence
 
 import numpy as np
 
 from ..compat.study06_capsule import genome_sha256, quench_column
 from ..compat.study06_v4 import birth_state, parse_theta_v2
+from ..physics import rhs
 from ..physics.state import Layer, NodeState
 
 
 def componer_red(constituyentes: Sequence[Mapping[str, Any]], edges, *, dt: float, seed: int,
                  k_global: float, coupling_gamma_c: float, tau_field: float = 0.0,
-                 temperature: float = 0.0):
+                 temperature: float = 0.0, e_ref_policy: str = "receiver_initial_energy"):
     """constituyentes: lista de {"theta": dict, "capsula": load_capsule(...) | None}.
-    Devuelve (net, specs, recibo). El recibo va al manifiesto del film (procedencia)."""
+    Devuelve (net, specs, recibo). El recibo queda ADHERIDO a la red
+    (net.composicion_recibo): el recorder lo EXIGE en el manifiesto — un film compuesto sin
+    su recibo nace huérfano (PROVENANCE_CONTRACT, double tap F5 A5)."""
     from ..engine.network import Network   # import local: el motor entra SOLO acá
 
     if any(c.get("capsula") for c in constituyentes) and float(temperature) != 0.0:
@@ -45,10 +50,14 @@ def componer_red(constituyentes: Sequence[Mapping[str, Any]], edges, *, dt: floa
         spec, _ = parse_theta_v2(theta, emission_scale=1.0 / max(len(theta["modes"]), 1))
         cap = cons.get("capsula")
         if cap is None:
-            st = birth_state(spec, seed=int(seed), idx=idx)
+            # el genoma fresh pasa por el MISMO peaje que el de cápsula: naturalidad +
+            # completitud v2 + huella citable (double tap F5 A4 — antes un theta con
+            # _mem_force_scale o incompleto entraba a la composición sin registro)
+            genoma = genome_sha256(theta)
+            st = birth_state(spec, seed=int(seed), idx=idx, e_ref_policy=e_ref_policy)
             origenes.append({"target_node_index": idx, "origen": "nacimiento",
-                             "seed": int(seed), "idx": idx,
-                             "e_ref_policy": "receiver_initial_energy"})
+                             "seed": int(seed), "idx": idx, "genome_hash": genoma,
+                             "e_ref_policy": str(e_ref_policy)})
         else:
             man = cap["manifest"]; arrays = cap["arrays"]
             genoma = genome_sha256(theta)
@@ -110,10 +119,18 @@ def componer_red(constituyentes: Sequence[Mapping[str, Any]], edges, *, dt: floa
         origenes[idx]["target_delay_steps"] = target_delay
     net.history.head_idx = 0   # head del receptor tras quench [oráculo :927]
 
-    # verificación POST-COPIA (espejo del oráculo :791-813): lo aplicado ES lo sellado
+    # verificación POST-COPIA de TODOS los nodos (espejo del oráculo :791-813, extendida al
+    # lado fresh por el double tap F5 A3: la capacidad nueva no puede ser la única sin ancla)
     for idx, cons in enumerate(constituyentes):
         cap = cons.get("capsula")
         if cap is None:
+            # fresh: la columna DEBE ser el relleno uniforme de la emisión inicial (la
+            # semántica de nacimiento del oráculo) — ni ceros, ni restos de otro nodo
+            uniforme = rhs.emitted_xv(specs[idx], net.states[idx])
+            if not np.array_equal(net.history.buffer[:, idx, :],
+                                  np.tile(uniforme, (target_delay + 1, 1))):
+                raise RuntimeError(f"post-composición: historia del nodo fresh {idx} no es "
+                                   "el relleno uniforme de su emisión inicial (F5 A3)")
             continue
         arrays = cap["arrays"]
         for campo in ("x", "v", "z", "b", "e"):
@@ -123,7 +140,18 @@ def componer_red(constituyentes: Sequence[Mapping[str, Any]], edges, *, dt: floa
         esperada = quench_column(arrays, target_delay)
         if not np.array_equal(net.history.buffer[:, idx, :], esperada):
             raise RuntimeError(f"post-composición: historia del nodo {idx} difiere del quench")
+    hay_capsulas = any(c.get("capsula") for c in constituyentes)
     recibo = {"schema": "study07_composicion_v1", "n_nodes": len(specs),
               "temperature": float(temperature), "target_delay_steps": target_delay,
+              # higiene de claims (espejo del receipt del oráculo :1025-1056, F5 A9):
+              # study07 v1 SOLO compone hacia topologías nuevas (exact_reconstruction no
+              # implementado) ⇒ todo transporte es quench, y ningún claim estacionario
+              # vale dentro de la ventana del delay del receptor
+              "topology_quench": bool(hay_capsulas),
+              "stationary_claim_exclusion_ticks": target_delay if hay_capsulas else 0,
               "por_nodo": origenes}
+    recibo["set_digest"] = "sha256:" + hashlib.sha256(
+        json.dumps(origenes, sort_keys=True, separators=(",", ":"),
+                   default=str).encode("utf-8")).hexdigest()
+    net.composicion_recibo = recibo
     return net, specs, recibo

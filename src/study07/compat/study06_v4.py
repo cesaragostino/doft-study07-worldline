@@ -116,7 +116,11 @@ def parse_theta_v2(theta: dict, emission_scale: float) -> Tuple[NodeSpec, Dict]:
             a=np.asarray(params["a"], float), beta=np.asarray(params["beta"], float),
             g=np.asarray(params["g"], float), kappa=np.asarray(params["kappa"], float))
     for layer in layers_present:
-        if layer in mem_layer_order and layer not in layer_mem:
+        if layer not in mem_layer_order:
+            raise RuntimeError(f"capa {layer.name} presente en modes pero FUERA de "
+                               "memory.layer_order: RECHAZO (paridad con "
+                               "validate_theta_internal del oráculo — double tap F5 A4)")
+        if layer not in layer_mem:
             raise RuntimeError(f"capa {layer.name} presente y en layer_order pero SIN memoria: "
                                "RECHAZO (el continue silencioso era el defecto §7.1)")
     W = np.asarray(memory_ser["W"], float)

@@ -1,5 +1,10 @@
 # datos y logs fuera de git (catalogados por hash en logs/DATA_MANIFEST.sha256, patrón Study06)
 data/*
+# EXCEPCIÓN (double tap F5 A6, lección §90-g B1): el inventario v4 SÍ se versiona — es el
+# catálogo citable de la población; sin él, gate6 falla en un clon limpio y el sellado no
+# es reproducible desde el repo.
+!data/inventario_v4.json
+!data/inventario_v4.sha256
 logs/*
 !logs/DATA_MANIFEST.sha256
 # fixtures de test SÍ se versionan (lección §90-g B1 de Study06)
