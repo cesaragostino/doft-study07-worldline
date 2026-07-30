@@ -1,6 +1,6 @@
 # datos y logs fuera de git (catalogados por hash en logs/DATA_MANIFEST.sha256, patrón Study06)
-data/
-logs/
+data/*
+logs/*
 !logs/DATA_MANIFEST.sha256
 # fixtures de test SÍ se versionan (lección §90-g B1 de Study06)
 !tests/fixtures/

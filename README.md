@@ -10,7 +10,7 @@ Study06 congelado como oráculo ejecutable.
 1. **El motor NO interpreta proxies para transferir fronteras entre olas.** Genera ola1,
    ola1+ola2, ola1+ola2+ola3: integración concurrente de constituyentes COMPLETOS. El motor no
    sabe qué es una ola — las olas son niveles de composición, catálogo e instrumentación, jamás
-   fronteras físicas. (Gate de CI: `src/study07/physics/` no contiene la palabra "ola".)
+   fronteras físicas. (Gate ejecutable local — tests/test_conformance_oracle.py::TestArquitectura — hasta que exista CI.)
 2. **Resultados por ola**: visibilidad de onions (ola1), grumos (ola2) y clusters (ola3/n) como
    VISTAS de instrumentos sobre la misma worldline — incluido medir al individuo EMBEBIDO en la
    red y compararlo con su rama aislada.

@@ -1,0 +1,4 @@
+# PINEADO — los streams del RNG de numpy no están congelados entre feature releases:
+# la conformidad bit-exacta y el replay de ruido EXIGEN esta versión (PHYSICS_CONTRACT §6).
+numpy==2.3.4
+pytest==8.4.2

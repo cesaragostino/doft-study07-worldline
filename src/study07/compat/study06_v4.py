@@ -39,6 +39,10 @@ def node_seed(seed: int, idx: int) -> int:
 def parse_theta_v2(theta: dict, emission_scale: float) -> Tuple[NodeSpec, Dict]:
     """theta_internal_v2 → NodeSpec. Devuelve además el dict de memoria/struct crudos por si el
     caller quiere sellar hashes de procedencia (PROVENANCE_CONTRACT)."""
+    if theta.get("schema_version") != "theta_internal_v2":
+        raise RuntimeError(
+            f"schema_version={theta.get('schema_version')!r}: el lector sólo acepta "
+            "theta_internal_v2 (V3/legacy: RECHAZO explícito — plan §20, gate de datos)")
     if theta.get("adaptive_couplings"):
         raise RuntimeError("theta trae adaptive_couplings (generación diagnóstica): RECHAZADO")
 
@@ -69,7 +73,14 @@ def parse_theta_v2(theta: dict, emission_scale: float) -> Tuple[NodeSpec, Dict]:
     for raw in theta.get("inter_couplings", []) or []:
         deep = _layer(raw["deep_layer"]); shallow = _layer(raw["shallow_layer"])
         g0 = float(raw.get("g0", 0.0))
+        vistos = set()
         for link in raw.get("links", []) or []:
+            key = (deep.name, shallow.name, int(link.get("i_deep", 0)),
+                   int(link.get("j_shallow", 0)))
+            if key in vistos:
+                raise RuntimeError(f"link inter duplicado {key}: RECHAZO (0 duplicados en v4 — "
+                                   "un duplicado silencioso duplicaría la fuerza)")
+            vistos.add(key)
             direct.append(DirectLink(
                 deep_idx=index_map[(deep, int(link.get("i_deep", 0)))],
                 shallow_idx=index_map[(shallow, int(link.get("j_shallow", 0)))],
@@ -93,6 +104,10 @@ def parse_theta_v2(theta: dict, emission_scale: float) -> Tuple[NodeSpec, Dict]:
         if not params:
             continue
         n_mem = len(params["tau0"])
+        for campo in ("beta_tau", "a", "beta", "g", "kappa"):
+            if len(params[campo]) != n_mem:
+                raise RuntimeError(f"memoria de {layer.name}: {campo} tiene "
+                                   f"{len(params[campo])} términos, tau0 tiene {n_mem}")
         for k in range(n_mem):
             mem_index[(layer, k)] = zc
             zc += 1
@@ -100,6 +115,10 @@ def parse_theta_v2(theta: dict, emission_scale: float) -> Tuple[NodeSpec, Dict]:
             tau0=np.asarray(params["tau0"], float), beta_tau=np.asarray(params["beta_tau"], float),
             a=np.asarray(params["a"], float), beta=np.asarray(params["beta"], float),
             g=np.asarray(params["g"], float), kappa=np.asarray(params["kappa"], float))
+    for layer in layers_present:
+        if layer in mem_layer_order and layer not in layer_mem:
+            raise RuntimeError(f"capa {layer.name} presente y en layer_order pero SIN memoria: "
+                               "RECHAZO (el continue silencioso era el defecto §7.1)")
     W = np.asarray(memory_ser["W"], float)
     if W.shape != (len(mem_layer_order), len(mem_layer_order)):
         raise RuntimeError(f"W {W.shape} no coincide con layer_order {len(mem_layer_order)}")
@@ -112,8 +131,11 @@ def parse_theta_v2(theta: dict, emission_scale: float) -> Tuple[NodeSpec, Dict]:
         vals = struct_ser.get(layer.name)
         if not isinstance(vals, dict):
             raise RuntimeError(f"struct_params sin capa {layer.name}")
+        if "e_ref" not in vals:
+            raise RuntimeError(f"struct_params.{layer.name} sin e_ref: RECHAZO (450/450 capas "
+                               "de v4 lo traen — un 0.0 silencioso cambia el punto fijo de b)")
         tau_e[layer] = float(vals["tau_e"]); tau_b[layer] = float(vals["tau_b"])
-        alpha_b[layer] = float(vals["alpha_b"]); e_ref[layer] = float(vals.get("e_ref", 0.0))
+        alpha_b[layer] = float(vals["alpha_b"]); e_ref[layer] = float(vals["e_ref"])
 
     spec = NodeSpec(modes=tuple(modes), intra_pairs=tuple(intra), direct_links=tuple(direct),
                     layer_mem=layer_mem, mem_layer_order=mem_layer_order, W=W,

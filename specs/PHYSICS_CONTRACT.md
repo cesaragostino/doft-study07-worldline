@@ -35,7 +35,7 @@ omega_eff2_p = omega0_p² · (1 + eps_omega · b[capa(p)])
 dv_p += −omega_eff2_p · x_p − gamma_p · v_p                         # NOTA: sin /mass (así es la ley)
 
 # (2) acoples intra-capa                                            # :506-510
-k_eff = k0 · (1 + eps_k · b[capa])
+k_eff = k0 · (1 + eps_k · b[capa_i])   # la b del intra es la de la capa del extremo i
 dv_i += −k_eff · (x_i − x_j) / mass_i        (y simétrico en j)
 
 # (3) links directos inter-capa (g0 — lo ÚNICO que cruza capas como resorte)  # :512-520
@@ -46,7 +46,8 @@ dv_shallow += −g_eff · (x_shallow − x_deep) / mass_shallow   (y simétrico 
 E_mem[capa]  = Σ_k ½·kappa[k]·z[(capa,k)]²                          # :527
 E_inst[capa] = Σ_p∈capa ½·mass·v² + ½·mass·omega_eff2·x²  + E_mem[capa]   # :529-532 y :448-449
 señal[capa]  = mean(x_p : p∈capa)                                   # :538
-input        = W @ señal_vec  (orden de capas canónico)             # :546
+input        = W @ señal_vec  (orden SERIALIZADO memory.layer_order —
+               coincide con el canónico en TODA la población v4)      # :545-547
 tau_eff      = max(tau0[k]·(1 + beta_tau[k]·E_inst[capa]), 1e-9)    # :557-558
 u_clamped    = clip(beta[k]·input[capa], ±clamp_tanh_arg)           # :560
 dz[(capa,k)] = −z/tau_eff + a[k]·tanh(u_clamped)                    # :561
@@ -55,6 +56,8 @@ dv_p += −F_mem[capa(p)] / mass_p   ∀ p∈capa                         # :564
 
 # (5) recepción del campo externo (drive_ext = fuerza KV de red, ver §3)     # :570-582
 dv_p += drive_ext / mass_p         ∀ modo p (superposición: TODOS los modos reciben)
+# EQUIVALENCIA DECLARADA: el oráculo chequea `is not None`; study07 chequea `!= 0.0` —
+# sumar 0.0/mass es la identidad, verificado por el gate con drive real (f2-f4, f6)
 
 # (6) variables lentas                                              # :584-590
 de[capa] = (E_inst[capa] − e[capa]) / tau_e[capa]
@@ -134,7 +137,10 @@ se restaura de cápsula, x/v/z/b/e vienen del checkpoint y NO se sortean.
 
 ## 7. Inicialización [physics_core.py:377-423 + differential_engine.py:171-238]
 
-1. `theta_internal_v2` valida fail-loud (`require_v2_state`): memoria y struct_params
+1. `theta_internal_v2` valida fail-loud — el lector de study07 IMPLEMENTA el dominio:
+   `schema_version=='theta_internal_v2'` obligatorio · memoria por capa presente con
+   arrays de longitudes iguales · `e_ref` OBLIGATORIO en struct (450/450 en v4) ·
+   links duplicados = RECHAZO (0 en v4) · capa sin memoria = RECHAZO. Memoria y struct_params
    SERIALIZADOS se heredan EXACTOS (sin re-sorteo). v1 legacy = re-sorteo por nodo (NO se porta
    como producción). `adaptive_couplings` ⇒ RECHAZO (generación diagnóstica).
 2. `e_ref_policy` ∈ {`receiver_initial_energy` (default: e_ref := E_inst(t0) local),
