@@ -1,0 +1,443 @@
+{
+ "summary": "Double tap de F7: campañas y el census M2 como tipo validado — atacar antes de declarar",
+ "agentCount": 5,
+ "logs": [],
+ "result": {
+  "veredicto": "Todo verificado. Cierro con el veredicto.\n\n# DOUBLE TAP F7 — VEREDICTO DEL JUEZ\n\nClon del juez: `scratchpad/judge_f7/repo` — `git clone` + `checkout ada062e` verificado (`git log -1` = ada062e). Baseline: gates 7/7, suite 66/66. Arnés con mutante CONTROL que MURIÓ (quitar el raise de población → `1 failed` en 0.16s): el arnés detecta kills. Cada mutación una por vez, `git checkout` + purga de `__pycache__` entre corridas (0 diffs al cierre). Sondas del juez: `scratchpad/judge_f7/sondas_judge.py` + `sonda_j6_pool.py`.\n\n**Ambos repos reales INTACTOS, verificado al cierre**: study07 @ ada062e porcelain vacío; oráculo study06 @ 39f8df6 porcelain vacío; ningún archivo R_f leído; cero procesos colgados de las sondas.\n\n## 1. Veredicto único: **F7 NO PASADA**\n\nEl patrón F2-F6 se repite por sexta vez: la mecánica central es sólida (determinismo BIT bajo pool, validador M2 rama por rama, restos jamás borrados, no-pisa, composer fail-loud — todo re-confirmado), pero los gates no protegen los claims de PAPELES del commit ada062e, y tres de esos claims son hoy **falsos en ejecución**. Verifiqué por mi cuenta, con evidencia ejecutada y controles vivos:\n\n- **\"Reanudación por unidad sin pérdida\" — FALSO (BLOQUEA, J1 confirmado)**: tras reanudar, el LEDGER.json EN DISCO quedó con `u1_transported`/`u3_mixta` = `{estado, run_id, worldline_hash}` — sin métricas ni view_hashes — pisando el LEDGER previo que tenía 3/3 con métricas. Convergencia de 3 lentes + juez.\n- **\"COMPLETE se reusa verificada por hash\" — FALSO (ALTO, J2 confirmado)**: chunk bit-flippeado con COMPLETE intacto → `estado=reusada`, hash heredado==original `True`. CONTROL vivo: `api.load_run` detecta `chunk_00000.npz: sha d5cb9e72aa3b != COMPLETE f97aae5f3076` — la maquinaria existe, nadie la llama.\n- **Una unidad que falla mata el census (BLOQUEA, J5 confirmado)**: unidad con sha adulterado → campaña ABORTA, `LEDGER.json existe: False` con 2/3 COMPLETE en disco; re-correr con la spec corregida → `COMPLETE de OTRA spec (1c2a88b1 != 8766d8a0)` — base_dir brickeado, N-1 unidades inutilizables. CONTROL: campaña sana escribe LEDGER.\n- **Procedencia fabricable (ALTO, J3 confirmado)**: `capsule_sha256` sin `capsula_dir` pasa el validador y el manifest queda `hashes_base_externa={capsula_nodo0: sha256:2e4aad25...}` con `origen='nacimiento'`. CONTROL vivo: sha adulterado con `capsula_dir` sí muere.\n- **Atribución swapeable (ALTO, J4 confirmado)**: block_id swapeados entre cápsulas → validador PASA, campaña VERDE, spec nodo0 `92466fe3` vs cápsula real `1bc9dccc` sellado en los papeles. CONTROL vivo: theta trocado muere en composer (`genoma no coincide`).\n- **Worker muerto = cuelgue (ALTO, J6 confirmado a nivel patrón)**: patrón idéntico a campana.py:244-246, worker SIGKILLeado → 25s sin resultado ni excepción; con `.map()` a secas el bloqueo es indefinido. CONTROL: sin kill termina. (El cuelgue de campaña real 180s lo ejecutó c4; no lo repetí — corroborado a nivel patrón.)\n\n### Arreglos requeridos (A1-A9) — condición dura: re-matar TODOS los mutantes vivos y re-correr las sondas J1-J6 contra el código arreglado antes de declarar\n\n| # | Dónde | Parche |\n|---|-------|--------|\n| A1 | campana.py:221-228 | Reusa: `api.load_run(run_dir)` (verifica chunks+manifest) en vez de `worldline_hash`; si falla → restos + rehacer. Recuperar fila COMPLETA: `load_view` de views_root + recomputar `metricas_basicas_v1` |\n| A2 | campana.py:262-267 | LEDGER jamás degradado: mover el previo a `restos_LEDGER_<n>.json` antes del rename (o merge verificado); sidecar sha con tmp+rename junto al json |\n| A3 | campana.py:240-248 | Contención por unidad: try/except en `_correr_unidad` → `estado='fallida'` con error+tick como DATO del reporte; distinguir falla-dato (blow-up) de aborto-integridad (cápsula adulterada); reanudación rehace solo fallidas |\n| A4 | campana.py:244-246 | `concurrent.futures.ProcessPoolExecutor(mp_context=spawn)` — `BrokenProcessPool` fail-loud ante worker muerto |\n| A5 | campana.py:84-85, 175-177 | Rechazar `capsule_sha256` sin `capsula_dir`; citar `capsula_nodo{idx}` SOLO si la cápsula se cargó |\n| A6 | campana.py:160-167 | `if c.get('block_id') and cap['manifest']['block_id'] != c['block_id']: raise` |\n| A7 | tests gate2/3/4 | Comparar filas ENTERAS del ledger (no solo hashes); view_hashes contra `load_view` recomputado; caso reanudación exige métricas en TODAS; caso chunk corrupto exige rehacer |\n| A8 | tests gate7 + metricas | Kill-test de archivado con fault-injection (corromper 1 byte post-copytree → debe raise); golden values de `metricas_basicas_v1` con arrays sintéticos (cruce breve ⇒ None, sostenido ⇒ k) y valores pinneados del fixture |\n| A9 | campana.py:95-109 | Validador M2: `hz >= 1`; población como lista sin duplicados; `genome_sha256(theta) == inventario.genome_hash[block_id]` para todo `es_poblacion` (el inventario_v4 ya lo tiene); RuntimeError tipado para `es_poblacion` sin block_id |\n\n## 2. Tabla de mutantes\n\n**Re-corridos por el juez** (independientes, restore+purga entre cada uno):\n\n| Mutante | Origen | Mi corrida | Veredicto |\n|---|---|---|---|\n| CTRL: quitar raise de población | juez | **1 failed, 0.16s** | MUERE — arnés válido |\n| M15: archivado sin verificación (sello intacto) | c2 | **7 passed** | VIVO — CONFIRMADO |\n| M18: t_lock primer-cruce sin ventana | c2 | **7 passed** + divergencia ejecutada: mutante=10, original=None | VIVO — CONFIRMADO |\n| M10: sin `load_view`, todo desde memoria | c2 | **7 passed** | VIVO — CONFIRMADO |\n| Ledger mentiroso: view_hashes basura + met ×1e6 | c1 | **7 passed** | VIVO — CONFIRMADO |\n\nGrep verificado: solo `tests/test_campanas_f7.py` consume `campana` — los veredictos valen para la suite de 66.\n\n**De los lentes, no re-corridos por mí** (evidencia ejecutada declarada por el lente; los acepto como PLAUSIBLES de alta confianza, mismo patrón): M13b orden en reanudación, M14 LEDGER sin tmp+rename, M17 `sort_keys` (riesgo: rehacer census entero), M19 `_sha_file` 1MB, M21 fork/spawn. **Muertos (crédito, c2)**: 14/22 — gate1 mata las 6 ramas del validador + borde or→and; M8 muere por defensa en profundidad del recorder (PROVENANCE F5-A5); M9 por el ancla física de gate2.\n\n## 3. Contratos por cláusula (EXPERIMENT_CONTRACT vs código)\n\n| Cláusula | Estado ejecutado |\n|---|---|\n| Población = inventario COMPLETO por hash | Ejecutada pero a nivel NOMBRE (set de strings): duplicados colapsan, census todo-fresh pasa, thetas trocados pasan, block_id swapeado pasa (J4) |\n| Cero intervenciones | EJECUTADA Y GATEADA (gate1, mutantes mueren) |\n| Horizonte ≥ emergencia declarada | Ejecutada pero auto-declarada y sin piso (0 y −100 compilan); no existe clave `prereg` en CLAVES_SPEC (leído: campana.py:35-36) |\n| Reglas de clasificación \"selladas en el prereg\" | Dict de texto libre no-vacío; sin prereg_sha nada las sella; las métricas \"congeladas\" son redefinibles (M18 vivo) |\n| Probeta GOLD | EJECUTADA Y GATEADA |\n| Reporte = población entera | Ejecutada en el camino feliz; el check interno :252-253 es inalcanzable; en reanudación el reporte pierde métricas (J1) y el orden no se asserta (M13b) |\n| \"Gate-portero no compila\" | Sin forma ejecutable (ningún chequeo de filtro de instrumento) |\n| Estado del documento | Sigue **[BORRADOR — Fase 1]** sin NINGUNA semántica F7 (spec auto-contenida, retención, ledger, restos, no-pisa, archivado, horizonte). Al cerrar el tap corresponde enmienda a v1 sellado, como INSTRUMENT_CONTRACT post-F4 |\n\n## 4. NO-CUBIERTO consolidado (escala census real: 150-300 unidades, workers 8-12, overnight)\n\n1. **Disco JUSTO**: films 124 MB/unidad medidos (c3) ⇒ 75-90 GB con archivado vs ~110 Gi libres; sin preflight de espacio; restos_* duplican por cada interrupción.\n2. **Generador de specs prometido en tools/ NO existe** (`ls` verificado: solo correr_m1p1, gen_f6/f7/f8, inventario_v4) — census a mano = exactamente la clase de bug que J4/A9 demuestran que nada atrapa.\n3. **spec_sha frágil**: sensible al orden de claves (M17) — una spec regenerada rechaza todos los COMPLETE; `chunk_ticks`/entorno/git entran al worldline_hash pero NO al spec_sha (c4-G): misma spec ⇒ films distintos entre corridas del runner.\n4. **La spec jamás se persiste** y el LEDGER no lleva git/entorno/timestamp — la campaña archivada no es re-ejecutable desde sus propios papeles (c3).\n5. **Corte de energía**: cero `fsync` en src/ (grep) — COMPLETE puede sobrevivir con chunks truncados; sidecar LEDGER.sha256 no atómico como par.\n6. **Sin lock de campaña ni guard documentado**: `__main__` sin guard = runaway real (pasó en el tap de c3); huérfanos post-kill del padre siguen escribiendo (c4, la carrera probada convergió limpia — rename-aside + COMPLETE atómico son protección real, pero la ventana existe).\n7. **Bordes de física**: n_nodes==1 clasifica t_lock=0 con R≡1 (identidad por construcción, F4 NO-CUBIERTO 4); t_half ancla solo al nodo 0 en campañas heterogéneas; ticks=0 publica film de cero evolución \"completa\".\n8. **Operación**: fork no pinneado (M21), `_sha_file` nunca ejercitado >1MB (M19), chunksize default regala ~1-1.5h de cola (c3), rendimiento/duración no registrados en ningún artefacto (c4).\n\n**Lo que SÍ protege (para el veredicto honesto)**: determinismo BIT bajo pool más allá de lo gateado (6u/3w/9chunks/views compartido: 0 diferencias — c1); validador M2 genuinamente gateado rama por rama (16 casos, 7 mutantes muertos); composer theta↔cápsula fail-loud (mi control J4); recorder PROVENANCE como defensa en profundidad (mató M8); restos jamás borrados y no-pisa funcionan como se declara; `load_worldline`/`load_view` detectan TODA la corrupción que la reusa deja pasar — los arreglos son mayormente llamar maquinaria que ya existe y endurecer 3 gates.",
+  "revs": [
+   {
+    "hallazgos": [
+     {
+      "que": "La reanudación DEGRADA el LEDGER final: una unidad reusada entra al reporte solo con {run_id, estado, worldline_hash} — sin metricas ni view_hashes — y el LEDGER bueno anterior se sobreescribe (tmp.rename pisa LEDGER.json sin conservar el previo). En el census real (150-300 unidades overnight, interrupción esperada — para eso existe la reanudación), el reporte entregable pierde las métricas de TODAS las unidades completadas antes de la interrupción. Además, una unidad interrumpida entre rec.close() y la escritura de vistas queda COMPLETE sin vistas y la reusa jamás las crea. Gate4 no asserta claves de las reusadas, así que está verde.",
+      "donde": "src/study07/artifacts/campana.py:227-228 (fila reusada sin metricas/view_hashes) y :262-267 (LEDGER pisado); gate ciego: tests/test_campanas_f7.py:181-196",
+      "severidad": "BLOQUEA_F7",
+      "evidencia": "EJECUTADO (scratchpad/c1-test-del-test/evidencia_reusa.py): corrida 1 → 3/3 unidades con claves ['estado','metricas','run_id','view_hash_energy','view_hash_phase','worldline_hash']; borro COMPLETE de u1, reanudo → LEDGER final en disco: u2/u3 estado=reusada claves=['estado','run_id','worldline_hash']; 'unidades con metricas en el LEDGER final: 1/3 (corrida 1 tenia 3/3; el LEDGER bueno fue sobreescrito)'. Gate4 pasa porque solo compara worldline_hashes y estados.",
+      "parche": "En el branch de reusa: cargar el film verificado (api.load_run), recomputar/leer las vistas desde views_root (load_view fail-loud) y re-emitir la fila COMPLETA (metricas + view_hashes) — o mergear las filas del LEDGER.json previo para las reusadas y mover el LEDGER previo a restos en vez de pisarlo. Gate4: assertEqual de las filas ENTERAS entre l1 y l2 (no solo hashes) + caso 'interrumpida post-close, pre-vistas'."
+     },
+     {
+      "que": "La reusa NO verifica el film: el docstring promete 'se REUSA (idéntica, verificada por hash)' pero worldline_hash(run_dir) solo lee el marcador COMPLETE (sha_total‖manifest_sha) — no re-hashea chunks ni manifest. Un chunk corrupto (bit-flip) o un manifest.json adulterado post-COMPLETE se reusa en silencio y el ledger cita el hash HEREDADO del marcador, que ya no corresponde a los bytes en disco. load_worldline detecta ambos casos — la reusa simplemente no lo llama. Gate4 solo borra COMPLETE (interrupción limpia), nunca corrompe contenido, y su check h1==h2 pasa trivialmente porque ambos hashes salen del mismo marcador.",
+      "donde": "src/study07/artifacts/campana.py:221-228 (reusa mira solo el marcador) + src/study07/artifacts/recorder.py:42-49 (worldline_hash lee COMPLETE, no verifica); gate ciego: tests/test_campanas_f7.py:186 (solo unlink de COMPLETE)",
+      "severidad": "ALTO",
+      "evidencia": "EJECUTADO (evidencia_reusa.py): bit-flip en chunk_00000.npz de u2 (COMPLETE intacto) y 'porque' editado en manifest.json de u3 → corrida 2: ambos estado=reusada, 'u2 hash heredado==original: True', 'u3 hash heredado==original: True'; en cambio load_worldline(u2) DETECTA 'chunk_00000.npz: sha 6350d8cf5e1e != COMPLETE 3ef41906bfe3' y load_worldline(u3) DETECTA 'manifest.json fue ALTERADO después del COMPLETE'.",
+      "parche": "En la reusa, reemplazar worldline_hash(run_dir) por api.load_run(run_dir) (verifica chunks contra COMPLETE + manifest_sha + consecutividad) antes de aceptar la unidad; si falla → mover a restos_* y rehacer. Gate4: nuevo caso que corrompe un chunk de una COMPLETE y exige que NO se reuse tal cual (rehacer al mismo hash o rechazo)."
+     },
+     {
+      "que": "NINGÚN gate asserta las metricas ni los view_hashes del LEDGER: gate3 compara SOLO worldline_hashes (su claim 'TODO idéntico salvo workers' es falso) y gate2 solo mira presencia de claves + un ratio E0. Dos mutantes viven con 7/7 verde: (M1) el worker del pool devuelve métricas ×1e6 y view_hashes 'CORRUPTO_POR_EL_POOL' solo cuando corre en el pool; (M2) lo mismo incondicional, también secuencial. Un bug real de transporte por el pool (pickling/orden) corrompería el producto del census (las métricas del reporte) con films perfectos en disco y todos los gates verdes.",
+      "donde": "tests/test_campanas_f7.py:166-177 (gate3 solo worldline_hash) y :147-161 (gate2 presencia + un ratio); superficie: src/study07/artifacts/campana.py:196-199",
+      "severidad": "ALTO",
+      "evidencia": "EJECUTADO: mutante M1 (if mp.current_process().name != 'MainProcess': met ×1e6 + view_hashes basura) → '7 passed'. Restore + purga pycache. Mutante M2 (incondicional: view_hash_energy/phase='LEDGER_MENTIROSO', met ×1e6) → '7 passed'. Contraste (evidencia_stress.py): el DISEÑO sí es determinista — 6 unidades/3 workers/9 chunks/4 checkpoints/views_root compartido → 0 diferencias en films+vistas+métricas; el agujero es del gate, no del pool.",
+      "parche": "Gate3: assertEqual(l_par['unidades'], self.ledger_base['unidades']) — filas ENTERAS, no solo hashes. Gate2: verificar view_hash_energy/phase del ledger contra load_view del directorio real en views_root (recomputa fail-loud) y al menos una métrica contra recomputación independiente desde la vista (p.ej. E0_nodo0 == e_capa[0,0].sum())."
+     },
+     {
+      "que": "Procedencia FABRICABLE en el film: un constituyente con capsule_sha256 pero SIN capsula_dir pasa el validador (solo chequea la dirección capsula_dir→sha) y _correr_unidad cita ese sha en hashes_base_externa del manifiesto aunque la cápsula JAMÁS se cargó (origen real: nacimiento). El film queda sellado con COMPLETE citando una cápsula fantasma — exactamente la mentira de procedencia que PROVENANCE/F5-A5 debía impedir, ahora firmada por la propia maquinaria.",
+      "donde": "src/study07/artifacts/campana.py:84-85 (chequeo unidireccional) y :175-177 (cita sha sin condicionar a que la cápsula se haya cargado)",
+      "severidad": "ALTO",
+      "evidencia": "EJECUTADO (evidencia_validador.py, caso d + e2e): '[PASA el validador] (d) capsule_sha256 sin capsula_dir en unidad fresh'; campaña corre VERDE y el manifest de u2_fresh queda con hashes_base_externa={'capsula_nodo0': 'sha256:2e4aad25bcaa774e1...'} mientras composicion.por_nodo[0].origen='nacimiento'.",
+      "parche": "Validador: `if c.get('capsule_sha256') and not c.get('capsula_dir'): raise RuntimeError(...sha pinneado sin cápsula que cargar...)`. Worker: mover la cita base[f'capsula_nodo{idx}'] adentro del branch que efectivamente cargó la cápsula (if cap is not None). Gate1: caso nuevo con regex."
+     },
+     {
+      "que": "El block_id de la spec jamás se cruza con el block_id del manifest de la cápsula pinneada: swapeando las etiquetas entre dos constituyentes (cápsula de A etiquetada como B y viceversa) el validador pasa (población 'completa' por set de strings), el composer pasa (genoma theta↔cápsula coincide por constituyente) y la campaña corre VERDE — el census atribuye los resultados al bloque equivocado. En un census real de 150-300 bloques, un bug del generador de specs (que es quien cruza al oráculo) scramblea la atribución entera sin que nada lo note, teniendo el dato para detectarlo (la cápsula LLEVA su block_id).",
+      "donde": "src/study07/artifacts/campana.py:95-99 (población por etiquetas) y :160-167 (worker no compara c['block_id'] vs cap manifest); el composer registra el block_id real en el recibo (composer.py:93-100) pero nadie compara",
+      "severidad": "ALTO",
+      "evidencia": "EJECUTADO (evidencia_validador.py, caso e + e2e): '[PASA el validador] (e) block_id swapeado vs capsula pinneada'; campaña VERDE; spec block_id nodo0 = 92466fe3... pero capsula REAL nodo0 (recibo del manifest) = 1bc9dccc... — atribución cruzada sellada en los papeles. Lo que SÍ protege: theta de OTRO bloque con la cápsula muere en composer.py:63-67 (genoma no coincide, fail-loud).",
+      "parche": "_correr_unidad, branch cápsula: `if c.get('block_id') and cap['manifest']['block_id'] != c['block_id']: raise RuntimeError(f'{run_id}: block_id de la spec no es el de la cápsula pinneada')`. Gate1/gate6: caso e2e con etiquetas swapeadas que exige rechazo."
+     },
+     {
+      "que": "Las reglas duras M2 se satisfacen VACUAMENTE: (a) horizonte_emergencia_ticks=0 y hasta -100 pasan (toda unidad 'cubre' trivialmente el horizonte); (b) un census M2 'completo' sin cargar NI UNA cápsula pasa (es_poblacion en constituyentes fresh — la 'población por hash del inventario' es solo un set de strings, nada exige que el bloque censado sea el artefacto del catálogo); (c) el mismo block_id como es_poblacion en DOS unidades pasa (el set colapsa duplicados — doble conteo invisible en la clasificación).",
+      "donde": "src/study07/artifacts/campana.py:105-109 (sin piso para hz), :95-104 (población por set de etiquetas, sin exigencia de origen ni unicidad)",
+      "severidad": "MEDIO",
+      "evidencia": "EJECUTADO (evidencia_validador.py): '[PASA el validador] (a) es_poblacion SOLO en la unidad fresh', '(b) bids[0] es_poblacion en u1 Y u3', '(c) horizonte_emergencia_ticks=0', \"(c') horizonte_emergencia_ticks=-100\", '(g) census M2 SIN ninguna capsula en toda la spec'. Gate1 no tiene caso para ninguna de estas ramas muertas.",
+      "parche": "Validador M2: `if hz < 1: raise` (horizonte declarado tiene que morder); contar es_poblacion como lista y rechazar duplicados (o exigir n_replicas declarado); exigir política explícita sellada en la spec sobre el ORIGEN de la población (p.ej. clave 'poblacion_origen': 'capsula' ⇒ todo es_poblacion debe llevar capsule_sha256). Gate1: tres casos nuevos con regex."
+     },
+     {
+      "que": "es_poblacion=True en un constituyente sin block_id revienta con KeyError crudo ('block_id') en vez del RuntimeError tipado del contrato — rechazo por accidente, no por diseño (fail-loud, pero fuera del vocabulario de rechazos que gate1 asserta por regex sobre RuntimeError).",
+      "donde": "src/study07/artifacts/campana.py:95-96",
+      "severidad": "BAJO",
+      "evidencia": "EJECUTADO (evidencia_validador.py, caso f): '[RECHAZA: KeyError] (f) es_poblacion sin block_id: block_id'.",
+      "parche": "Usar c.get('block_id') y levantar RuntimeError explícito ('constituyente es_poblacion sin block_id') + caso en gate1."
+     },
+     {
+      "que": "Menores de robustez del LEDGER: (i) LEDGER.sha256 se escribe DESPUÉS del rename de LEDGER.json — una muerte en esa ventana deja sidecar viejo/ausente junto a un ledger nuevo (el par no es atómico); (ii) el LEDGER previo se pisa sin ir a restos (la política 'jamás borrar' no cubre al propio reporte — agravante del hallazgo 1); (iii) gate3/gate4 dependen de que gate2 haya corrido (type(self).ledger_base): `pytest -k gate3` solo da error de atributo, no un skip declarado. Doble lanzamiento accidental sobre el mismo base_dir: análisis de código (NO ejecutado) — el segundo proceso renombra el run_dir VIVO del primero a restos_*; el primero muere fail-loud (mkdir exist_ok=False del recorder + rutas resueltas por path) y no hay corrupción silenciosa, pero el protocolo 'un nohup por batch' sigue siendo la única defensa real.",
+      "donde": "src/study07/artifacts/campana.py:263-267 (par no atómico, pisado), :230-232 (rename de run_dir ajeno); tests/test_campanas_f7.py:162,175 (acoplamiento entre gates)",
+      "severidad": "NOTA",
+      "evidencia": "Lectura de código (líneas citadas); el pisado del LEDGER quedó además demostrado ejecutando en evidencia_reusa.py ('el LEDGER bueno fue sobreescrito'). El doble lanzamiento NO se ejecutó — se declara como análisis.",
+      "parche": "Escribir LEDGER.sha256 a tmp y renombrar junto con el ledger (o incluir el sha adentro y verificar al leer); mover el LEDGER previo a restos_LEDGER_<n>.json antes del rename; en gate3/gate4 usar setUp que corra la campaña base si falta."
+     },
+     {
+      "que": "LO QUE SÍ PROTEGE (medido, para el veredicto honesto): el determinismo del DISEÑO bajo paralelismo es sólido más allá de lo que gate3 ejercita — con cola real (6 unidades > 3 workers), multi-chunk (9 chunks/film), checkpoints concurrentes (4/unidad) y views_root COMPARTIDO no hay un bit de diferencia en films, vistas ni métricas; las rutas de vistas son disjuntas por construcción (prefijo wl_hash[:16] único por unidad, 6/6 distintos, 12/12 vistas); View.write es tmp+rename con rechazo de pisado; el genoma theta↔cápsula muere fail-loud en el composer; load_worldline/load_view detectan toda la corrupción que la reusa deja pasar (la maquinaria de verificación EXISTE — solo falta llamarla); gate5 (spec_sha) y los restos jamás borrados funcionan como se declara.",
+      "donde": "scratchpad/c1-test-del-test/evidencia_stress.py; src/study07/instruments/api.py:99-124; src/study07/artifacts/composer.py:63-67; src/study07/artifacts/recorder.py:275-337",
+      "severidad": "NOTA",
+      "evidencia": "EJECUTADO (evidencia_stress.py): 'chunks por unidad: 9, checkpoints por unidad: 4; diferencias seq vs par (films+vistas+metricas): NINGUNA; vistas escritas bajo par/views: 12 (esperadas 12 = 6x2); prefijos wl_hash distintos: 6'.",
+      "parche": "Ninguno — anclar este estrés (unidades>workers, multi-chunk, checkpoints, comparación de filas enteras) como el gate3 endurecido del parche del hallazgo 3."
+     }
+    ],
+    "resumen": "DOUBLE TAP c1 (test-del-test) sobre F7 @ ada062e, en clon (ambos repos reales verificados intactos: study07 limpio @ ada062e, study06 limpio @ 39f8df6). Baseline: 7/7 gates y 66/66 suite. El patrón F2-F6 se repite: la física/mecánica salió bien (estrés propio con cola real, multi-chunk, checkpoints y views_root compartido: 0 diferencias bit) pero los gates tienen agujeros — 2 mutantes VIVOS con 7/7 verde (pool que corrompe métricas ×1e6 y view_hashes; ledger mentiroso incondicional) porque gate3 solo compara worldline_hashes y gate2 solo presencia de claves. Hallazgo que BLOQUEA: la reanudación degrada el LEDGER entregable (unidades reusadas pierden metricas/view_hashes y el ledger bueno se pisa — en el census overnight de 150-300 unidades una interrupción vacía el reporte de todo lo corrido antes). Tres ALTOs con evidencia ejecutada: la reusa NO verifica el film (chunk bit-flippeado y manifest adulterado se reusan con hash heredado del marcador; load_worldline los detecta pero nadie lo llama), procedencia fabricable (capsule_sha256 sin capsula_dir → film sellado citando cápsula jamás cargada), y block_id de la spec jamás cruzado con el de la cápsula pinneada (atribución swapeada corre campaña VERDE). MEDIO: reglas M2 satisfacibles vacuamente (horizonte 0/negativo, census todo-fresh, doble conteo de bloque). Todos los parches son locales y baratos; la maquinaria de verificación ya existe (load_run/load_view) — falta llamarla en la reusa y comparar filas enteras en los gates. Veredicto: F7 NO declarable hasta cerrar el bloqueante + reforzar gates 2/3/4; scripts de evidencia en scratchpad/c1-test-del-test/ (evidencia_reusa.py, evidencia_validador.py, evidencia_stress.py)."
+   },
+   {
+    "hallazgos": [
+     {
+      "que": "M15 VIVO: quitar la verificación sha-por-archivo del archivado (dejando que ARCHIVADO.json siga sellando 'sha256 por archivo, 0 discrepancias') pasa los 7 gates — el sello puede MENTIR y gate7 solo lee el string del sello, jamás ejercita la verificación en negativo. En este proyecto el archivo verificado precede a borrados de originales (§93-e: 69G borrados tras shasum -c OK): un sello mentiroso es exactamente el agujero más caro.",
+      "donde": "src/study07/artifacts/campana.py:276-279 (bloque malos/_sha_file) vs tests/test_campanas_f7.py:219-230 (gate7 solo assertEqual del string de ARCHIVADO.json)",
+      "severidad": "BLOQUEA_F7",
+      "evidencia": "Mutante: reemplazado el cómputo de `malos` + raise por solo `n = sum(...)`. Corrida: PYTHONPATH=src:tests python3 -m pytest tests/test_campanas_f7.py -x -q → '7 passed, 52 warnings in 17.64s'. El sello se escribe idéntico sin haber verificado nada.",
+      "parche": "Kill-test en gate7: monkeypatch de shutil.copytree con un wrapper que corrompe 1 byte de un archivo copiado (fault injection) y assertRaisesRegex(RuntimeError, 'FALLÓ la verificación'). Con el mutante la campaña completa y escribe el sello → el test lo mata. Opcional: que ARCHIVADO.json registre n_verificados == n_archivos y el gate lo compare contra un conteo independiente del test."
+     },
+     {
+      "que": "M18 VIVO: redefinir t_lock como primer cruce simple de r>=0.99 (sin ventana sostenida) pasa los 7 gates — 'metricas basicas_v1 CONGELADAS de M1-P1' es un claim sin gate: ningún test pinnea NINGÚN valor de métrica (solo assertIn de claves). t_lock/t_half son las reglas de clasificación selladas del census: el instrumento clasificador es silenciosamente redefinible.",
+      "donde": "src/study07/artifacts/campana.py:139-143 (metricas_basicas_v1, ventana sostenida) vs tests/test_campanas_f7.py:149-150 (solo assertIn('t_lock_tick'/'E0_nodo0'))",
+      "severidad": "BLOQUEA_F7",
+      "evidencia": "Mutante: `sitios = np.where(r >= 0.99)[0]` en vez del convolve. Corrida: '7 passed in 14.68s'. Evidencia ejecutada de divergencia: con r=0.5 salvo r[10:20]=1.0 (n=400), MUTANTE t_lock=10 vs ORIGINAL t_lock=None.",
+      "parche": "Kill-test golden de metricas_basicas_v1 con arrays sintéticos: cruce breve (r[10:20]=1.0, n=400) ⇒ assertIsNone(t_lock_tick); cruce sostenido desde k ⇒ assertEqual(t_lock_tick, k). Además pinnear en gate2 los valores exactos de metricas del fixture (golden values con assertAlmostEqual/hash del dict de métricas) — congelado se prueba congelando números."
+     },
+     {
+      "que": "M10 VIVO: saltar la re-verificación desde disco (api.load_view) y computar métricas/view_hash desde las vistas EN MEMORIA pasa los 7 gates — el claim 'vistas re-verificadas' del docstring de gate2 y de la spec F7 no tiene gate: en el camino feliz el round-trip write→load es bit-exacto y la diferencia es inobservable. A escala census, una vista corrupta en disco queda publicada con métricas selladas en el ledger sin el fail-loud.",
+      "donde": "src/study07/artifacts/campana.py:193-195 (lv_e/lv_f = api.load_view — 'caché re-verificado fail-loud')",
+      "severidad": "ALTO",
+      "evidencia": "Mutante: métricas desde v_e.arrays/v_f.arrays y view_hash desde v_e.view_hash() (sin load_view). Corrida: '7 passed in 14.19s'. (test_instruments.py sí prueba load_view contra adulteración, pero nada exige que campana lo LLAME — grep verificado: ningún otro test consume _correr_unidad.)",
+      "parche": "Kill-test doble: (a) spec-pin — mock.patch de study07.instruments.api.load_view con wrapper contador; correr 1 unidad; assert 2 llamadas por unidad (con el mutante: 0); (b) fault injection — wrapper de View.write que trunca data.npz tras escribir manifest y assertRaisesRegex('view_hash recomputado') en _correr_unidad."
+     },
+     {
+      "que": "M13b VIVO: `reporte = list(resultados.values())` (orden de inserción: reusadas primero) pasa los 7 gates — el claim 'REPORTE con TODAS las unidades EN ORDEN de la spec' solo se asserta en gate2 donde todas son corridas frescas y el orden de inserción COINCIDE con la spec por accidente; en el escenario mixto de reanudación (gate4) nadie mira el orden.",
+      "donde": "src/study07/artifacts/campana.py:251 (reporte ordenado por spec) vs tests/test_campanas_f7.py:181-196 (gate4 sin assert de orden)",
+      "severidad": "MEDIO",
+      "evidencia": "Mutante corrido: '7 passed in 14.76s'. Evidencia ejecutada del agujero (escenario gate4 reproducido con el mutante): ORDEN REPORTE tras reanudación = ['u1_transported','u3_mixta','u2_fresh'] vs ORDEN SPEC = ['u1_transported','u2_fresh','u3_mixta'] — KILL-TEST (orden==spec): False.",
+      "parche": "Una línea en gate4: self.assertEqual([u['run_id'] for u in l2['unidades']], ['u1_transported','u2_fresh','u3_mixta'], 'el reporte reanudado no respeta el ORDEN de la spec') — el caso mixto reuso+rehecho es DONDE el orden se rompe."
+     },
+     {
+      "que": "M14 VIVO: escribir LEDGER.json directo (sin tmp+rename atómico) pasa los 7 gates — la atomicidad es inobservable en el camino feliz. El modelo de amenaza declarado de F7 es EXACTAMENTE la interrupción overnight: un kill durante el write final deja LEDGER.json truncado + LEDGER.sha256 viejo. NOTA adjunta: aun en el original, el par LEDGER.json/LEDGER.sha256 no es atómico COMO PAR (sidecar se escribe después del rename).",
+      "donde": "src/study07/artifacts/campana.py:263-265 (tmp.write_text + rename)",
+      "severidad": "MEDIO",
+      "evidencia": "Mutante: `(base_dir / 'LEDGER.json').write_text(cuerpo)`. Corrida: '7 passed in 17.26s'.",
+      "parche": "Kill-test spec-pin: mock.patch de pathlib.Path.write_text registrando destinos; assert que el cuerpo del ledger JAMÁS se escribe directo a LEDGER.json (siempre a *.tmp.json seguido de rename) y que al terminar no queda LEDGER.tmp.json. Para el par: escribir sha256 también con tmp+rename y en orden sha-después-de-json documentado."
+     },
+     {
+      "que": "M19 VIVO (mutante propio): _sha_file hasheando SOLO el primer chunk de 1MB pasa los 7 gates — todos los archivos del fixture son <1MB, así que la verificación truncada es indistinguible. En el census real (films de cientos de MB) el 'archivado verificado' cubriría solo el primer 1MB de cada film. Se compone con M15: el camino negativo de la verificación no se ejercita jamás.",
+      "donde": "src/study07/artifacts/campana.py:45-50 (_sha_file, loop de chunks)",
+      "severidad": "MEDIO",
+      "evidencia": "Mutante: `h.update(f.read(1 << 20))` sin loop. Corrida: '7 passed in 14.80s'.",
+      "parche": "Kill-test unitario: archivo de 2MB que difiere de otro SOLO después del byte 2^20; assert _sha_file(a) != _sha_file(b) y assert _sha_file(a) == hashlib.sha256(bytes_completos).hexdigest(). Alternativa integrada: gate7 con un archivo >1MB en base_dir y fault injection en la cola del archivo."
+     },
+     {
+      "que": "M17 VIVO: sha_json sin sort_keys pasa los 7 gates — los tests construyen la spec siempre con el mismo orden de inserción, así que el hash orden-dependiente es estable dentro de la suite. Riesgo real: una spec semánticamente IDÉNTICA regenerada con otro orden de claves (generador de tools/, round-trip JSON editado) produce OTRA spec_sha ⇒ la reanudación rechaza todos los COMPLETE ('COMPLETE de OTRA spec') y el census overnight se rehace de cero.",
+      "donde": "src/study07/artifacts/campana.py:40-42 (sha_json)",
+      "severidad": "MEDIO",
+      "evidencia": "Mutante: sort_keys=False. Corrida: '7 passed in 18.12s'. Evidencia ejecutada: MUTANTE sha_json({'campana':'x','spec_tipo':'M2'}) == sha_json(permutado) → False; ORIGINAL → True.",
+      "parche": "Kill-test de una línea: self.assertEqual(cp.sha_json({'a':1,'b':2}), cp.sha_json({'b':2,'a':1}), 'spec_sha debe ser invariante al orden de claves') — más un caso anidado {'x':{'b':1,'a':2}}."
+     },
+     {
+      "que": "M21 VIVO (mutante propio): pool con contexto fork en vez de spawn pasa los 7 gates — gate3 prueba bit-exactitud del RESULTADO (que fork también da acá porque cada unidad se auto-siembra), pero la propiedad declarada en el comentario ('sin herencia de estado') no tiene gate. A workers=8-12 overnight en macOS, fork+numpy/Accelerate es propenso a crashes/deadlocks y hereda estado global del padre.",
+      "donde": "src/study07/artifacts/campana.py:244 (mp.get_context('spawn'))",
+      "severidad": "BAJO",
+      "evidencia": "Mutante: mp.get_context('fork'). Corrida: '7 passed in 15.53s'.",
+      "parche": "Kill-test spec-pin: mock.patch de multiprocessing.get_context (wrapper que registra el argumento) y assert que correr_campana con workers>1 pide 'spawn'. Alternativa canario: global envenenado en el padre que un worker spawn no puede ver."
+     },
+     {
+      "que": "NOTA de crédito — lo que SÍ protege (14 mutantes MUERTOS): gate1 mata TODOS los mutantes del validador rama por rama (M1 población, M2 sha inventario, M3 intervenciones, M4 horizonte, M5 GOLD-en-unidades, M6 whitelist retención) e incluso el mutante de borde M20 (or→and: cubre faltantes-solo Y sobrantes-solo por separado). M7 muere en gate6; M11 en gate5; M12 y M13a en gate4; M16 en gate7. M9 (métricas de AIRE) muere por el ancla de física de gate2 (E0 transported >> fresh: un dict fijo no puede satisfacerla). M8 (no citar cápsulas) muere DEBAJO del gate: el WorldlineRecorder rechaza 'hashes_base_externa sin el capsule_sha256 de los nodos-cápsula' (defensa en profundidad heredada de F5-A5). El invariante interno 'reporte incompleto' (campana.py:252-253) participa en matar M13a.",
+      "donde": "tests/test_campanas_f7.py gates 1,2,4,5,6,7 + src/study07/artifacts/recorder.py (validación PROVENANCE)",
+      "severidad": "NOTA",
+      "evidencia": "22 corridas ejecutadas, una mutación por vez con restore+purga de __pycache__ entre cada una. MUERTOS con test y tiempo: M1-M6,M20→gate1 (0.16-0.19s); M7→gate6 (11.25s); M8→gate2 (0.25s, ValueError del recorder); M9→gate2 (3.32s); M11→gate5 (10.95s); M12,M13a→gate4 (8.10-8.50s); M16→gate7 (17.73s). Score: 14/22 muertos (64%).",
+      "parche": "Ninguno — registrar como fortaleza: el núcleo validador/flujo está genuinamente gateado; los 8 vivos se concentran en los invariantes de 'papeles' (re-verificación, orden, atomicidad, honestidad del sello, estabilidad de hash, definición de métricas) — el MISMO patrón de F2-F6."
+     }
+    ],
+    "resumen": "LENTE c2 — MUTACIÓN sobre campana.py @ ada062e (clon en scratchpad, git clone+checkout verificado; baseline 7 passed en 13.5s). 21 mutantes / 22 corridas (M13 en dos variantes), una mutación por vez con restore + purga de __pycache__, todos con evidencia ejecutada. RESULTADO: 14 MUERTOS / 8 VIVOS (score 64%). El patrón F2-F6 se repite: el validador M2 y el flujo (reanudación, no-pisa, cápsula adulterada) están genuinamente gateados — gate1 mata las 6 ramas + el mutante de borde or→and, y M8 muere por defensa en profundidad del recorder (PROVENANCE F5-A5) —, pero los invariantes de PAPELES anunciados en la candidata no tienen gate: (1) BLOQUEA_F7 — el 'archivado verificado' puede dejar de verificar y el sello 'sha256 por archivo, 0 discrepancias' MIENTE sin que gate7 lo note (M15), grave porque en este proyecto el archivo verificado precede a borrados de originales; (2) BLOQUEA_F7 — las 'métricas basicas_v1 congeladas' son redefinibles silenciosamente (M18: t_lock primer-cruce da 10 donde la definición congelada da None) porque ningún gate pinnea un solo valor; (3) ALTO — la 're-verificación de vistas desde disco' es removible (M10); además MEDIO: orden del reporte roto en reanudación (M13b, demostrado ejecutando el escenario gate4: u1,u3,u2), LEDGER no-atómico (M14), _sha_file truncado a 1MB invisible con fixtures chicos (M19), spec_sha inestable a permutación de claves con riesgo de rehacer el census entero (M17, demostrado); BAJO: fork vs spawn sin pin (M21). Cada VIVO trae kill-test concreto (mayormente 1-5 líneas en los gates + 2 fault-injections). Grep verificado: ningún otro test de la suite de 66 consume los símbolos mutados — los veredictos valen para la suite completa. Cierre limpio: clon restaurado a ada062e sin diffs; repos reales intactos (study07 @ ada062e porcelain vacío, study06 oráculo @ 39f8df6 porcelain vacío; ningún archivo R_f leído)."
+   },
+   {
+    "resumen": "DOUBLE TAP F7, lente c3 (contrato vs código + escala real) sobre ada062e, todo ejecutado en clon (git clone + checkout verificado; ambos repos reales intactos al cierre: study07 @ ada062e limpio, oráculo @ 39f8df6 limpio). LO QUE SÍ PROTEGE, medido: el validador M2 rechaza de verdad sus 16 ramas (población parcial, inventario ausente/sha errado, intervenciones, horizonte corto, reglas vacías, GOLD ausente, retención no implementada, cápsula sin pin); determinismo BIT workers=1==3 real; restos jamás borrados; COMPLETE/chunks/vistas con tmp+rename; el composer SÍ verifica genoma theta↔cápsula cuando hay cápsula pinneada; los manifiestos DE UNIDAD llevan git+porqué+spec_sha; el archivado que corre entero verifica sha-por-sha. PERO la máquina NO está lista para su próximo uso real (census 150-300 unidades overnight, workers 8-12): DOS hallazgos BLOQUEA_F7 ejecutados — (1) una sola unidad que falla (blow-up §8 incluido, resultado esperable en 150 genomas no explorados) aborta la campaña entera SIN ledger, la falla determinista hace el census incompletable para siempre (el M2 prohíbe sacar la unidad) y corregir la spec brickea el base_dir («COMPLETE de OTRA spec»), perdiendo las N-1 unidades corridas; (2) la reanudación — claim central de F7 — degrada el producto: las 'reusada' entran al LEDGER sin métricas ni view_hashes, la re-invocación PISA el ledger bueno con uno sin métricas, y una unidad muerta en la ventana COMPLETE→vistas (~20s/unidad a 250k ticks) queda para siempre sin vistas; gate 4 no chequea métricas, por eso pasó. Cuatro ALTO: cuelgue indefinido si un worker muere sin raise (OOM — mp.Pool.map no lo detecta, medido 30s+ sin respuesta), reuso «verificado por hash» que NO verifica (chunk corrupto reusado en silencio), binding theta↔block_id inexistente en unidades fresh (census físicamente mal etiquetado COMPILA; el inventario tiene genome_hash y el validador no lo pide), y campaña no re-ejecutable desde su LEDGER (la spec jamás se persiste; ledger sin git/entorno/fecha). Contrato: horizonte de emergencia AUTO-declarado (=1 compila), «reglas selladas en el prereg» sin prereg (no existe la clave), «ley única» sin forma ejecutable, y EXPERIMENT_CONTRACT sigue [BORRADOR] sin ninguna semántica F7 — corresponde enmienda como INSTRUMENT_CONTRACT post-F4. El generador de specs que campana.py promete en tools/ NO existe (census a mano = la clase de bug que nada atrapa). ESCALA, medida y extrapolada: tiempo OK (2.0-2.1 ms/tick ⇒ ~9 min/unidad a 250k ⇒ 3.8-5.6h el census), RAM OK (~0.4-0.5 GB/worker pico ⇒ ~6 GB con 12), checkpoints negligibles (12 KB), pero disco JUSTO (films medidos 124 MB/unidad sin comprimir tanto como M1-P1 + vistas + copia archivada ≈ 75-90 GB vs ~110 Gi libres) y el chunksize default de pool.map (10) desperdicia hasta ~1.5h de cola idle ⇒ chunksize=1. Evidencia ejecutada completa en scratchpad/c3-contrato-escala/exp/ (exp1-exp10 + salidas). Veredicto del lente: la física y la disciplina por-unidad están bien paridas; la capa CAMPAÑA todavía trata el fracaso parcial como imposible, y el census real es 8 horas de fracasos parciales.",
+    "hallazgos": [
+     {
+      "que": "Sin contención de fallas POR UNIDAD: cualquier raise de un worker (blow-up FloatingPointError del runner §8, cápsula adulterada, bug) aborta la campaña ENTERA sin escribir LEDGER; la falla determinista hace el census incompletable PARA SIEMPRE (el validador M2 prohíbe sacar la unidad de la población); corregir la spec cambia spec_sha y brickea el base_dir («COMPLETE de OTRA spec — no pisa»): las N-1 unidades corridas quedan inutilizables y hay que re-correr TODO en base_dir nuevo. No existe estado 'fallida' en el esquema del ledger. Además Pool.map sólo propaga el error cuando TODOS los chunks terminaron: el trabajo corre horas y muere sin reporte.",
+      "donde": "src/study07/artifacts/campana.py:240-248 (pool.map sin try por unidad), :221-226 (brick por spec_sha), runner.py:25-27 (raise §8)",
+      "severidad": "BLOQUEA_F7",
+      "evidencia": "exp2_unidad_que_falla.py: campaña 6u workers=3 con u3 de sha adulterado → ABORTA a 2.2s (RuntimeError), 5/6 unidades COMPLETE en disco, LEDGER.json existe: False; reintento idéntico falla IGUAL; spec corregida sobre el mismo base_dir → «u0_poblacion: COMPLETE de OTRA spec (9270270d35e4 != 52a2875f44e9) — una campaña no pisa otra (F7)».",
+      "parche": "try/except dentro de _correr_unidad → {'run_id', 'estado': 'fallida', 'error': repr+tick} como DATO del reporte (los divergentes son datos, igual que los aburridos); reanudación que rehace sólo fallidas; enmienda del contrato distinguiendo falla-dato (blow-up físico) de aborto-integridad (cápsula adulterada); gate nuevo: campaña con 1 unidad divergente produce LEDGER completo con esa unidad reportada fallida."
+     },
+     {
+      "que": "La REANUDACIÓN (claim central de F7) degrada el producto del census: unidades 'reusada' entran al LEDGER sólo con {run_id, estado, worldline_hash} — sin métricas ni view_hashes; una re-invocación PISA el LEDGER bueno con uno sin métricas (el ledger es el único artefacto que agrega la ciencia y no tiene no-pisa); y una unidad muerta entre rec.close() y las vistas (ventana medida ~20s/unidad a 250k ticks: load 1.2s + energy 13s + phase 3.3s + write 2s) queda COMPLETE sin vistas PARA SIEMPRE — el reuso jamás las regenera. Tras cualquier interrupción overnight, el census «reporta la población entera» sólo de nombre.",
+      "donde": "src/study07/artifacts/campana.py:227-228 (reusada sin métricas), :262-265 (LEDGER se reescribe sin no-pisa), :187-199 (vistas después del COMPLETE)",
+      "severidad": "BLOQUEA_F7",
+      "evidencia": "exp1[b]: re-corrida idéntica → 6/6 'reusada', metricas por unidad [False×6], y el LEDGER.json EN DISCO (que tenía las 6 con métricas) quedó degradado. exp3b: unidad con COMPLETE y vistas borradas (estado post-kill real) → 'reusada', views regeneradas: False, metricas: False. Gate 4 (test_campanas_f7.py:181-196) no chequea 'metricas' en reusadas — por eso los 7/7 pasaron.",
+      "parche": "En el reuso: verificar que las vistas existen (load_view fail-loud) y recomputar/releer métricas (determinista y barato: ~16s/unidad medido); si faltan vistas, rehacer la fase de observación sin re-integrar; LEDGER con no-pisa propio (versionado o merge verificado con el previo); endurecer gate 4 exigiendo métricas para TODAS las unidades tras reanudación."
+     },
+     {
+      "que": "Worker muerto SIN raise (OOM-killer, segfault) = CUELGUE INDEFINIDO del census: mp.Pool no detecta la muerte del proceso y map() espera para siempre — sin error, sin ledger, sin timeout. Un overnight con 12 workers termina en máquina colgada a la mañana.",
+      "donde": "src/study07/artifacts/campana.py:244-246 (ctx.Pool(...).map sin timeout)",
+      "severidad": "ALTO",
+      "evidencia": "exp5_worker_sigkill.py: patrón idéntico (mp.get_context('spawn').Pool(3).map) con una tarea que se SIGKILLea a sí misma → map_async.get(timeout=30) expira sin respuesta ni excepción; con .map() a secas (el código real) el bloqueo no termina jamás.",
+      "parche": "concurrent.futures.ProcessPoolExecutor (levanta BrokenProcessPool fail-loud ante worker muerto) o imap_unordered con timeout por unidad derivado del horizonte declarado; al expirar, unidad → 'fallida' (se integra con el parche del hallazgo 1)."
+     },
+     {
+      "que": "El reuso dice «idéntica, verificada por hash» (docstring campana.py:15 y bitácora §13) pero SÓLO lee el archivo COMPLETE: no re-verifica los chunk_shas. Un film corrupto en disco (bit-rot, copia a medias, adulteración) se reusa en silencio y su worldline_hash entra al LEDGER del census como si el film estuviera íntegro.",
+      "donde": "src/study07/artifacts/campana.py:221-228 (reuso) + recorder.py:42-49 (worldline_hash sólo lee COMPLETE)",
+      "severidad": "ALTO",
+      "evidencia": "exp1[c]: 1 byte flipeado en chunk_00000.npz de u2_fresh (unidad COMPLETE) → re-corrida de la campaña NO falla: estado 'reusada', worldline_hash 1a79bba452b78d9f citado en el ledger con el film corrupto debajo.",
+      "parche": "En el reuso, load_worldline(run_dir) (ya verifica chunk_shas contra COMPLETE, fail-loud) en lugar de worldline_hash a secas; costo medido ~0.1s por unidad de 25k ticks (~segundos a 250k) — asumible incluso ×300."
+     },
+     {
+      "que": "Binding theta↔block_id INEXISTENTE para unidades fresh: una spec M2 con los thetas INTERCAMBIADOS entre block_ids de la población COMPILA y corre — census físicamente mal etiquetado con «población completa» sólo de nombre. La cláusula «población == inventario COMPLETO por hash» se ejecuta a nivel NOMBRE (set de block_ids), no a nivel genoma. El inventario real (inventario_v4.json) TIENE genome_hash por block_id y el validador no lo recibe ni lo pide ({'sha256','block_ids'}); el composer sólo verifica genoma contra cápsula cuando hay cápsula pinneada. Es exactamente el bug que produciría un generador de specs con un zip corrido — y no hay generador (hallazgo 9).",
+      "donde": "src/study07/artifacts/campana.py:95-104 (población por nombre) + composer.py:56-60 (fresh sin verificación) vs tools/inventario_v4.py:75-87 (genome_hash disponible)",
+      "severidad": "ALTO",
+      "evidencia": "exp6 caso 1: unidad-población fresh con c0.theta ↔ c1.theta intercambiados bajo sus block_ids → «COMPILA (validar_campana no objeta)»; nada aguas abajo lo detiene (el recibo registra genome_hash pero nadie lo cruza contra el block_id declarado).",
+      "parche": "Inventario del validador con genome_hash por block_id y regla dura M2: genome_sha256(theta embebido) == genome_hash[block_id] para todo constituyente es_poblacion (compat.genome_sha256 ya existe y es la verificación triple del inventario); rechazo con mensaje propio."
+     },
+     {
+      "que": "La campaña NO es re-ejecutable desde su LEDGER: la spec auto-contenida (el corazón de F7: «componer la campaña es leer la spec») JAMÁS se persiste — spec_sha256 cita un objeto que la máquina nunca guardó y que vive sólo en el script del caller; el LEDGER tampoco lleva git commit, entorno, timestamp ni porqué (sólo los manifiestos de unidad llevan git). Si el driver del census se pierde o cambia, la campaña archivada es un hash de nada. PROVENANCE_CONTRACT: «TODA salida sella los hashes de su base» — el artefacto de nivel campaña es más débil que sus unidades.",
+      "donde": "src/study07/artifacts/campana.py:254-267 (ledger sin spec/git/entorno; ningún write de la spec)",
+      "severidad": "ALTO",
+      "evidencia": "exp1[a]: raíz de la campaña = ['LEDGER.json','LEDGER.sha256','unidades','views'] — sin SPEC; claves del LEDGER sin git/commit/entorno/porque ([]); manifest de unidad SÍ tiene {'commit':'ada062e','dirty':False}.",
+      "parche": "Escribir SPEC.json (el dict exacto, tmp+rename, no-pisa por spec_sha) en base_dir ANTES de correr, y sumar al ledger: spec_path+sha, git commit+dirty, entorno (python/numpy/machine), timestamp, porque, workers/chunk_ticks/checkpoint_every usados."
+     },
+     {
+      "que": "Cláusulas del contrato SIN forma ejecutable (todo esto compila): horizonte de emergencia AUTO-declarado — horizonte_emergencia_ticks=1 pasa, nadie valida que el declarado sea honesto porque el prereg no existe como clave de la spec; «reglas de clasificación selladas en el prereg» = dict no-vacío de texto libre (sin prereg_sha nada las sella); la «ley única» del census (§11 bitácora) no se chequea — kappa_global=99.9 y temperature=1.0 en unidades sueltas compilan. Y EXPERIMENT_CONTRACT sigue [BORRADOR — Fase 1] sin NINGUNA de las semánticas ejecutadas de F7 (spec auto-contenida, retención, ledger población entera, restos, no-pisa, archivado, GOLD en unidad, horizonte): corresponde enmienda que selle lo ejecutado, como INSTRUMENT_CONTRACT quedó «v1, sellado tras double tap F4».",
+      "donde": "src/study07/artifacts/campana.py:105-119 y CLAVES_SPEC:35-36 vs specs/EXPERIMENT_CONTRACT.md:13-19; precedente specs/INSTRUMENT_CONTRACT.md:1",
+      "severidad": "MEDIO",
+      "evidencia": "exp6 casos 2-4: horizonte=1 COMPILA; engine_params heterogéneos COMPILAN; reglas texto-libre COMPILAN; CLAVES_SPEC impresas: no existe prereg/prereg_sha256 en el tipo spec.",
+      "parche": "Claves nuevas duras M2: prereg_path+prereg_sha256 (el horizonte y las reglas se COMPARAN contra el prereg leído, no contra sí mismos) + engine_params idénticos entre unidades del census (o desigualdad declarada con porqué); tras cerrar el tap, enmendar EXPERIMENT_CONTRACT a v1 sellado con las cláusulas ejecutables reales."
+     },
+     {
+      "que": "Archivado NO atómico ni reanudable: copytree interrumpido (kill/OOM/corte — a escala census son ~40 GB, minutos de ventana) deja el destino a medias SIN marcador; el reintento bloquea ese destino PARA SIEMPRE («no se pisa») porque el código no mira ARCHIVADO.json para distinguir archivo-verificado de restos-de-corte; en el disco externo queda un directorio que PARECE campaña válida (tiene LEDGER.json) pero está incompleto. ARCHIVADO.json además se escribe sin tmp+rename.",
+      "donde": "src/study07/artifacts/campana.py:269-283",
+      "severidad": "MEDIO",
+      "evidencia": "exp4: destino pre-poblado con copia parcial sin ARCHIVADO.json (estado exacto post-kill de copytree) → RuntimeError «ya existe — el archivo no se pisa»; ningún camino del código lo desbloquea ni lo señala como corrupto.",
+      "parche": "Copiar a destino.with_suffix('.tmp'), verificar sha-por-sha, escribir ARCHIVADO.json (tmp+rename) y RENAME final al destino — el no-pisa chequea sólo el destino final y un .tmp huérfano es basura reciclable declarada; opcional: al chocar con destino existente, decir si tiene ARCHIVADO.json en el mensaje."
+     },
+     {
+      "que": "El generador de specs del census NO existe: campana.py:10-11 lo promete («El generador de specs (tools/) es quien cruza al oráculo; este módulo no») pero tools/ sólo tiene correr_m1p1, gen_f6/f7/f8 e inventario_v4. El census real de 150-300 unidades se escribiría A MANO (150 thetas embebidos + 150 block_ids + gold + horizonte), que es exactamente la clase de error (zip corrido, theta trocado, unidad olvidada) que el hallazgo 5 demuestra que nada atrapa.",
+      "donde": "src/study07/artifacts/campana.py:10-11 vs tools/ (ls ejecutado)",
+      "severidad": "MEDIO",
+      "evidencia": "ls tools/ → correr_m1p1.py, gen_f6_from_oracle.py, gen_f7_observables.py, gen_f8_transport.py, inventario_v4.py; grep census/generador → sin resultados.",
+      "parche": "tools/gen_census_spec.py: lee data/inventario_v4.json (verificando su sha256), embebe los 150 thetas desde blocks canonical, pinnea cápsulas si el census es transported, toma horizonte/reglas/gold del prereg citado y emite la spec + su sha — el census jamás se escribe a mano; si no llega para F7, borrar la promesa del docstring y declarar el gap."
+     },
+     {
+      "que": "ESCALA medida — aguanta, con margen JUSTO en disco y una cola evitable de CPU: run 2.0-2.1 ms/tick (consistente con M1-P1: 1.75-1.88) ⇒ ~9 min/unidad a 250k; census 300u ≈ 5.6h con 8 workers / 3.8h con 12 (antes de degradación por E-cores). RAM pico/worker extrapolada 0.4-0.5 GB (film en memoria 16.8 MB a 25k ⇒ 168 MB a 250k, ×2 transitorio del concatenate + baseline 56 MB; RSS medido 121 MB a 25k) ⇒ 12 workers ≈ 6 GB: OK. Checkpoints 12 KB c/u ⇒ 1500 ≈ 18 MB: negligible. Disco: film 124 MB/unidad medido (el ~66 MB del plan es la compresión favorable de M1-P1) + vistas 23 MB ⇒ 300u ≈ 37-44 GB local + copia archivada ≈ 75-90 GB contra ~110 Gi libres: JUSTO. pool.map con 300 args aguanta, pero el chunksize DEFAULT = 10 (300u/8w) asigna tandas de 10 unidades (~90 min) por worker: cola idle de hasta ~1 tanda ≈ 1-1.5h regalada.",
+      "donde": "src/study07/artifacts/campana.py:246 (map sin chunksize) — mediciones exp10, extrapolación lineal verificada en 2 puntos (12.5k/25k)",
+      "severidad": "BAJO",
+      "evidencia": "exp10: {12500: run 25.4s, energy 0.65s, rss 81 MB, film 6.2 MB} / {25000: run 52.2s, energy 1.29s, rss 121 MB, film 12.4 MB} — lineal; divmod(300, 8*4) ⇒ chunksize=10, divmod(300,12*4) ⇒ 7.",
+      "parche": "pool.map(..., chunksize=1) (unidades de ~9 min: el overhead de despacho es nulo y la cola cae a ≤1 unidad); pre-vuelo del census: df del disco local y del externo contra la proyección n_unidades×(film+vistas)×2, abortar si no entra."
+     },
+     {
+      "que": "spawn re-importa __main__ en cada worker: un driver de census SIN el guard if __name__=='__main__' re-ejecuta correr_campana recursivamente en cada worker sobre el MISMO base_dir (pasó DE VERDAD en este tap: la primera versión del script de evidencia produjo un runaway de campañas anidadas que hubo que matar a mano). campana.py no documenta el requisito, y no hay lock del base_dir: dos invocaciones concurrentes (doble nohup, el guard olvidado) se pisan los rename a restos_*_n y corren la misma unidad dos veces.",
+      "donde": "src/study07/artifacts/campana.py:244 (ctx spawn) — sin lockfile en correr_campana",
+      "severidad": "NOTA",
+      "evidencia": "Runaway real reproducido y matado en este tap (exp1 v1 sin guard, task bktrj5k8h exit 144); tools/correr_m1p1.py:177 tiene el guard pero es convención no documentada.",
+      "parche": "Documentar el requisito del guard en el docstring de correr_campana + lockfile O_EXCL en base_dir/CORRIENDO al entrar (fail-loud si existe, se borra al salir; una interrupción lo deja y el operador lo remueve declarándolo)."
+     },
+     {
+      "que": "Dos límites de resistencia menores, para que el gate no los confunda con protección: (a) CERO fsync en todo src/ — el tmp+rename es atómico ante crash de PROCESO pero ante corte de energía la atomicidad es de metadata: COMPLETE puede sobrevivir con chunks truncados debajo (overnight en una Mac que duerme/corta no es hipotético); (b) el chequeo «reporte incompleto» (campana.py:252-253) es INALCANZABLE — resultados se construye de la misma lista que lo consume y un worker fallido raise-a antes: defensa en profundidad, no protección real.",
+      "donde": "src/study07/artifacts/ (grep fsync: 0 hits) + campana.py:252-253",
+      "severidad": "NOTA",
+      "evidencia": "grep -rn fsync src/ tools/ → vacío; lectura de correr_campana:218-253 — todo run_id de spec['unidades'] termina en resultados o en excepción previa, len(reporte)!=len(unidades) no tiene camino.",
+      "parche": "Si se quiere resistencia a cortes de energía: os.fsync del fd antes del rename de COMPLETE y LEDGER (costo negligible: 2 archivos chicos por unidad/campaña); si no, declarar el límite en WORLDLINE_SCHEMA. El chequeo muerto puede quedarse, pero que ningún gate lo cite como protección."
+     }
+    ]
+   },
+   {
+    "resumen": "TAP c4 sobre clon @ ada062e (66 passed baseline). 8 sondas EJECUTADAS. Lo que SI protege: T>0 determinista BIT bajo pool (workers=3==1 con kicks estocasticos); rechazo capsula+T>0 llega con el mensaje bueno del composer a traves del pool; reanudacion tras kill -9 al padre convergio LIMPIA y BIT-exacta a la referencia (rename-aside + COMPLETE atomico); colision de views entre unidades imposible (run_id en manifest => worldline_hash distinto); metricas_basicas_v1 NO asume 2 nodos (campana heterogenea 1/2/3 nodos corre y el ledger la refleja); M2 frena ticks<horizonte. Los agujeros estan a escala census: (1) BLOQUEA_F7 — la reanudacion escribe un LEDGER.json final donde toda unidad reusada queda SIN metricas ni view_hashes, y re-correr una campana ya completa PISA su LEDGER bueno con uno degradado (mismo spec_sha: el gate 5 no aplica) — un census interrumpido a 140/150 termina con ledger inutilizable para clasificar; (2) ALTO — kill -9 a un worker real cuelga mp.Pool PARA SIEMPRE (180s+ verificado, resto de unidades completas, sin LEDGER): overnight con OOM = campana muda; (3) ALTO — el reuso no verifica integridad: chunk corrupto en unidad COMPLETE se reusa en silencio y el ledger cita un hash que el disco ya no cumple (load_run SI lo detecta, pero nadie lo llama). Ademas: identidad del film depende de chunk_ticks/entorno fuera del spec_sha; poblacion M2 identificada por block_id STRING (thetas trocados pasan); unidad de 1 nodo clasificaria t_lock=0 con R identicamente 1; sin lock de campana; rendimiento y costo de disco en ningun lado (medido: ~8.6 s/unidad a 4000 ticks 2 nodos, ~312 B/tick/nodo; census 300x100k ~19 GB + restos + x2 archivado). Repos reales verificados intactos al cierre (study07 ada062e limpio, oraculo 39f8df6 limpio); ningun proceso colgado.",
+    "hallazgos": [
+     {
+      "que": "La reanudacion degrada el LEDGER final: toda unidad reusada entra al reporte solo con {run_id, estado, worldline_hash} — SIN metricas ni view_hash_energy/phase — y el LEDGER.json nuevo PISA al anterior (tmp.rename incondicional). Re-correr una campana ya completa reemplaza un ledger con metricas por uno sin ellas; el gate 5 (no-pisa) no aplica porque el spec_sha coincide. En el census real (interrupcion a 140/150 + relanzar), el LEDGER final — el artefacto citable — queda sin metricas para la mayoria de la poblacion, y clasificar exige re-derivar a mano. Gate 4 chequea estados y hashes pero jamas que las reusadas conserven metricas.",
+      "donde": "src/study07/artifacts/campana.py:227-228 (resultados de reusada sin metricas) y :262-267 (LEDGER.tmp.rename pisa); tests/test_campanas_f7.py:181-196 (gate 4 no lo cubre)",
+      "severidad": "BLOQUEA_F7",
+      "evidencia": "Sonda A ejecutada: correr_campana 2 veces la misma spec => LEDGER.json en disco con unidades SIN metricas = ['u1_transported','u2_fresh','u3_mixta'] (antes de la 2da corrida ese mismo archivo las tenia). Reanudacion parcial: u2 completa con metricas, u1/u3 reusadas sin metricas.",
+      "parche": "En el camino de reuso, recuperar el resultado completo: las views cacheadas son deterministas y verificadas — api.load_view(views_root/wl_hash[:16]/instrumento/config_hash) + metricas_basicas_v1 recompute (barato, sin motor); o fusionar contra el LEDGER.json previo si existe y su spec_sha coincide. Y jamas degradar: antes del rename, si existe LEDGER.json de la misma spec con mas informacion por unidad, rechazar o fusionar. Gate nuevo: reanudar y exigir metricas en TODAS las unidades del ledger en disco."
+     },
+     {
+      "que": "kill -9 a un worker del pool (OOM killer, kernel, operador) cuelga la campana PARA SIEMPRE: mp.Pool.map espera un resultado que nunca llega. Las demas unidades terminan, el padre queda vivo sin hacer nada, no hay LEDGER ni error. En el census overnight con workers=8-12, un solo worker muerto = maquina ociosa toda la noche sin aviso. (Matar el resource_tracker en cambio es inocuo: campana termino OK.)",
+      "donde": "src/study07/artifacts/campana.py:244-246 (ctx.Pool(...).map sin proteccion contra worker muerto)",
+      "severidad": "ALTO",
+      "evidencia": "Sonda C1 ejecutada: campana 4 unidades workers=2, kill -9 al PID con spawn_main a los 6s => VEREDICTO: POOL COLGADO tras 180s; u2/u3/u4 COMPLETE en disco, u1 sin COMPLETE, sin LEDGER, padre vivo. Control: mismo kill al resource_tracker => campana completa LEDGER_OK.",
+      "parche": "concurrent.futures.ProcessPoolExecutor(mp_context=spawn) — muere fail-loud con BrokenProcessPool cuando un worker desaparece — manteniendo el mismo _correr_unidad y el gate de determinismo; o watchdog con timeout por unidad declarado. Gate nuevo: kill -9 a un worker y exigir excepcion (no cuelgue) en tiempo acotado."
+     },
+     {
+      "que": "El reuso de unidades COMPLETE no verifica la integridad del film en disco: solo compara campana_spec_sha256 del manifest y lee el hash del marcador COMPLETE (worldline_hash abre COMPLETE, no los chunks). Un chunk con bit-rot/truncado se reusa en silencio y el LEDGER cita el worldline_hash ORIGINAL que el contenido ya no cumple — procedencia falsa firmada. A escala census (20GB, discos externos, interrupciones) es el escenario esperable. El docstring promete 'COMPLETE se REUSA (identica, verificada por hash)' — hoy es prosa.",
+      "donde": "src/study07/artifacts/campana.py:221-229 (reuso) y recorder.py:42-49 (worldline_hash lee solo COMPLETE)",
+      "severidad": "ALTO",
+      "evidencia": "Sonda B ejecutada: corromper 1 byte de chunk_00000.npz de u2_fresh COMPLETE => re-corrida NO fallo, estados todos 'reusada', hash citado igual al original. Control: api.load_run sobre la misma unidad detecta 'chunk_00000.npz: sha 6350d8cf5e1e != COMPLETE 3ef41906bfe3'.",
+      "parche": "En el reuso llamar load_worldline(run_dir) (ya verifica sha de cada chunk + manifest_sha) antes de aceptar; si falla, mover a restos_* y rehacer — exactamente la maquinaria que ya existe. Gate: corromper un chunk de una COMPLETE y exigir re-hacer, no reusar."
+     },
+     {
+      "que": "La identidad del film (worldline_hash) incluye parametros del RUNNER y del ENTORNO que NO estan en el spec_sha: chunk_ticks entra al manifiesto (y cambia los sha de chunks), git commit/dirty y python/numpy/machine tambien. Misma spec => hashes DISTINTOS con otro chunk_ticks; una reanudacion con otro chunk_ticks (u otra maquina, o repo dirty) mezcla en un solo LEDGER identidades de dos configuraciones, sin que el ledger registre chunk_ticks/workers/entorno para explicarlo. 'Specs gemelas => mismo film' NO es cierto entre corridas del runner.",
+      "donde": "src/study07/artifacts/campana.py:202-207 (chunk_ticks/checkpoint_every como args, fuera de la spec) y recorder.py:184-190 (git/entorno/chunk_ticks al manifiesto)",
+      "severidad": "MEDIO",
+      "evidencia": "Sonda G ejecutada: misma spec (spec_sha 9b30d5715448) con chunk_ticks=4096 vs 64 => hashes distintos en las 3 unidades (b517dd1b9c7c vs 70fb1a4265fa, ...). Reanudacion con chunk_ticks=64 tras romper u2: u2 cambia de hash, u1 reusada conserva el viejo; el ledger no registra chunk_ticks (clave ausente).",
+      "parche": "Subir chunk_ticks (y checkpoint_every) a la spec — son parte de la definicion del artefacto — o registrar en el LEDGER chunk_ticks/workers/entorno por corrida y exigir en la reanudacion el MISMO chunk_ticks que la campana ya usada (detectable leyendo el manifest de cualquier COMPLETE)."
+     },
+     {
+      "que": "La poblacion M2 se identifica por block_id STRING, no por genoma: el inventario es {sha256, block_ids} y el validador solo cruza nombres. Thetas TROCADOS entre dos block_ids (unidades fresh, sin capsula que los pinnee) pasan el validador — un bug de emparejamiento en el generador de specs correria el census entero con genomas equivocados citando el catalogo correcto por hash. Ademas la poblacion es un SET: el mismo block_id como es_poblacion en DOS unidades (doble conteo) pasa. Y un constituyente es_poblacion sin block_id revienta con KeyError crudo, no mensaje de contrato.",
+      "donde": "src/study07/artifacts/campana.py:95-104 (poblacion por block_id, set) ; el theta embebido solo se cruza contra capsulas (composer.py:64-67), nunca contra el inventario",
+      "severidad": "MEDIO",
+      "evidencia": "Sonda F ejecutada: (2) thetas trocados entre los dos block_ids del inventario, fresh => validador PASA; (3) poblacion completa declarada DOS veces (u1 y u4) => PASA; (6) es_poblacion sin block_id => KeyError: 'block_id' crudo.",
+      "parche": "Inventario con block_id -> genome_sha256 (el generador de tools/ ya cruza al oraculo y lo tiene) y validar genome_sha256(theta embebido) == inventario[block_id] para todo es_poblacion; exigir multiplicidad exactamente 1 por block_id (o declarada en la spec); envolver el KeyError en el mensaje de contrato."
+     },
+     {
+      "que": "Una unidad de 1 nodo compila en M1 y M2 (nada mira n_nodes) y metricas_basicas_v1 la clasifica t_lock_tick=0 con R_max=1.000000 exacto — R es identidad-por-construccion con 1 nodo (|exp(i·theta)|=1, F4 NO-CUBIERTO 4), no fisica. En un census, cualquier unidad de 1 nodo apareceria 'locked de nacimiento' en el ledger. Ademas t_half/t_dec10 miden SOLO el nodo 0 (e0=e_tot[0,0]): en campanas heterogeneas la metrica de decaimiento depende del orden de constituyentes, no declarado.",
+      "donde": "src/study07/artifacts/campana.py:132-143 (metricas: e0 nodo 0, t_lock sobre r) ; validar_campana no tiene regla de n_nodes",
+      "severidad": "MEDIO",
+      "evidencia": "Sonda D ejecutada: campana heterogenea M1 con unidad de 1 nodo (edges=[]) => corre 'completa', R_max=1.000000, t_lock=0, R_ult10pct=1.000000; las de 2 y 3 nodos dan R fisico (0.688, 0.768) y el ledger refleja n nodos por unidad en las claves E0_nodo*.",
+      "parche": "Guard declarado en metricas_basicas_v1: con n_nodes==1 emitir t_lock_tick=None y R_*=None con nota 'R identidad por construccion' (o regla del validador exigiendo n_nodes>=2 para unidades es_poblacion); declarar en la spec cual nodo ancla t_half o calcularlo por nodo."
+     },
+     {
+      "que": "No hay lock de campana: kill -9 al PADRE deja workers huerfanos VIVOS que siguen escribiendo (completaron sus unidades 40s despues del kill, sin LEDGER), y nada impide relanzar sobre el mismo base_dir con huerfanos activos ni dos corridas concurrentes de la misma campana. En lo PROBADO la carrera convergio limpia: la reanudacion inmediata movio los run_dirs a restos_* (el huerfano muere al perder su directorio), rehizo todo y el resultado fue BIT-exacto a la referencia limpia con metricas completas — rename-aside + COMPLETE atomico son proteccion real. Pero la ventana existe (huerfano que escribe COMPLETE justo entre el chequeo y el rename) y no esta vedada.",
+      "donde": "src/study07/artifacts/campana.py:213-239 (escaneo/rename sin lock ni pidfile)",
+      "severidad": "MEDIO",
+      "evidencia": "Sondas C2/C3 ejecutadas: kill -9 al padre a los 6s => worker huerfano vivo (ppid=1), u1/u2 COMPLETE 40s DESPUES del kill, sin LEDGER. Reanudacion inmediata con huerfanos vivos => exit 0, restos_u1/restos_u2 preservados (1 archivo, sin COMPLETE), 4/4 hashes identicos a la corrida limpia de referencia.",
+      "parche": "Lockfile en base_dir (O_EXCL con pid+timestamp; stale si el pid no existe) tomado antes del escaneo y liberado tras el LEDGER; documentar en el runbook del census: tras un kill del padre, esperar/matar huerfanos (pgrep spawn_main) antes de relanzar."
+     },
+     {
+      "que": "El rendimiento no queda registrado en NINGUN lado: el LEDGER es deterministicamente puro (correcto — sin timestamps no hay ruido en el hash) pero no existe sidecar de duracion/ticks-por-segundo, y dimensionar el census overnight (150-300 unidades, workers=8-12) queda a ojo. Medido en esta maquina: ~8.6 s/unidad a 4000 ticks 2 nodos (~470 ticks/s por worker, incluye views+metricas) => 300 unidades x 20000 ticks con workers=10 ~ 22 min; con 100000 ticks ~ 1.8 h — numeros que HOY nadie declara ni versiona.",
+      "donde": "src/study07/artifacts/campana.py:254-261 (ledger sin claves de tiempo; grep de time/duracion en el modulo: cero fuera de 'RuntimeError')",
+      "severidad": "BAJO",
+      "evidencia": "Sonda H ejecutada: claves del ledger = [campana, hashes_base_externa, n_unidades, probeta_gold_block_id, reglas_clasificacion, reusadas, schema, spec_sha256, spec_tipo, unidades] — sin duracion/workers/chunk_ticks. Timing medido: 4 unidades x 4000 ticks workers=1 = 34.9 s.",
+      "parche": "Sidecar RENDIMIENTO.json al lado del LEDGER (fuera de todo hash): por unidad t_wall, ticks/s, worker; total campana + workers usados. Declarado como NO-determinista. Suficiente para dimensionar el census y detectar unidades anomalas."
+     },
+     {
+      "que": "Nada estima ni avisa el costo de disco ANTES de correr: correr_campana arranca a ciegas. Medido: ~312 bytes/tick/nodo (film comprimido + views + sidecars) => census 300 unidades x 100k ticks 2 nodos ~ 19 GB, MAS restos_* (que por diseno JAMAS se borran: cada interrupcion duplica lo corrido hasta ahi) MAS x2 si se archiva (copytree, y la verificacion relee origen y destino enteros: ~40 GB de lectura). Un disco lleno a mitad de census overnight = fallo a las 3 AM con restos gigantes.",
+      "donde": "src/study07/artifacts/campana.py:202-284 (sin preflight de espacio; archivado :269-283 duplica y relee todo)",
+      "severidad": "BAJO",
+      "evidencia": "Sonda H ejecutada: du campana 4x4000x2 = 9.5M (8.0M unidades + 1.5M views) => 312 B/tick/nodo; extrapolaciones 150x20k=1.9GB, 300x20k=3.7GB, 300x100k=18.7GB. grep disco/statvfs/disk_usage en campana.py: cero.",
+      "parche": "Preflight DECLARADO: estimar bytes = B_medido x sum(ticks x n_nodos) (constante medida y versionada en la spec o en el runner), compararlo con shutil.disk_usage(base_dir).free y abortar fail-loud si no alcanza, con el numero en el mensaje; sumar los restos_* existentes al informe."
+     },
+     {
+      "que": "Limites del validador en los bordes: horizonte_emergencia_ticks=0 pasa M2 con TODAS las unidades en ticks=0 (la declaracion de horizonte no se valida a si misma, >0); en M1 ticks=0 corre y publica un film de 1 fila (solo estado PRE-step) con estado 'completa' y metricas degeneradas (E_final==E0, R_ult10pct=R[0], t_half=None) — un artefacto citable de cero evolucion. Campana de 1 unidad si funciona (probado via reanudacion parcial: 1 pendiente).",
+      "donde": "src/study07/artifacts/campana.py:105-109 (solo ticks<hz; hz sin cota) y runner.py:16 (range(1, 0+1) vacio)",
+      "severidad": "BAJO",
+      "evidencia": "Sondas D/F ejecutadas: M2 con horizonte=0 y ticks=0 => validador PASA; M1 con unidad cero_ticks => 'completa', R_max=0.688 (fila PRE-step), t_half=None, E_final==E0.",
+      "parche": "validar horizonte_emergencia_ticks >= 1 en M2 (una emergencia declarada en 0 ticks es un sinsentido de prereg) y ticks >= 1 por unidad en ambos tipos (o exigir declaracion explicita 'unidad_estatica' si algun dia se quiere la fila 0 sola)."
+     },
+     {
+      "que": "M1 laxa confirmada POR DISENO y sus fantasmas son inertes: es_poblacion fantasma, claves inventadas en spec/unidad y 'eventos_futuros' (el veto es solo sobre las claves exactas 'eventos'/'intervenciones') pasan sin ruido — pero el runner de campanas NO tiene maquinaria de intervencion (run_net no acepta eventos) y el recorder veta eventos_declarados/linaje en M2, asi que no hay camino a fisica intervenida silenciosa. La probeta GOLD es chequeo de PRESENCIA: nada contrasta el resultado de la unidad GOLD contra referencia sellada (deteccion de drift de instrumentos queda fuera de F7). NO-CUBIERTO declarable, no bug.",
+      "donde": "src/study07/artifacts/campana.py:76-79 (veto por clave exacta), :113-119 (GOLD presencia)",
+      "severidad": "NOTA",
+      "evidencia": "Sonda F ejecutada: M1 con es_poblacion fantasma + eventos_futuros + clave_inventada => PASA. Proteccion verificada en codigo: _correr_unidad/run_net sin parametro de eventos; recorder.py:69-73 veta M2 con eventos_declarados.",
+      "parche": "Lista NO-CUBIERTO de F7 (declarar, no corregir): M1 no valida poblacion/horizonte/GOLD ni claves desconocidas; GOLD = presencia sin contraste (el contraste con metricas selladas de la GOLD es candidato natural a F7.2, junto al whitelist de claves de unidad estilo armar_config)."
+     },
+     {
+      "que": "Lo que SI protege, medido — para el registro del double tap: (a) T>0 con semilla declarada es BIT-exacto bajo pool (workers=3==1, kicks estocasticos en el film y en el hash); (b) el rechazo capsula+T>0 del composer llega al caller con su mensaje integro tanto con workers=1 como 2 (pool.map re-lanza limpio); (c) colision de views entre unidades es imposible dentro de una campana: el run_id viaja en el manifiesto => worldline_hash distinto por unidad, y la re-escritura de la MISMA vista es idempotente (mismo view_hash) — verificado en cada reanudacion; (d) campanas heterogeneas (1/2/3 nodos, engine_params por unidad) corren y el ledger las refleja; (e) el driver de census DEBE llevar guard __main__ (spawn re-importa el modulo principal: sin guard, el worker intenta re-correr la campana y muere con el error de freeze_support — footgun operativo del runbook, no del modulo).",
+      "donde": "sondas E, D, C3 y el primer intento de C1 (harness sin guard)",
+      "severidad": "NOTA",
+      "evidencia": "Sonda E: 'T>0: workers=3 == workers=1 BIT: True'; mensajes identicos del composer en w=1 y w=2. Sonda C3: reanudacion re-escribio views sin conflicto (view_hash identico). Harness propio sin __main__ guard => RuntimeError freeze_support en los workers spawn.",
+      "parche": "Nada que tocar en el modulo: volcarlo al runbook del census (guard __main__ obligatorio en el driver; un nohup por batch segun protocolo) y citar estas anclas en la declaracion de F7."
+     }
+    ]
+   }
+  ]
+ },
+ "workflowProgress": [
+  {
+   "type": "workflow_phase",
+   "index": 1,
+   "title": "Ataque"
+  },
+  {
+   "type": "workflow_phase",
+   "index": 2,
+   "title": "Sello"
+  },
+  {
+   "type": "workflow_agent",
+   "index": 1,
+   "label": "c1:test-del-test",
+   "phaseIndex": 1,
+   "phaseTitle": "Ataque",
+   "agentId": "a8d8e5f2e5e8bcf25",
+   "model": "claude-fable-5",
+   "state": "done",
+   "startedAt": 1785440578057,
+   "queuedAt": 1785440572670,
+   "attempt": 1,
+   "lastToolName": "StructuredOutput",
+   "lastToolSummary": "DOUBLE TAP c1 (test-del-test) sobre F7 @ ada062e, en clon (…",
+   "promptPreview": "DOUBLE TAP — regla de COA. REPO: /Users/cagostino/code/doft-study07-worldline @ ada062e (pusheado).\nORACULO read-only: /Users/cagostino/code/doft-study06-fundamental-lock-dynamics (congelado). NUNCA leer archivos R_f.\n\nQUE SE AUDITA — F7 candidata (gates 7/7, NO declarada): campañas + census [M2] como tipo\nVALIDADO.\n- src/study07/artifacts/campana.py: validar_campana (reglas duras M2 del EXPERIMEN…",
+   "lastProgressAt": 1785441367402,
+   "tokens": 93579,
+   "toolCalls": 28,
+   "durationMs": 789345,
+   "resultPreview": "{\"hallazgos\":[{\"que\":\"La reanudación DEGRADA el LEDGER final: una unidad reusada entra al reporte solo con {run_id, estado, worldline_hash} — sin metricas ni view_hashes — y el LEDGER bueno anterior se sobreescribe (tmp.rename pisa LEDGER.json sin conservar el previo). En el census real (150-300 unidades overnight, interrupción esperada — para eso existe la reanudación), el reporte entregable pier…"
+  },
+  {
+   "type": "workflow_agent",
+   "index": 2,
+   "label": "c2:mutacion",
+   "phaseIndex": 1,
+   "phaseTitle": "Ataque",
+   "agentId": "ad7b8b5ee36e5bb76",
+   "model": "claude-fable-5",
+   "state": "done",
+   "startedAt": 1785440579186,
+   "queuedAt": 1785440572671,
+   "attempt": 1,
+   "lastToolName": "StructuredOutput",
+   "lastToolSummary": "LENTE c2 — MUTACIÓN sobre campana.py @ ada062e (clon en scr…",
+   "promptPreview": "DOUBLE TAP — regla de COA. REPO: /Users/cagostino/code/doft-study07-worldline @ ada062e (pusheado).\nORACULO read-only: /Users/cagostino/code/doft-study06-fundamental-lock-dynamics (congelado). NUNCA leer archivos R_f.\n\nQUE SE AUDITA — F7 candidata (gates 7/7, NO declarada): campañas + census [M2] como tipo\nVALIDADO.\n- src/study07/artifacts/campana.py: validar_campana (reglas duras M2 del EXPERIMEN…",
+   "lastProgressAt": 1785441511610,
+   "tokens": 84265,
+   "toolCalls": 40,
+   "durationMs": 932424,
+   "resultPreview": "{\"hallazgos\":[{\"que\":\"M15 VIVO: quitar la verificación sha-por-archivo del archivado (dejando que ARCHIVADO.json siga sellando 'sha256 por archivo, 0 discrepancias') pasa los 7 gates — el sello puede MENTIR y gate7 solo lee el string del sello, jamás ejercita la verificación en negativo. En este proyecto el archivo verificado precede a borrados de originales (§93-e: 69G borrados tras shasum -c OK)…"
+  },
+  {
+   "type": "workflow_agent",
+   "index": 3,
+   "label": "c3:contrato-y-escala",
+   "phaseIndex": 1,
+   "phaseTitle": "Ataque",
+   "agentId": "ad53a78872e7f57b0",
+   "model": "claude-fable-5",
+   "state": "done",
+   "startedAt": 1785440578771,
+   "queuedAt": 1785440572671,
+   "attempt": 1,
+   "lastToolName": "StructuredOutput",
+   "lastToolSummary": "DOUBLE TAP F7, lente c3 (contrato vs código + escala real) …",
+   "promptPreview": "DOUBLE TAP — regla de COA. REPO: /Users/cagostino/code/doft-study07-worldline @ ada062e (pusheado).\nORACULO read-only: /Users/cagostino/code/doft-study06-fundamental-lock-dynamics (congelado). NUNCA leer archivos R_f.\n\nQUE SE AUDITA — F7 candidata (gates 7/7, NO declarada): campañas + census [M2] como tipo\nVALIDADO.\n- src/study07/artifacts/campana.py: validar_campana (reglas duras M2 del EXPERIMEN…",
+   "lastProgressAt": 1785442033996,
+   "tokens": 122206,
+   "toolCalls": 43,
+   "durationMs": 1455225,
+   "resultPreview": "{\"resumen\":\"DOUBLE TAP F7, lente c3 (contrato vs código + escala real) sobre ada062e, todo ejecutado en clon (git clone + checkout verificado; ambos repos reales intactos al cierre: study07 @ ada062e limpio, oráculo @ 39f8df6 limpio). LO QUE SÍ PROTEGE, medido: el validador M2 rechaza de verdad sus 16 ramas (población parcial, inventario ausente/sha errado, intervenciones, horizonte corto, reglas …"
+  },
+  {
+   "type": "workflow_agent",
+   "index": 4,
+   "label": "c4:cobertura-honesta",
+   "phaseIndex": 1,
+   "phaseTitle": "Ataque",
+   "agentId": "a4116969c3740eb51",
+   "model": "claude-fable-5",
+   "state": "done",
+   "startedAt": 1785440578198,
+   "queuedAt": 1785440572671,
+   "attempt": 1,
+   "lastToolName": "StructuredOutput",
+   "lastToolSummary": "TAP c4 sobre clon @ ada062e (66 passed baseline). 8 sondas …",
+   "promptPreview": "DOUBLE TAP — regla de COA. REPO: /Users/cagostino/code/doft-study07-worldline @ ada062e (pusheado).\nORACULO read-only: /Users/cagostino/code/doft-study06-fundamental-lock-dynamics (congelado). NUNCA leer archivos R_f.\n\nQUE SE AUDITA — F7 candidata (gates 7/7, NO declarada): campañas + census [M2] como tipo\nVALIDADO.\n- src/study07/artifacts/campana.py: validar_campana (reglas duras M2 del EXPERIMEN…",
+   "lastProgressAt": 1785441929361,
+   "tokens": 105935,
+   "toolCalls": 36,
+   "durationMs": 1351163,
+   "resultPreview": "{\"resumen\":\"TAP c4 sobre clon @ ada062e (66 passed baseline). 8 sondas EJECUTADAS. Lo que SI protege: T>0 determinista BIT bajo pool (workers=3==1 con kicks estocasticos); rechazo capsula+T>0 llega con el mensaje bueno del composer a traves del pool; reanudacion tras kill -9 al padre convergio LIMPIA y BIT-exacta a la referencia (rename-aside + COMPLETE atomico); colision de views entre unidades i…"
+  },
+  {
+   "type": "workflow_agent",
+   "index": 5,
+   "label": "juez:sello",
+   "phaseIndex": 2,
+   "phaseTitle": "Sello",
+   "agentId": "a77d49f41fb40b89c",
+   "model": "claude-fable-5",
+   "state": "done",
+   "startedAt": 1785442039389,
+   "queuedAt": 1785442037002,
+   "attempt": 1,
+   "lastToolName": "Bash",
+   "lastToolSummary": "echo \"== study07 REAL ==\"; git -C /Users/cagostino/code/dof…",
+   "promptPreview": "DOUBLE TAP — regla de COA. REPO: /Users/cagostino/code/doft-study07-worldline @ ada062e (pusheado).\nORACULO read-only: /Users/cagostino/code/doft-study06-fundamental-lock-dynamics (congelado). NUNCA leer archivos R_f.\n\nQUE SE AUDITA — F7 candidata (gates 7/7, NO declarada): campañas + census [M2] como tipo\nVALIDADO.\n- src/study07/artifacts/campana.py: validar_campana (reglas duras M2 del EXPERIMEN…",
+   "lastProgressAt": 1785442638115,
+   "tokens": 107176,
+   "toolCalls": 28,
+   "durationMs": 598725,
+   "resultPreview": "Todo verificado. Cierro con el veredicto.\n\n# DOUBLE TAP F7 — VEREDICTO DEL JUEZ\n\nClon del juez: `scratchpad/judge_f7/repo` — `git clone` + `checkout ada062e` verificado (`git log -1` = ada062e). Baseline: gates 7/7, suite 66/66. Arnés con mutante CONTROL que MURIÓ (quitar el raise de población → `1 failed` en 0.16s): el arnés detecta kills. Cada mutación una por vez, `git checkout` + purga de `__p…"
+  }
+ ],
+ "totalTokens": 513161,
+ "totalToolCalls": 175
+}
