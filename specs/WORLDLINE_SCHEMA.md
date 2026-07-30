@@ -98,7 +98,7 @@ red): un film compuesto sin su procedencia no se graba.
 
 ## Reglas de integridad
 
-1. Chunks con hash individual (escritos tmp+rename: jamás un chunk a medias); `COMPLETE` = hash del conjunto + hash del manifiesto (adulterar el manifiesto post-cierre = rechazo). COMPLETE prueba CIERRE ÍNTEGRO, no autenticidad: el sha_total lo pinea el catálogo/manifiesto EXTERNO (quien tenga el hash detecta cualquier reemplazo coherente). Una interrupción deja chunks
+1. Chunks con hash individual (escritos tmp+rename: jamás un chunk a medias); `COMPLETE` = hash del conjunto + hash del manifiesto (adulterar el manifiesto post-cierre = rechazo). COMPLETE prueba CIERRE ÍNTEGRO, no autenticidad: el pin EXTERNO de un film es su `worldline_hash` = sha256(sha_total ‖ manifest_sha) — pinear sólo el sha_total dejaba el manifiesto fuera del pin (double tap F6). Una interrupción deja chunks
    válidos y NINGÚN `COMPLETE` — la corrida se reanuda del último checkpoint o se descarta
    entera, jamás se publica a medias.
 2. La worldline es INMUTABLE una vez `COMPLETE`. Corrección de instrumento ⇒ nueva vista.

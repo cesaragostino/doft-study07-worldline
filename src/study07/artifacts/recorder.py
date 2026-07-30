@@ -39,14 +39,105 @@ def _flat(state) -> np.ndarray:
     return np.concatenate([state.x, state.v, state.z, state.b, state.e])
 
 
+def worldline_hash(run_dir: Path) -> str:
+    """Identidad del film = sha256(sha_total ‖ manifest_sha). Los chunks SOLOS no identifican
+    la física observable: dt y el layout por nodo viven en el manifiesto que los consumidores
+    LEEN (double tap F4 A4: la colisión dt×2 compartía hash). El pin EXTERNO de un film es
+    ESTE hash (double tap F6: pinear sha_total dejaba el manifiesto fuera del pin)."""
+    marca = json.loads((Path(run_dir) / "COMPLETE").read_text())
+    cuerpo = (marca["sha_total"] + marca["manifest_sha"]).encode("utf-8")
+    return hashlib.sha256(cuerpo).hexdigest()
+
+
 class WorldlineRecorder:
     """Escribe la worldline por chunks al nivel caliente (disco local). El archivado al nivel
     externo (copy-at-close + verificación + poda declarada) es responsabilidad de campañas —
     este recorder garantiza el artefacto local íntegro y verificable."""
 
+    @staticmethod
+    def _validar_manifiesto(net, manifest: Dict) -> None:
+        """TODA la validación de nacimiento, ANTES de tocar el disco."""
+        faltan = [k for k in CLAVES_OBLIGATORIAS if k not in manifest]
+        if faltan:
+            raise ValueError(f"manifiesto sin claves obligatorias {faltan} — un artefacto sin "
+                             "run_id/spec_tipo/hashes_base_externa nace huérfano "
+                             "(PROVENANCE_CONTRACT; double tap F3 A2)")
+        if manifest["spec_tipo"] not in ("M1", "M2"):
+            raise ValueError(f"spec_tipo={manifest['spec_tipo']!r}: debe ser M1 o M2")
+        # M2 = evolución LIBRE desde t=0: intervención o linaje de hija NO COMPILAN
+        # (EXPERIMENT_CONTRACT; double tap F6 c3-E1)
+        if manifest["spec_tipo"] == "M2" and (
+                manifest.get("intervenida") or manifest.get("eventos_declarados")
+                or any(str(k).startswith("parent_") for k in manifest)):
+            raise ValueError("spec M2 con intervención o linaje de hija: M2 es evolución "
+                             "libre desde t=0 (EXPERIMENT_CONTRACT / double tap F6)")
+        # PROCEDENCIA EXIGIDA (double tap F5 A5): una red COMPUESTA lleva su recibo adherido;
+        # el film debe declararlo EXACTO y citar el capsule_sha256 de cada nodo-cápsula.
+        recibo = getattr(net, "composicion_recibo", None)
+        if recibo is not None:
+            if manifest.get("composicion") != recibo:
+                raise ValueError("la red viene de una COMPOSICIÓN: el manifiesto debe llevar "
+                                 "el recibo exacto en 'composicion' "
+                                 "(PROVENANCE_CONTRACT / double tap F5 A5)")
+            declarados = {str(v) for v in manifest["hashes_base_externa"].values()}
+            sin_citar = [o["target_node_index"] for o in recibo["por_nodo"]
+                         if o["origen"] == "capsula"
+                         and o["capsule_sha256"] not in declarados]
+            if sin_citar:
+                raise ValueError(f"hashes_base_externa sin el capsule_sha256 de los "
+                                 f"nodos-cápsula {sin_citar}: un film compuesto sin sus "
+                                 "cápsulas citadas nace huérfano (double tap F5 A5)")
+        # LINAJE EXIGIDO (F6, endurecido por el double tap A3): una red restaurada lleva su
+        # origen adherido; el manifiesto debe declararlo COMPLETO y VERIFICADO — y la
+        # SIMETRÍA vale: linaje sin red restaurada es fabricación.
+        origen = getattr(net, "origen_checkpoint", None)
+        claves_parent = sorted(k for k in manifest if str(k).startswith("parent_"))
+        if origen is None:
+            if claves_parent:
+                raise ValueError(f"manifiesto con linaje {claves_parent} pero la red NO viene "
+                                 "de un checkpoint restaurado: linaje FABRICADO "
+                                 "(double tap F6 A3)")
+            return
+        faltan_lin = [k for k in ("parent_run_id", "parent_worldline_hash",
+                                  "parent_checkpoint_sha256", "tick_madre",
+                                  "eventos_declarados", "intervenida",
+                                  "linaje_intervenido")
+                      if k not in manifest]
+        if faltan_lin:
+            raise ValueError(f"red restaurada de checkpoint SIN linaje completo en el "
+                             f"manifiesto: faltan {faltan_lin} — una hija no nace "
+                             "huérfana (F6)")
+        if manifest["parent_checkpoint_sha256"] != origen["sha256"]:
+            raise ValueError("parent_checkpoint_sha256 del manifiesto no es el del "
+                             "checkpoint RESTAURADO — el linaje no se declama, se "
+                             "verifica (F6)")
+        if int(manifest["tick_madre"]) != int(origen["tick"]):
+            raise ValueError(f"tick_madre={manifest['tick_madre']} != tick del "
+                             f"checkpoint restaurado ({origen['tick']}) (F6)")
+        if "run_id" not in origen:
+            raise ValueError("checkpoint PRE-ESQUEMA (sin run_id estampado): una hija exige "
+                             "un checkpoint nacido de un recorder (double tap F6 A3)")
+        if str(manifest["parent_run_id"]) != str(origen["run_id"]):
+            raise ValueError(f"parent_run_id={manifest['parent_run_id']!r} no es el run_id "
+                             f"ESTAMPADO en el checkpoint ({origen['run_id']!r}): el padre "
+                             "no se inventa (double tap F6 A3)")
+        if bool(manifest["intervenida"]) != bool(manifest["eventos_declarados"]):
+            raise ValueError("intervenida debe reflejar EXACTAMENTE si hay eventos "
+                             "declarados: una gemela no es intervenida y una "
+                             "intervenida no es gemela (F6)")
+        esperado_linaje = (bool(manifest["eventos_declarados"])
+                          or bool(origen.get("intervenida_linaje", False)))
+        if bool(manifest["linaje_intervenido"]) != esperado_linaje:
+            raise ValueError(f"linaje_intervenido={manifest['linaje_intervenido']} no refleja "
+                             f"la herencia (esperado {esperado_linaje}): el estado intervenido "
+                             "NO se lava en una generación (double tap F6 A3 — nieta lavada)")
+
     def __init__(self, out_dir: Path, net: Network, manifest: Dict, chunk_ticks: int = 4096):
         if chunk_ticks < 1:
             raise ValueError("chunk_ticks >= 1")
+        # TODA la validación ANTES de tocar el disco (double tap F6 c1-E5: un manifiesto
+        # inválido dejaba el directorio creado — el pre-registro fallido no deja rastro)
+        self._validar_manifiesto(net, manifest)
         self.dir = Path(out_dir)
         (self.dir / "worldline").mkdir(parents=True, exist_ok=False)   # corrida nueva SIEMPRE
         (self.dir / "checkpoints").mkdir(exist_ok=True)
@@ -64,55 +155,12 @@ class WorldlineRecorder:
         self._tick_actual = 0
         # el estado del RNG al INICIO del chunk (replay/continuación por chunk)
         self._rng_state_chunk = json.dumps(net.noise_rng.bit_generator.state, default=str)
-
-        faltan = [k for k in CLAVES_OBLIGATORIAS if k not in manifest]
-        if faltan:
-            raise ValueError(f"manifiesto sin claves obligatorias {faltan} — un artefacto sin "
-                             "run_id/spec_tipo/hashes_base_externa nace huérfano "
-                             "(PROVENANCE_CONTRACT; double tap F3 A2)")
-        if manifest["spec_tipo"] not in ("M1", "M2"):
-            raise ValueError(f"spec_tipo={manifest['spec_tipo']!r}: debe ser M1 o M2")
-        # PROCEDENCIA EXIGIDA (double tap F5 A5): una red COMPUESTA lleva su recibo adherido;
-        # el film debe declararlo EXACTO y citar el capsule_sha256 de cada nodo-cápsula en
-        # hashes_base_externa — sin eso, el film compuesto se sellaba COMPLETE y huérfano.
-        recibo = getattr(net, "composicion_recibo", None)
-        if recibo is not None:
-            if manifest.get("composicion") != recibo:
-                raise ValueError("la red viene de una COMPOSICIÓN: el manifiesto debe llevar "
-                                 "el recibo exacto en 'composicion' "
-                                 "(PROVENANCE_CONTRACT / double tap F5 A5)")
-            declarados = {str(v) for v in manifest["hashes_base_externa"].values()}
-            faltan = [o["target_node_index"] for o in recibo["por_nodo"]
-                      if o["origen"] == "capsula"
-                      and o["capsule_sha256"] not in declarados]
-            if faltan:
-                raise ValueError(f"hashes_base_externa sin el capsule_sha256 de los "
-                                 f"nodos-cápsula {faltan}: un film compuesto sin sus "
-                                 "cápsulas citadas nace huérfano (double tap F5 A5)")
-        # LINAJE EXIGIDO (F6): una red restaurada de checkpoint lleva su origen adherido — el
-        # film hijo DEBE declarar el linaje completo y coincidir con lo restaurado; la madre
-        # jamás se sobreescribe y la hija jamás nace huérfana (WORLDLINE_SCHEMA).
+        # para el estampado de checkpoints (F6 A3/A5): quién soy + qué linaje cargo
+        self._run_id = str(manifest["run_id"])
         origen = getattr(net, "origen_checkpoint", None)
-        if origen is not None:
-            faltan_lin = [k for k in ("parent_run_id", "parent_worldline_hash",
-                                      "parent_checkpoint_sha256", "tick_madre",
-                                      "eventos_declarados", "intervenida")
-                          if k not in manifest]
-            if faltan_lin:
-                raise ValueError(f"red restaurada de checkpoint SIN linaje completo en el "
-                                 f"manifiesto: faltan {faltan_lin} — una hija no nace "
-                                 "huérfana (F6)")
-            if manifest["parent_checkpoint_sha256"] != origen["sha256"]:
-                raise ValueError("parent_checkpoint_sha256 del manifiesto no es el del "
-                                 "checkpoint RESTAURADO — el linaje no se declama, se "
-                                 "verifica (F6)")
-            if int(manifest["tick_madre"]) != int(origen["tick"]):
-                raise ValueError(f"tick_madre={manifest['tick_madre']} != tick del "
-                                 f"checkpoint restaurado ({origen['tick']}) (F6)")
-            if bool(manifest["intervenida"]) != bool(manifest["eventos_declarados"]):
-                raise ValueError("intervenida debe reflejar EXACTAMENTE si hay eventos "
-                                 "declarados: una gemela no es intervenida y una "
-                                 "intervenida no es gemela (F6)")
+        self._linaje_heredado = bool(origen.get("intervenida_linaje", False)) if origen else False
+        self._eventos_ticks = sorted(int(e["tick_hija"])
+                                     for e in (manifest.get("eventos_declarados") or []))
         import platform
         manifest = dict(manifest)
         manifest.update({
@@ -187,9 +235,22 @@ class WorldlineRecorder:
         self._rng_state_chunk = json.dumps(self.net.noise_rng.bit_generator.state, default=str)
 
     def save_checkpoint(self) -> Path:
+        """Checkpoint ESTAMPADO (double tap F6 A3/A5): viaja quién lo produjo (run_id +
+        manifest_sha), si el estado ya fue intervenido HASTA este tick (heredado O propio —
+        el estado intervenido no se lava en una generación) y el recibo de composición si la
+        red es compuesta (la procedencia F5 no muere en la primera generación)."""
         from .checkpoint import save_checkpoint
+        extra = {
+            "run_id": self._run_id,
+            "manifest_sha": self._manifest_sha,
+            "intervenida_linaje": bool(self._linaje_heredado or any(
+                t <= self._tick_actual for t in self._eventos_ticks)),
+        }
+        recibo = getattr(self.net, "composicion_recibo", None)
+        if recibo is not None:
+            extra["composicion"] = recibo
         return save_checkpoint(self.dir / "checkpoints" / f"ck_{self._tick_actual:08d}.npz",
-                               self.net, self._tick_actual)
+                               self.net, self._tick_actual, extra_meta=extra)
 
     def close(self) -> str:
         """Cierre ATÓMICO: flush del último chunk + COMPLETE con el hash del conjunto.

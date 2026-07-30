@@ -121,6 +121,16 @@ def network_from_checkpoint(specs: Sequence[NodeSpec], ck: Dict) -> Network:
                   history_init=(ck["buffer"], ck["head"]),
                   rng_state=meta["rng_state"])
     # LINAJE ADHERIDO (F6, patrón A5 de F5): una red restaurada lo lleva puesto — el recorder
-    # EXIGE que el film declare de qué checkpoint nació; una hija sin linaje no se graba
-    net.origen_checkpoint = {"sha256": ck["sha256"], "tick": int(meta["tick"])}
+    # EXIGE que el film declare de qué checkpoint nació; una hija sin linaje no se graba.
+    # El ESTAMPADO del checkpoint (run_id/manifest_sha/intervenida_linaje/composicion —
+    # double tap F6 A3/A5) viaja al origen: el padre no se inventa y el estado intervenido
+    # o compuesto NO se lava en una generación.
+    origen = {"sha256": ck["sha256"], "tick": int(meta["tick"])}
+    extra = meta.get("extra") or {}
+    for clave in ("run_id", "manifest_sha", "intervenida_linaje"):
+        if clave in extra:
+            origen[clave] = extra[clave]
+    net.origen_checkpoint = origen
+    if extra.get("composicion"):
+        net.composicion_recibo = extra["composicion"]   # el enforcement F5-A5 dispara solo
     return net

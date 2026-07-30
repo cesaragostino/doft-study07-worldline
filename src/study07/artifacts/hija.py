@@ -1,24 +1,37 @@
 """Worldlines HIJAS — intervenciones como specs de corrida (F6, EXPERIMENT_CONTRACT [M1]).
 
 Una intervención NO es un instrumento: es una spec de corrida hija (WORLDLINE_SCHEMA sellado).
-La hija nace de un checkpoint de la madre (parent_run_id + parent_checkpoint_sha256 + tick),
-con su timeline de eventos DECLARADO ANTES de correr (pre-registro fail-loud) y ejecutado
-entre steps — el motor jamás sabe que fue intervenido: la cirugía es estado/aristas desde
-afuera, entre integraciones. La madre JAMÁS se toca.
+La hija nace de un checkpoint ESTAMPADO de la madre (run_id + intervenida_linaje +
+composición viajan en el checkpoint — double tap F6 A3/A5: el padre no se inventa y el estado
+intervenido o compuesto NO se lava en una generación), con su timeline y su PORQUÉ declarados
+ANTES de correr (pre-registro fail-loud, regla M1) y ejecutado entre steps — el motor jamás
+sabe que fue intervenido. La madre JAMÁS se toca, y debe estar CERRADA (COMPLETE): su run_id
+y su worldline_hash se VERIFICAN contra el directorio real, no se declaman.
 
 Tipos de evento v1 (aditivos y exactos — el estado post-cirugía es DERIVABLE del film):
   kick          {tick_hija, nodo, canal: x|v, delta[n_modes]}   → state.canal += delta
-  escala_arista {tick_hija, arista, factor_w_k, factor_w_gamma} → pesos *= factor
-                (hotcut = factor 0.0)
+                (la semántica histórica del oráculo: entre steps, jamás dentro del RK4)
+  escala_arista {tick_hija, arista, factor_w_k, factor_w_gamma} → pesos *= factor (≥0);
+                corte total = factor 0.0. NOTA declarada: NO es el «hotcut» del oráculo
+                (aquello era otra cirugía; el oráculo jamás mutó pesos mid-run — colisión de
+                nombre evitada: acá se llama escala_arista y nada más). Tras escalar se
+                RECOMPUTAN los wsum de normalización (double tap F6 A2: sin esto, la red viva
+                y su restore divergían 4.66e-04 en silencio).
   gemela        eventos=[] — la hija SIN intervención: el control apareado (intervenida=False)
+Eventos VACUOS (delta todo-cero, factores ambos 1.0) se RECHAZAN: declarar una intervención
+que no interviene es teatro. Cambiar τ (estructura de delay) queda FUERA de contrato v1.
 
 Semántica de reloj: el evento con tick_hija=k se aplica sobre el estado POST step k-1
 (= fila k-1 del film hijo) y el step k integra el estado intervenido. Fila 0 del film hijo =
-estado restaurado del checkpoint (= fila tick_madre del film madre).
+estado restaurado del checkpoint (= fila tick_madre del film madre). `tick_global` =
+tick_madre + tick_hija: es el reloj del PADRE (relativo a la generación anterior), NO un
+reloj absoluto de la raíz del linaje — declarado.
 
-events.jsonl: un renglón por evento EJECUTADO, con lo aplicado EXACTO y sha256 del estado
-pre/post cirugía del objetivo — TODO verificable desde el film + el manifiesto
-(verificar_hija recomputa; adulterar events.jsonl es detectable sin sellos extra).
+events.jsonl: un renglón por evento EJECUTADO (escrito INCREMENTAL: un abort deja los restos
+legibles), con lo aplicado EXACTO y sha256 pre/post del objetivo — TODO verificable desde el
+film + el manifiesto sellado: los kicks anclan a la fila tick_hija-1; las aristas anclan a la
+TOPOLOGÍA del manifiesto encadenada por factores (double tap F6 A1). Claves por tipo:
+ESTRICTAS (un campo extra es adulteración).
 """
 from __future__ import annotations
 
@@ -30,10 +43,16 @@ from typing import Any, Dict, List, Mapping, Sequence
 import numpy as np
 
 from .checkpoint import load_checkpoint, network_from_checkpoint
-from .recorder import WorldlineRecorder
+from .recorder import WorldlineRecorder, worldline_hash
 
 TIPOS_VALIDOS = ("kick", "escala_arista")
 CANALES_KICK = ("x", "v")
+_CLAVES_EJECUTADO = {
+    "kick": {"tipo", "tick_hija", "nodo", "canal", "delta", "tick_global",
+             "estado_pre_sha256", "estado_post_sha256"},
+    "escala_arista": {"tipo", "tick_hija", "arista", "factor_w_k", "factor_w_gamma",
+                      "tick_global", "estado_pre_sha256", "estado_post_sha256", "aplicado"},
+}
 
 
 def _sha_estado(vector: np.ndarray) -> str:
@@ -71,6 +90,9 @@ def validar_eventos(eventos: Sequence[Mapping[str, Any]], net, ticks: int) -> Li
                                    f"del nodo {nodo} (pre-registro F6)")
             if not np.all(np.isfinite(delta)):
                 raise RuntimeError(f"evento {i}: delta no finito (pre-registro F6)")
+            if not np.any(delta != 0.0):
+                raise RuntimeError(f"evento {i}: delta todo-cero — una intervención VACUA "
+                                   "declarada como intervención es teatro (pre-registro F6)")
             norm.append({"tipo": "kick", "tick_hija": tk, "nodo": nodo, "canal": canal,
                          "delta": [float(v) for v in delta]})
         else:
@@ -82,9 +104,28 @@ def validar_eventos(eventos: Sequence[Mapping[str, Any]], net, ticks: int) -> Li
             fg = float(ev.get("factor_w_gamma", 1.0))
             if not (np.isfinite(fk) and np.isfinite(fg)):
                 raise RuntimeError(f"evento {i}: factor no finito (pre-registro F6)")
+            if fk < 0.0 or fg < 0.0:
+                raise RuntimeError(f"evento {i}: factor negativo — un peso negativo queda "
+                                   "FUERA de contrato v1 (pre-registro F6)")
+            if fk == 1.0 and fg == 1.0:
+                raise RuntimeError(f"evento {i}: factores 1.0/1.0 — una intervención VACUA "
+                                   "declarada como intervención es teatro (pre-registro F6)")
             norm.append({"tipo": "escala_arista", "tick_hija": tk, "arista": ar,
                          "factor_w_k": fk, "factor_w_gamma": fg})
     return sorted(norm, key=lambda e: e["tick_hija"])
+
+
+def _recomputar_wsum(net) -> None:
+    """Espejo EXACTO del loop de Network.__init__ (engine/network.py:45-49): tras mutar
+    pesos, los wsum de normalización deben re-derivarse de las aristas — si no, la red viva
+    y su checkpoint→restore DIVERGEN en silencio (double tap F6 A2: dmax=4.66e-04)."""
+    n = len(net.specs)
+    net._wsum_k = np.zeros(n)
+    net._wsum_g = np.zeros(n)
+    for e in range(net.edge_ij.shape[0]):
+        a, b = int(net.edge_ij[e, 0]), int(net.edge_ij[e, 1])
+        net._wsum_k[a] += net.edge_w_k[e]; net._wsum_k[b] += net.edge_w_k[e]
+        net._wsum_g[a] += net.edge_w_g[e]; net._wsum_g[b] += net.edge_w_g[e]
 
 
 def _aplicar(ev: Dict, net, tick_madre: int) -> Dict:
@@ -104,6 +145,7 @@ def _aplicar(ev: Dict, net, tick_madre: int) -> Dict:
         reg["estado_pre_sha256"] = _sha_estado(np.array(antes))
         net.edge_w_k[ar] = antes[0] * ev["factor_w_k"]
         net.edge_w_g[ar] = antes[1] * ev["factor_w_gamma"]
+        _recomputar_wsum(net)                      # F6 A2: la mutación cierra bajo restore
         despues = (float(net.edge_w_k[ar]), float(net.edge_w_g[ar]))
         reg["aplicado"] = {"w_k_antes": antes[0], "w_gamma_antes": antes[1],
                            "w_k_despues": despues[0], "w_gamma_despues": despues[1]}
@@ -113,25 +155,52 @@ def _aplicar(ev: Dict, net, tick_madre: int) -> Dict:
 
 def correr_hija(specs, checkpoint_path: Path, out_dir: Path, manifest: Dict,
                 eventos: Sequence[Mapping[str, Any]], ticks: int,
-                chunk_ticks: int = 4096, finite_check_every: int = 256):
-    """Crea la worldline HIJA: checkpoint → red restaurada (constitución verificada por
-    huella) → eventos declarados aplicados entre steps → film propio con linaje EXIGIDO.
-    La madre no se toca jamás (la hija sólo LEE el checkpoint). Devuelve (run_dir,
-    sha_total, ejecutados)."""
-    for clave in ("parent_run_id", "parent_worldline_hash"):
+                chunk_ticks: int = 4096, finite_check_every: int = 256,
+                checkpoint_every: int | None = None):
+    """Crea la worldline HIJA. La madre debe estar CERRADA y su identidad se VERIFICA
+    (run_id del manifiesto real + worldline_hash recomputado del COMPLETE — el padre no se
+    inventa, double tap F6 A3). El linaje intervenido/compuesto se HEREDA del estampado del
+    checkpoint. checkpoint_every habilita NIETAS. Devuelve (run_dir, sha_total, ejecutados)."""
+    for clave in ("parent_run_id", "parent_worldline_hash", "porque"):
         if clave not in manifest:
-            raise RuntimeError(f"manifiesto de hija sin {clave}: el linaje se declara al "
-                               "nacer, no se reconstruye después (F6)")
+            raise RuntimeError(f"manifiesto de hija sin {clave!r}: el linaje y el PORQUÉ "
+                               "se declaran al nacer (regla M1 / F6)")
+    checkpoint_path = Path(checkpoint_path)
+    madre_dir = checkpoint_path.parent.parent
+    if not (madre_dir / "COMPLETE").exists():
+        raise RuntimeError(f"la madre {madre_dir} no está CERRADA (sin COMPLETE): una hija "
+                           "sólo nace de una worldline sellada (F6 v1)")
+    man_madre = json.loads((madre_dir / "manifest.json").read_text())
+    if str(man_madre.get("run_id")) != str(manifest["parent_run_id"]):
+        raise RuntimeError(f"parent_run_id={manifest['parent_run_id']!r} != run_id real de "
+                           f"la madre ({man_madre.get('run_id')!r}): el padre no se inventa "
+                           "(double tap F6 A3)")
+    wl_madre = worldline_hash(madre_dir)
+    if wl_madre != manifest["parent_worldline_hash"]:
+        raise RuntimeError(f"parent_worldline_hash declarado no es el de la madre real "
+                           f"({wl_madre[:12]}): el padre no se inventa (double tap F6 A3)")
     ck = load_checkpoint(checkpoint_path)
     net = network_from_checkpoint(specs, ck)
     norm = validar_eventos(eventos, net, ticks)     # ANTES de crear nada en disco
+    origen = net.origen_checkpoint
     man = dict(manifest)
     man.update({
         "parent_checkpoint_sha256": ck["sha256"],
         "tick_madre": int(ck["meta"]["tick"]),
         "eventos_declarados": norm,
         "intervenida": bool(norm),
+        "linaje_intervenido": bool(norm) or bool(origen.get("intervenida_linaje", False)),
     })
+    # herencia de composición (double tap F6 A5): si la madre era compuesta, el recibo viaja
+    # en el checkpoint y la hija CITA sus cápsulas — la procedencia no muere en gen 1
+    recibo = getattr(net, "composicion_recibo", None)
+    if recibo is not None:
+        man["composicion"] = recibo
+        base = dict(man.get("hashes_base_externa") or {})
+        for o in recibo["por_nodo"]:
+            if o["origen"] == "capsula":
+                base[f"capsula_nodo{o['target_node_index']}"] = o["capsule_sha256"]
+        man["hashes_base_externa"] = base
     rec = WorldlineRecorder(Path(out_dir), net, man, chunk_ticks=chunk_ticks)
     eventos_path = Path(out_dir) / "events.jsonl"
     eventos_path.write_text("")                     # existe SIEMPRE (gemela: vacío)
@@ -145,23 +214,34 @@ def correr_hija(specs, checkpoint_path: Path, out_dir: Path, manifest: Dict,
                 reg = _aplicar(ev, net, int(ck["meta"]["tick"]))
                 ejecutados.append(reg)
                 fh.write(json.dumps(reg) + "\n")
+                fh.flush()                          # incremental: un abort deja los restos
             net.step()
             rec.record_step()
             if finite_check_every and tick % finite_check_every == 0:
-                for j, st in enumerate(net.states):
-                    if not np.all(np.isfinite(_flat(st))):
-                        raise FloatingPointError(
-                            f"blow-up: no-finito en nodo {j} al tick {tick} de la hija — "
-                            "aborta fail-loud sin COMPLETE (contrato §8)")
+                _exigir_finito(net, tick)
+            if checkpoint_every and tick % checkpoint_every == 0:
+                rec.save_checkpoint()
+    # F6 A4: el check FINAL es incondicional — un blow-up más corto que la ventana de
+    # chequeo NO se sella COMPLETE jamás
+    _exigir_finito(net, int(ticks))
     sha_total = rec.close()
     return Path(out_dir), sha_total, ejecutados
 
 
+def _exigir_finito(net, tick: int) -> None:
+    for j, st in enumerate(net.states):
+        if not np.all(np.isfinite(_flat(st))):
+            raise FloatingPointError(
+                f"blow-up: no-finito en nodo {j} al tick {tick} de la hija — aborta "
+                "fail-loud sin COMPLETE (contrato §8 / double tap F6 A4)")
+
+
 def verificar_hija(run_dir: Path, wl: Dict | None = None) -> List[Dict]:
     """Verificador: los eventos EJECUTADOS (events.jsonl) coinciden con los DECLARADOS
-    (manifiesto, sellado por el COMPLETE) y son CONSISTENTES con el film — el estado pre
-    cirugía ES la fila tick_hija-1 y el post es derivable exacto (pre + delta / pesos ×
-    factor). Adulterar events.jsonl se detecta sin sellos extra."""
+    (manifiesto, sellado por el COMPLETE) y son CONSISTENTES con el film — kicks anclados a
+    la fila tick_hija-1; aristas ancladas a la TOPOLOGÍA del manifiesto encadenada por
+    factores (double tap F6 A1: sin ese ancla, la rama arista era forjable); claves
+    ESTRICTAS por tipo. Adulterar events.jsonl se detecta sin sellos extra."""
     from .recorder import load_worldline
     run_dir = Path(run_dir)
     if wl is None:
@@ -180,9 +260,16 @@ def verificar_hija(run_dir: Path, wl: Dict | None = None) -> List[Dict]:
         raise RuntimeError(f"eventos ejecutados ({len(ejecutados)}) != declarados "
                            f"({len(declarados)}) — el timeline no coincide (F6)")
     tick_madre = int(man["tick_madre"])
-    # estados intermedios POR TICK para eventos encadenados en el mismo tick
-    encadenado: Dict[int, np.ndarray] = {}
+    # pesos CORRIENTES por arista: nacen de la topología SELLADA del manifiesto y se
+    # encadenan por los factores declarados (F6 A1 — el ancla que faltaba)
+    w_k = [float(v) for v in man["topologia"]["w_k"]]
+    w_g = [float(v) for v in man["topologia"]["w_gamma"]]
+    encadenado: Dict[Any, np.ndarray] = {}
     for i, (dec, ej) in enumerate(zip(declarados, ejecutados)):
+        extras = set(ej) - _CLAVES_EJECUTADO[dec["tipo"]]
+        if extras:
+            raise RuntimeError(f"evento {i}: claves EXTRA {sorted(extras)} en el ejecutado "
+                               "— adulteración (F6 A1)")
         for clave, val in dec.items():
             if ej.get(clave) != val:
                 raise RuntimeError(f"evento {i}: campo {clave!r} ejecutado "
@@ -210,10 +297,20 @@ def verificar_hija(run_dir: Path, wl: Dict | None = None) -> List[Dict]:
                                    "lo aplicado no es lo declarado (F6)")
             encadenado[clave_ch] = post
         else:
+            ar = int(dec["arista"])
             ap = ej.get("aplicado") or {}
             for k in ("w_k_antes", "w_gamma_antes", "w_k_despues", "w_gamma_despues"):
                 if k not in ap:
                     raise RuntimeError(f"evento {i}: aplicado sin {k} (F6)")
+            if ap["w_k_antes"] != w_k[ar] or ap["w_gamma_antes"] != w_g[ar]:
+                raise RuntimeError(f"evento {i}: pesos 'antes' ({ap['w_k_antes']}, "
+                                   f"{ap['w_gamma_antes']}) no son los CORRIENTES de la "
+                                   f"arista {ar} según topología+cadena "
+                                   f"({w_k[ar]}, {w_g[ar]}) — events.jsonl miente (F6 A1)")
+            if _sha_estado(np.array([ap["w_k_antes"], ap["w_gamma_antes"]])) \
+                    != ej["estado_pre_sha256"]:
+                raise RuntimeError(f"evento {i}: estado_pre_sha256 de la arista no es el "
+                                   "de los pesos corrientes — events.jsonl miente (F6 A1)")
             if (ap["w_k_despues"] != ap["w_k_antes"] * dec["factor_w_k"]
                     or ap["w_gamma_despues"] != ap["w_gamma_antes"] * dec["factor_w_gamma"]):
                 raise RuntimeError(f"evento {i}: los pesos aplicados no son "
@@ -222,6 +319,8 @@ def verificar_hija(run_dir: Path, wl: Dict | None = None) -> List[Dict]:
                     != ej["estado_post_sha256"]:
                 raise RuntimeError(f"evento {i}: estado_post_sha256 de la arista no "
                                    "coincide con lo aplicado (F6)")
+            w_k[ar] = float(ap["w_k_despues"])
+            w_g[ar] = float(ap["w_gamma_despues"])
     if bool(man["intervenida"]) != bool(ejecutados):
         raise RuntimeError("intervenida no refleja los eventos ejecutados (F6)")
     return ejecutados

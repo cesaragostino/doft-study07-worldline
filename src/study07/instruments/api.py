@@ -18,17 +18,9 @@ from typing import Dict
 
 import numpy as np
 
-from ..artifacts.recorder import load_worldline
-
-
-def worldline_hash(run_dir: Path) -> str:
-    """Identidad del film = sha256(sha_total ‖ manifest_sha). Los chunks SOLOS no identifican
-    la física observable: dt y el layout por nodo viven en el manifiesto que los instrumentos
-    LEEN — dos films con los mismos bytes de chunks y manifiestos distintos son films distintos
-    (double tap F4 A4: la colisión dt×2 compartía hash y ruta de vista)."""
-    marca = json.loads((Path(run_dir) / "COMPLETE").read_text())
-    cuerpo = (marca["sha_total"] + marca["manifest_sha"]).encode("utf-8")
-    return hashlib.sha256(cuerpo).hexdigest()
+# worldline_hash vive en artifacts (F6: también lo consume el linaje de hijas) y se
+# re-exporta acá: los instrumentos siguen entrando por api.worldline_hash
+from ..artifacts.recorder import load_worldline, worldline_hash  # noqa: F401
 
 
 def config_hash(instrument_id: str, version: str, observation_config: Dict) -> str:

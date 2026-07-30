@@ -91,4 +91,7 @@ def run(wl: Dict, thetas_constitucion: List[dict],
                 {"ticks": wl["ticks"][sel], "e_capa": e_capa},
                 {"constitucion_sha256": huella, "capas": list(CAPAS),
                  "canales": dict(CANALES),
+                 "film_intervenida": bool(man.get("intervenida", False)),
+                 "film_linaje_intervenido": bool(man.get("linaje_intervenido",
+                                                         man.get("intervenida", False))),
                  "spec_fingerprints_verificados": list(huellas_film)})

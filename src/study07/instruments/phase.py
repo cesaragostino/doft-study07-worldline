@@ -82,6 +82,10 @@ def run(wl: Dict, observation_config: Dict | None = None) -> View:
                 {"ticks": wl["ticks"][sel], "theta": theta, "z": z, "r": r,
                  "j": j_val, "omega": omega, "omega_valid": valido},
                 {"canales": dict(CANALES),
+                 # la vista NO calla la procedencia del film (double tap F6 c4-S6)
+                 "film_intervenida": bool(man.get("intervenida", False)),
+                 "film_linaje_intervenido": bool(man.get("linaje_intervenido",
+                                                         man.get("intervenida", False))),
                  "nota": ("J[0]=0, omega[0] segun validez; el primer tick de TODA ventana "
                           "tiene J=0 por construccion; stride>1 => dZ/dt con dt efectivo "
                           "(OTRO estimador, no decimacion)")})
