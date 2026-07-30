@@ -1,0 +1,20 @@
+{
+ "arbitraje": "M1-P1 vs oraculo @ 39f8df6 (250k ticks por brazo)",
+ "resultados": [
+  {
+   "brazo": "transported",
+   "max_abs_d": 0.0,
+   "primer_tick_divergente": null,
+   "ticks_comparados": 250000,
+   "filas_comparadas": 500002
+  },
+  {
+   "brazo": "fresh",
+   "max_abs_d": 0.0,
+   "primer_tick_divergente": null,
+   "ticks_comparados": 250000,
+   "filas_comparadas": 500002
+  }
+ ],
+ "duracion_s": 1002.7
+}
