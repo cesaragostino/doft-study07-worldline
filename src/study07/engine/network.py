@@ -21,7 +21,11 @@ class Network:
     def __init__(self, specs: Sequence[NodeSpec], states: Sequence[NodeState], edges,
                  dt: float, seed: int, k_global: float = 0.0,
                  coupling_damp_ratio: float = 0.0, coupling_gamma_c: float | None = None,
-                 tau_field: float = 0.0, temperature: float = 0.0) -> None:
+                 tau_field: float = 0.0, temperature: float = 0.0,
+                 history_init=None, rng_state=None) -> None:
+        """history_init=(buffer, head): restaura la historia causal EXACTA (checkpoint /
+        cápsula) en vez de inicializarla uniforme desde el estado actual — CHECKPOINT_SCHEMA.
+        rng_state: estado del bit_generator a restaurar (continuación exacta con T>0)."""
         if dt <= 0 or not math.isfinite(dt):
             raise ValueError("dt debe ser finito y > 0 (configurado EXPLÍCITO — contrato §5)")
         self.specs = list(specs)
@@ -58,6 +62,20 @@ class Network:
 
         xv_init = np.array([emitted_xv(sp, st) for sp, st in zip(self.specs, self.states)])
         self.history = HistoryBuffer(delay_steps, xv_init)
+        if history_init is not None:
+            buf, head = history_init
+            buf = np.asarray(buf, dtype=float)
+            if buf.shape != self.history.buffer.shape:
+                raise ValueError(f"history_init: forma {buf.shape} != {self.history.buffer.shape} "
+                                 "(el delay lo fijan las aristas — CHECKPOINT_SCHEMA)")
+            self.history.buffer[:] = buf
+            self.history.head_idx = int(head)
+        if rng_state is not None:
+            self.noise_rng.bit_generator.state = rng_state
+        # información CAUSAL del último paso (drive aplicado + incrementos estocásticos):
+        # NO es instrumento — es lo que la worldline debe registrar (WORLDLINE_SCHEMA).
+        self.last_drive0 = np.zeros(len(self.specs))
+        self.last_noise_kicks = [np.zeros(sp.n_modes) for sp in self.specs]
 
     # ── helpers ──────────────────────────────────────────────────────────────
     def _xv(self, states: List[NodeState]) -> np.ndarray:
@@ -86,6 +104,7 @@ class Network:
     def step(self) -> None:
         s0 = self.states
         f0 = self._f_inter(s0, 0.0)
+        self.last_drive0 = f0.copy()
         k1 = [derivatives(sp, st, f0[i]) for i, (sp, st) in enumerate(zip(self.specs, s0))]
         s1 = [state_add(st, k, self.dt * 0.5) for st, k in zip(s0, k1)]
 
@@ -109,7 +128,11 @@ class Network:
                 gamma = np.array([m.gamma for m in sp.modes])
                 mass = np.array([max(m.mass, 1e-12) for m in sp.modes])
                 sigma_v = np.sqrt(2.0 * gamma * self.temperature * self.dt / mass)
-                ns.v = ns.v + sigma_v * self.noise_rng.standard_normal(ns.v.shape)
+                kick = sigma_v * self.noise_rng.standard_normal(ns.v.shape)
+                ns.v = ns.v + kick
+                self.last_noise_kicks[i] = kick
+            else:
+                self.last_noise_kicks[i] = np.zeros(sp.n_modes)
             nuevos.append(ns)
         self.states = nuevos
         self.history.push(self._xv(nuevos))   # UNA vez por paso, al final (contrato §5)
