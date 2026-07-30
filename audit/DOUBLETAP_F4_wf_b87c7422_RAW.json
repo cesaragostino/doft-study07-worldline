@@ -1,0 +1,394 @@
+{
+ "summary": "Double tap de F4: los primeros instrumentos offline — atacar las vistas antes de declarar",
+ "agentCount": 5,
+ "logs": [],
+ "result": {
+  "veredicto": "Verificación completa. Ambos repos quedaron intactos (todo corrió sobre copia en scratchpad; el driver restauró pristine al final). Resultado para la bitácora:\n\n---\n\n# DOUBLE TAP F4 — VEREDICTO DEL JUEZ\n\nRepo auditado: `/Users/cagostino/code/doft-study07-worldline` @ 522683e. Entorno **pinned** confirmado (numpy 2.3.4 / x86_64 == meta7 ⇒ los gates exigen 0.0 exacto). Baseline reproducido: **6 passed (~5s)**. Batería independiente del juez en sandbox: `scratchpad/judge_f4/{driver.py,probes.py}`, una mutación por vez, restore + purga de `__pycache__` entre corridas, con control que DEBE morir (murió: arnés válido).\n\n## 1. Veredicto único: **F4 NO PASADA**\n\nEl espejo físico es genuino: el camino anclado (t0=0, t1=full, stride=1) reproduce al oráculo a 0.000e+00 exacto y el control (atan2 invertido) muere en gate A. Pero los gates no protegen el instrumento: **11/11 mutantes construidos por el juez viven con 6/6 verde**, cubriendo los cuatro BLOQUEA_F4 de los lentes, todos verificados por mi cuenta. Tres cláusulas del INSTRUMENT_CONTRACT están incumplidas en código (no en prosa): el caché escrito jamás se relee y `write()` rompe la estabilidad del `view_hash` (verificado: pre-write `e53c5876` == almacenado; post-write recomputado `4fb5e385` ≠ almacenado; segundo write almacena otro hash); la identidad del film no se coteja nunca (hash constante `\"f\"*64` pasa todo); la constitución de energy no está atada al film (masa×2 aceptada sin error, max|dE|=2.144e-01; nodos permutados aceptados, max|dE|=4.412e+02; el manifiesto del film no lleva `spec_fingerprints` y `hashes_base_externa={'fixture_f6':'local'}` es placeholder). Regla dura de F3: no se declara hasta aplicar los arreglos y **re-matar los mutantes contra el código modificado**. Patrón confirmado: F2=24 vivos, F3=5 vivos, F4=15 vivos únicos (11 verificados por el juez).\n\n### Arreglos requeridos para el próximo tap (file:línea + parche)\n\n- **A1** `tests/test_instruments.py:83-98` (gateC): asserts exactos de recorte/decimación para `r`, `j`, `z`, `omega`, `ticks` en `vb` y `vc` (no sólo `theta`), + referencia escalar independiente para `vc.j` con `dt_ef=5·dt` (c1 la verificó a residuo 0.0). Mata J-M1/J-M2/J-M5.\n- **A2** `tests/test_instruments.py:63-75` (gateA): comparar `v.arrays['z']` contra `ref['z']`; sub-gate con `r_min=0.99` sobre el MISMO film (r∈[0.6008,0.9998] ⇒ ambas ramas pobladas): `omega_valid==(ref['r']>=0.99)` y `isnan(omega[~valid])`. Mata J-Mz/J-Mo/J-Mr.\n- **A3** `src/study07/instruments/api.py:45-52,54-63`: `view_hash()` hashea el manifiesto EXCLUYENDO la clave `view_hash`; `write()` no muta el hash base, escribe `data.npz` primero y el manifiesto al final como marca de cierre, rechaza overwrite con `view_hash` distinto; agregar `load_view()` que relee y recomputa fail-loud; gate D pasa a comparar recompute vs **DISCO**. Mata J-M3/J-M13 y sella idempotencia.\n- **A4** identidad: gate `wl['worldline_hash'] == json.loads(COMPLETE)['sha_total'] == rec.close()` + dos films distintos ⇒ hashes distintos; `api.py:20-23`: `worldline_hash = sha256(sha_total || manifest_sha)` (el manifiesto que phase/energy LEEN debe estar dentro de la identidad — colisión dt×2 confirmada por lectura de `recorder.py:152-158`). Mata J-M15/J-M6.\n- **A5** energy: gate con ventana `{'t0_tick':500,'t1_tick':1000,'stride':5}` vs recorte bit-exacto + clon de gateE para energy. Mata J-M4. `recorder.py:74-95`: `spec_fingerprints` en el manifiesto del film (la función ya existe en `checkpoint.py:20`); `energy.py:31`: verificar por nodo contra `man['spec_fingerprints']`, fail-loud; `MAN` con sha real de f6, no `'local'`.\n- **A6** anclas f7: en `setUpClass` assert `sha256(F6)==meta7['f6_sha256']` y `sha256(F7)==sidecar` (hoy coinciden — verificado — pero ningún test los mira: grep `sha256` en `test_instruments.py` = 0 hits); `tools/gen_f7_observables.py:75-81`: assert por-tick contra f6 dentro del loop (hoy sólo fila 0); `:89` oracle_commit medido con git, no prosa.\n- **A7** `recorder.py:16`: mover `Network` a `TYPE_CHECKING` + gate de subproceso limpio (verificado: `import study07.instruments.api` carga `study07.engine.network` transitivamente — \"sin re-simular\" es sintáctico, no invariante de proceso).\n- **A8** validación de ventana compartida en api: `0<=t0<=t1<len(ticks)`, `stride>=1`, `sel.size>0`; whitelist de claves (`set(obs)-set(DEFAULTS)` ⇒ error de contrato); agregar `'ticks'` a `exigir_canales` y exigir `wl['complete'] is True` por defecto.\n- **A9** fixture heterogéneo (2 nodos, layouts distintos) para que `capas_por_modo` deje de testearse vacuamente (c2-M16 sobrevivió la suite COMPLETA).\n- **A10** condición dura F3: re-matar los 15 vivos contra el código arreglado antes de declarar F4.\n\n## 2. Tabla de mutantes\n\nBatería del juez (independiente, verificada): **12 probados / 1 detectado / 11 vivos**.\n\n| Mutante | Toca | Gate que debía cazarlo | Resultado |\n|---|---|---|---|\n| J-M1 dt_ef=dt (ignora stride) | phase.py:52 | C/D | **VIVO** 6/6 |\n| J-M2 subsample arranca t0+stride−1 | phase.py:30 | C/D | **VIVO** |\n| J-M5 J=0 si t0>0 | phase.py:65 | C | **VIVO** |\n| J-M15 worldline_hash=\"f\"×64 | api.py:20-23 | C/F | **VIVO** |\n| J-M6 worldline_hash=manifest_sha | api.py:23 | C/F | **VIVO** |\n| J-Mz z con signo invertido | phase.py:56 | A | **VIVO** |\n| J-Mo omega inválido→0.0 (no NaN) | phase.py:69 | A | **VIVO** |\n| J-Mr r_min ignorado (ok=isfinite) | phase.py:67 | A/F | **VIVO** |\n| J-M3 write() guarda npz sin arrays | api.py:61 | C/D | **VIVO** |\n| J-M13 view_hash ignora arrays | api.py:49-51 | D | **VIVO** |\n| J-M4 energy ignora su ventana | energy.py:34 | B | **VIVO** |\n| CONTROL atan2(X,V) | phase.py:45 | A | MUERTO (gate A) |\n\nCorroboración lente c2 (no re-corrida por el juez): 17 probados / 12 muertos / 5 vivos — los 12 muertos son la física del espejo (θ/J/ω/E), márgenes 4.8e-05…3.2e+02; sus vivos adicionales: M16 capas_por_modo nodo-0 (suite completa verde), M04 r_min default 0.5, M05b eps_den hardcodeado, y el float32-cache de c3. **Vivos únicos consolidados: 15** (11 verificados por el juez, 4 reportados por lentes con evidencia consistente).\n\n## 3. INSTRUMENT_CONTRACT por cláusula\n\n| Cláusula | Estado | Evidencia |\n|---|---|---|\n| instrument_id+versión | CUMPLE | gate F |\n| required_channels: falla, jamás sustituye | PARCIAL | gate E sólo phase/estados=[]; predicado sólo listas vacías; `ticks` y `complete` sin declarar; energy sin gate equivalente |\n| observation_config DECLARADA (ventana/stride/umbral) | INCUMPLE en efecto | declara pero no valida ni honra verificadamente: J-M1/M2/M5/M4/Mr vivos; t0 negativo wrapea; typo entra al config_hash |\n| worldline_hash → vista con hash y procedencia | INCUMPLE | J-M15/J-M6 vivos; identidad excluye el manifiesto que los instrumentos leen; procedencia placeholder; constitución sin contraparte (verificado: masa×2 y permutación aceptadas) |\n| NO muta ni ejecuta el motor | PARCIAL | no ejecuta (cierto hoy), pero engine CARGADO transitivamente (verificado en subproceso); gate AST sólo imports directos |\n| Recalculable y comparable contra su caché | INCUMPLE | no existe lector de vistas (grep src/: 0 hits); gate D compara RAM-vs-RAM; J-M3/J-M13 vivos; view_hash inestable post-write (verificado) |\n| Distingue dato/inferencia/veredicto | INCUMPLE | sin forma ejecutable; api.py:6 la reescribe debilitada (\"dato de configuración\") |\n| Vistas POR NIVEL (cláusula 2 COA) | NO EVALUADA | F4 sólo cubre nivel red — declarar fuera de alcance, no cumplida |\n| Migración con fixture del oráculo | CUMPLE SÓLO en el camino default | 0.0 exacto verificado en (t0=0, t1=full, stride=1); resto del espacio sin fixture |\n\n## 4. NO-CUBIERTO consolidado\n\n1. Espacio de `observation_config` fuera del default: stride>1 y sub-ventanas sin referencia para r/j/z/omega; energy jamás corrida con ventana en tests.\n2. Canal `z` y slots inválidos de `omega` jamás comparados contra referencia.\n3. El NULO del instrumento (r_min/omega_valid) nunca ejercitado: f7 tiene 0/1501 ticks en [0.08, 0.5), omega_valid=1501/1501 (medido) — la clase exacta de deriva de Study06.\n4. `eps_den` inalcanzable en films físicos (constante-guardia no auditable); declaración≠uso sin gate.\n5. Caché en disco: sin lector, sin marca de cierre (manifest antes que data), overwrite silencioso del mismo path, hash inestable en re-write.\n6. Identidad del film excluye el manifiesto (colisión dt por construcción); `hashes_base_externa` acepta placeholders.\n7. Constitución↔film sin huella verificable (sin `spec_fingerprints`).\n8. Anclas f7 no verificadas por tests (hoy válidas, verificado a mano); degradación `_pinned`→TOL silenciosa, y TOL=3.86e-11 admite trayectorias a distancia ≲5e-12 en estado (medido por c1, régimen contractivo); gen_f7 verifica sólo tick 0; oracle_commit hardcodeado.\n9. \"Sin re-simular\" es sintáctico: motor cargado transitivamente en el proceso.\n10. Ventanas malformadas: wrap negativo, vista vacía escrita, IndexError crudo, stride 0/negativo; sin whitelist de claves.\n11. Films incompletos observables por puerta lateral (`allow_incomplete` + hash inventado) y publicables.\n12. Población de fixtures homogénea: layout por nodo testeado vacuamente (mutante nodo-0 sobrevive la suite completa).\n13. n=1 ⇒ R≡1 identidad-por-construcción sin declarar; T=0 y film de 0 ticks cubiertos de facto sin gate propio.\n14. Stride de grabación protegido por accidente (loader exige ticks consecutivos); instrumentos asumen índice==tick y no leen `perfil`.\n15. J estriado es OTRO estimador (max|d|=8.4e+01 vs decimado) declarado sólo en nota prosa; borde de ventana redefine J[0]/omega[0]; no existe VIEW_SCHEMA; WORLDLINE_SCHEMA sin enmienda `por_nodo`; `views/<hash>` vs truncado `[:16]`.\n\nReproducción: `python3 scratchpad/judge_f4/driver.py` (batería) y `python3 scratchpad/judge_f4/probes.py` (P1-P6). Repos read-only respetados; sandbox restaurado a pristine.",
+  "revs": [
+   {
+    "resumen": "DOUBLE TAP F4 — NO DECLARAR TODAVÍA. Los gates A-F están verdes pero 6/6 mutantes construidos sobreviven con la suite en verde (patrón F2: 24 vivos, F3: 5 vivos, F4: 6 vivos). Lo que SÍ está clavado: el camino (t0=0, t1=full, stride=1) de phase y energy reproduce la referencia del oráculo a 0.0 exacto en el entorno pinned, y gateA es un testigo fuerte de identidad de trayectoria EN ESE ENTORNO (una perturbación 1e-12 rompe el 0.0). Lo que NO está medido: (1) TODO el espacio de observation_config fuera del default — stride>1 y sub-ventanas no se comparan contra ninguna referencia (dt_ef ignorando stride, subsample desalineado y J=0 en t0>0 pasan 6/6; energy ignora su ventana declarada y pasa); la demo fundacional de gateC prueba consistencia de recorte de theta, no corrección de las otras vistas; (2) la vista ESCRITA jamás se relee — data.npz vacío pasa 6/6, y write() muta el manifiesto: view_hash post-write ≠ almacenado y el segundo write no es idempotente (39b45dfa→54dbfedd, demostrado); (3) la identidad f7↔f6 existe como campo (meta7.f6_sha256, sidecar f7) pero NADIE la verifica en test (hoy coinciden en disco, verificado a mano), y fuera del entorno pinned TOL=3.86e-11 ADMITE otra trayectoria: eps=1e-12 en un modo S1 da theta inicial idéntico (d=0.0) y serie completa max 1.0e-11 < TOL, con divergencia CONTRACTIVA (7.7e-12→3.8e-12: nunca separa) — _pinned degrada en silencio sin marcar; (4) el gate de arquitectura mira sólo imports DIRECTOS: importar study07.instruments carga transitivamente study07.engine.network vía artifacts/recorder.py:16 (demostrado en subproceso limpio) — el motor está en el proceso, alcanzable por sys.modules, y \"sin re-simular\" es prosa, no invariante. Los parches propuestos para (1) fueron verificados a residuo 0.0 contra el código honesto (vb.r==va.r[recorte], vb.j[1:]==va.j[recorte], vc.theta/z/ticks==va[::5], vc.j==referencia escalar con dt_ef=5dt) — matan M1/M2/M5 sin tocar la física. Positivo verificado del lente (c): view_hash ES estable entre procesos (sort_keys + repr determinista de float64). Condición dura sugerida (regla F3): aplicar arreglos y re-matar los 6 mutantes contra el código modificado antes de declarar F4.",
+    "hallazgos": [
+     {
+      "que": "El path stride>1 y las sub-ventanas de phase no tienen referencia: 3 mutantes viven con 6/6 verde — M1 (dt_ef = dt, ignora stride: J y omega salen ×stride mal), M2 (subsample desalineado: arranca en t0+stride-1 si stride>1), M5 (J=0 siempre que t0>0). gateC sólo compara theta de la sub-ventana como recorte (ni r, ni j, ni omega); la vista vc (stride=5) no se compara con NADA salvo config_hash y path; gateD compara el código consigo mismo (stride=3 dos veces, mismo proceso, mismo bug). La única ruta anclada al oráculo es (t0=0, t1=full, stride=1).",
+      "donde": "tests/test_instruments.py:83-103 (gateC/gateD) + src/study07/instruments/phase.py:30,52 (sel, dt_ef)",
+      "severidad": "BLOQUEA_F4",
+      "evidencia": "Batería en sandbox (scratchpad/dtf4/mutantes.py): M1, M2, M5 → '6 passed' cada uno. Contraste: los mismos mutantes restringidos a stride=1/t0=0 los caza gateA por forma o valor.",
+      "parche": "En gateC agregar asserts EXACTOS (verificados a 0.0 contra el código honesto): vb.arrays['r']==va.arrays['r'][500:1001]; vb.arrays['j'][1:]==va.arrays['j'][501:1001]; vb.omega[1:][ok]==va.omega[recorte][ok]; vc.arrays['theta']==va.arrays['theta'][::5]; vc.arrays['z']==va.arrays['z'][::5]; vc.arrays['ticks']==va.arrays['ticks'][::5]; y para vc.j una referencia independiente en el test: espejo escalar sobre va.z[::5] con dt_ef=5·dt (verificado: residuo 0.0). Eso mata M1/M2/M5. Después re-matar los 6 contra el código arreglado (condición dura de F3)."
+     },
+     {
+      "que": "La vista escrita jamás se relee: View.write() puede escribir data.npz VACÍO (M3) y los 6 gates siguen verdes — 'recompute==cache' (gateD) nunca se prueba contra el caché real en disco. Además write() MUTA self.manifest insertando view_hash: recomputar view_hash después de write da OTRO hash que el almacenado, y un segundo write del mismo objeto almacena un view_hash distinto para datos+config idénticos — la cadena de verificación desde disco (pop view_hash, recomputar) queda rota tras cualquier rewrite.",
+      "donde": "src/study07/instruments/api.py:54-63 (write) y 45-52 (view_hash); tests/test_instruments.py:95-98 (gateC sólo mira paths)",
+      "severidad": "ALTO",
+      "evidencia": "M3 (savez sin arrays) → '6 passed'. Demostración en sandbox: hash pre-write 39b45dfa == almacenado; hash post-write 54dbfedd (DISTINTO); segundo write almacena 54dbfedd (no idempotente).",
+      "parche": "view_hash() debe hashear el manifiesto SIN la clave view_hash ({k:v for k,v in manifest.items() if k!='view_hash'}) y write() no mutar el hash base. Gate nuevo: write → cargar manifest.json+data.npz → arrays bit-iguales a los de la vista y view_hash recomputado desde disco == almacenado. Mata M3 y sella idempotencia."
+     },
+     {
+      "que": "La identidad de la referencia f7 no está anclada en los gates y el nivel-2 (TOL) ADMITE otra trayectoria. (i) meta7 trae f6_sha256 y existe el sidecar study07_f7.sha256, pero ningún test los verifica (el sidecar de f6 SÍ se verifica en conformance; el de f7 es peso muerto); si f6 se regenerara sin regenerar f7, gateA fallaría con un diff numérico opaco en vez de fail-loud de procedencia. (ii) El film de trabajo lleva hashes_base_externa={'fixture_f6':'local'} — un placeholder, no un hash. (iii) Fuera del entorno del generador (_pinned falso: numpy o machine distintos), la degradación a TOL=3.8579e-11 es SILENCIOSA y acepta trayectorias genuinamente distintas: perturbar x de un modo S1 en 1e-12 da theta inicial IDÉNTICO (d=0.0, el falso positivo del lente a) y la serie completa de 1500 ticks queda en max 1.0e-11 < TOL; el régimen lockeado es contractivo (d(t): 7.7e-12→3.8e-12), así que nunca separa. Con eps=5e-11 sí falla (5.1e-10). En el entorno pinned el 0.0-exacto SÍ caza la otra trayectoria — la garantía de identidad depende del entorno y nadie lo declara.",
+      "donde": "tests/test_instruments.py:32-34 (_pinned), 41-50 (setUpClass sin verificación de sha), 22-23 de test_worldline_checkpoint.py (MAN placeholder); tools/gen_f7_observables.py:86,99 (los sellos que nadie lee)",
+      "severidad": "ALTO",
+      "evidencia": "Verificado en disco HOY: meta7.f6_sha256==sha(f6) True, sidecar f7==sha(f7) True — pero por inspección ningún test los compara. Experimento sandbox: eps=1e-12 → theta fila0 d=0.000e+00, serie max=1.02e-11, pasa_TOL=True; eps=5e-11 → max=5.08e-10, falla.",
+      "parche": "En setUpClass: assert sha256(F6)==meta7['f6_sha256'] y sha256(F7)==sidecar (dos líneas, fail-loud de procedencia). Pasar el sha real de f6 en MAN['hashes_base_externa'] del film de trabajo. Hacer VISIBLE la degradación: si no _pinned, emitir warning explícito o partir gateA en dos tests (exacto @pinned / TOL@resto) para que el modo degradado se vea en el reporte. Declarar en NO-CUBIERTO que TOL admite trayectorias a distancia ≲5e-12 en estado (medido)."
+     },
+     {
+      "que": "El gate de arquitectura ('instruments jamás importa engine') mide sólo imports DIRECTOS por AST: importar study07.instruments.api carga transitivamente study07.engine.network porque artifacts/recorder.py:16 hace 'from ..engine.network import Network' (usado únicamente como anotación de tipo, con from __future__ import annotations ya activo). El motor queda cargado en el proceso del instrumento y alcanzable vía sys.modules sin ningún import que el AST vea — la prueba arquitectónica de 'sin re-simular' (la mitad que gateC no cubre, lente b) es sintáctica, no un invariante de proceso.",
+      "donde": "tests/test_conformance_oracle.py:269-282 (gate AST) + src/study07/artifacts/recorder.py:16 (import Network) + src/study07/instruments/api.py:17 (la ruta transitiva)",
+      "severidad": "MEDIO",
+      "evidencia": "Subproceso limpio en sandbox: tras 'import study07.instruments.api', sys.modules contiene ['study07.engine','study07.engine.network'] y Network es alcanzable sin import directo.",
+      "parche": "recorder.py: mover Network a 'if TYPE_CHECKING:' (la anotación ya es lazy). Gate nuevo en conformance: subprocess.run([python,'-c','import study07.instruments, sys; assert not [m for m in sys.modules if m.startswith(\"study07.engine\")]']) — convierte 'sin re-simular' de prosa a invariante verificado en proceso limpio. Sobre tiempo: NO usar timing como gate (flaky); la arquitectura es la prueba correcta."
+     },
+     {
+      "que": "La semántica de identidad del film no está medida: el mutante M6 (worldline_hash devuelve manifest_sha en vez de sha_total) pasa 6/6. Los gates sólo usan worldline_hash para compararlo consigo mismo entre vistas (gateC) y para verificar presencia (gateF) — cualquier valor determinista por-film pasa. 'La identidad del film = sha_total del COMPLETE' es un comentario, no un contrato medido.",
+      "donde": "src/study07/instruments/api.py:20-23 + tests/test_instruments.py:88-89,118",
+      "severidad": "MEDIO",
+      "evidencia": "Batería sandbox: M6 → '6 passed'.",
+      "parche": "Gate: worldline_hash(run) == json.loads((run/'COMPLETE').read_text())['sha_total'] y == el valor que retornó rec.close() (el recorder ya lo devuelve). Opcional: verificar que dos films distintos dan hashes distintos."
+     },
+     {
+      "que": "energy ignora por completo su ventana declarada y nadie lo nota: M4 (sel = arange(len(ticks)) — t0/t1/stride muertos) pasa 6/6 porque gateB sólo llama energy con defaults y ningún otro gate la toca. Una vista cuyo observation_config declara una ventana que el código no honra es exactamente la 'identidad disfrazada de testigo' que el INSTRUMENT_CONTRACT quiere impedir: el manifiesto miente. Además gateE (canal ausente FALLA) sólo cubre phase — los modos de fallo de energy (canales, constitución con n_nodes distinto) no tienen gate.",
+      "donde": "src/study07/instruments/energy.py:28-34 + tests/test_instruments.py:77-81,105-109",
+      "severidad": "MEDIO",
+      "evidencia": "Batería sandbox: M4 → '6 passed'. Inspección: energy.run aparece una sola vez en los tests, sin observation_config.",
+      "parche": "En gateB (o gate nuevo): ve = energy.run(wl, thetas, {'t0_tick':500,'t1_tick':1000,'stride':5}); assert ve.arrays['e_capa'] == e_capa_full[500:1001:5] bit-exacto y ve.arrays['ticks'] == ticks[500:1001:5]. Clonar gateE para energy (estados vacíos + constitución con nodos de menos → RuntimeError)."
+     },
+     {
+      "que": "Verificaciones que SÍ sostienen (lente c refutado en su peor caso): view_hash es estable ENTRE procesos — dos subprocesos independientes sobre el mismo film y config {'stride':3,'t0_tick':10} producen 494735ea… idéntico (json sort_keys + repr determinista de float64 + tobytes contiguo). El riesgo real del hash no es entre-procesos sino el post-write del hallazgo 2. Menor adicional: exigir_canales sólo detecta vacío en listas — un canal presente como None o ndarray vacío pasa el chequeo y revienta después con error no declarado (gateE pasa porque estados=[] es lista).",
+      "donde": "src/study07/instruments/api.py:45-52,73-77",
+      "severidad": "NOTA",
+      "evidencia": "Sandbox: dos procesos separados → view_hash idéntico. Lectura de exigir_canales: el guard 'isinstance(wl[c], list) and not wl[c]' no cubre None ni ndarray.size==0.",
+      "parche": "Opcional: en exigir_canales tratar None y arrays de tamaño 0 como ausencia. Documentar en el contrato que la estabilidad del hash está verificada entre procesos del MISMO entorno (numpy/machine), no entre entornos."
+     }
+    ]
+   },
+   {
+    "resumen": "DOUBLE TAP F4 — LENTE 2 (batería de mutación), sandbox en scratchpad, una mutación por vez, 17 mutantes (los 16 pedidos + variante M05b). Entorno PINNED (numpy 2.3.4/x86_64 == generador ⇒ los gates exigen 0.0 exacto). VEREDICTO: la física espejada está bien custodiada — 12 mutantes MUERTOS con márgenes enormes: fase θ (S1 en vez de Q: 4.9e+00; todos los modos: 4.9e+00; atan2 invertido: 4.7e+00), J (sin /dt: 1.7e+02; Re por Im: 2.4e+02), ω (J/R sin cuadrado: 8.6e+01), energía (sin masa cinética: 3.2e+02; sin memoria κz²: 6.4e-02; eps_omega=0: 4.8e-05; b de capa fija 0: 4.8e-05), config_hash sin config (gate C), eps_den en DEFAULTS (gate F, pero SOLO por la declaración). PERO 5 mutantes VIVEN con 6/6 verde y todos son del INSTRUMENT_CONTRACT — el patrón exacto de F2/F3 (gates que no protegen la infraestructura): (1) worldline_hash INVENTADO (constante, no lee COMPLETE) pasa todo — la identidad del film, el corazón del gate C 'misma película', jamás se coteja contra sha_total ni entre films distintos ⇒ BLOQUEA_F4; (2) view_hash que ignora los arrays pasa gate D — el sello caché==recompute no está atado al CONTENIDO; (3) capas_por_modo de OTRO nodo sobrevive la SUITE COMPLETA (26 passed) — el 'film auto-suficiente' (cierre del hallazgo del juez F3) se testea sólo vacuamente porque toda la población de fixtures tiene nodos de layout idéntico; (4) r_min 0.08→0.5 vive — el film jamás pisa r∈[0.08,0.5) (r∈[0.6008,0.9998], omega_valid 1501/1501): el NULO del instrumento no se ejercita nunca, exactamente la clase de deriva de Study06; (5) eps_den hardcodeado 1e-6 con DEFAULTS declarando 1e-12 vive — gate F verifica el dict, no que el cómputo USE la config ('identidad declarada ≠ identidad usada'). Recomendación: NO declarar F4 hasta cerrar (1)-(3) con los kill-tests indicados; (4)-(5) exigen una sonda sintética del kernel escalar. El 0.000e+00 es real para la aritmética; lo que no cubre es la procedencia.",
+    "hallazgos": [
+     {
+      "que": "MUTANTE VIVO M15: worldline_hash() reemplazado por una constante ('f'*64, sin leer COMPLETE) pasa los 6 gates. Ningún gate asserta worldline_hash == sha_total del COMPLETE ni compara hashes de DOS films distintos. El gate C ('misma película ⇒ mismo worldline_hash') queda evidencialmente vacío: una función constante lo satisface con CUALQUIER par de films, y View.write colocaría vistas de films DISTINTOS bajo el mismo árbol (mismo instrumento+config ⇒ mismo directorio ⇒ el segundo write pisa data.npz del primero: envenenamiento de procedencia silencioso).",
+      "donde": "src/study07/instruments/api.py:20-23 (worldline_hash); gates que debían protegerlo: tests/test_instruments.py:88-89 (gate C) y :118 (gate F, sólo presencia)",
+      "severidad": "BLOQUEA_F4",
+      "evidencia": "Mutación aplicada: 6 passed (4.86s). Demo en código sano: api.worldline_hash(run) == json.loads(COMPLETE)['sha_total'] es True — la igualdad existe pero NINGÚN test la exige; grep confirma que sólo test_instruments.py ejercita instruments (test_conformance_oracle sólo el gate de imports).",
+      "parche": "Gate nuevo: (a) self.assertEqual(self.wl['worldline_hash'], json.loads((run/'COMPLETE').read_text())['sha_total']); (b) grabar un segundo film corto (otro seed u otros ticks) y assertNotEqual entre sus worldline_hash — identidad ligada al contenido, no a la función."
+     },
+     {
+      "que": "MUTANTE VIVO M13: view_hash() que ignora los arrays (hashea sólo el manifiesto) pasa los 6 gates, incluido el gate D. El contrato promete 'recomputable y comparable con su caché', pero gate D compara recompute-vs-recompute en memoria — nunca ata el hash al CONTENIDO ni verifica la caché ESCRITA. Con el mutante, un data.npz bit-rotted, adulterado o intercambiado 'verifica' contra su manifest.json para siempre (y no existe todavía ningún load_view que re-verifique).",
+      "donde": "src/study07/instruments/api.py:45-52 (view_hash); gate D: tests/test_instruments.py:100-103",
+      "severidad": "ALTO",
+      "evidencia": "Mutación aplicada: 6 passed (4.76s). Demo en código sano: v.arrays['theta'] += 1.0 con manifiesto idéntico ⇒ view_hash CAMBIA (True) — esa discriminación es exactamente lo que ningún gate exige; bajo el mutante daría hash idéntico y nada lo nota.",
+      "parche": "Reforzar gate D: h=v.view_hash(); v.arrays['theta'][0,0]+=1e-9; assertNotEqual(v.view_hash(), h). Y cerrar el ciclo del contrato: write() → releer manifest.json+data.npz → recomputar → assertEqual contra el view_hash almacenado (requiere el lector/verificador de vistas que hoy no existe)."
+     },
+     {
+      "que": "MUTANTE VIVO M16: capas_por_modo tomado SIEMPRE del nodo 0 (layout desalineado en el manifiesto) sobrevive no sólo los gates F4 sino la SUITE COMPLETA (26 passed, ~64s). Causa: TODA la población de fixtures deriva del f6 con 3 nodos de layout idéntico (10 modos, ['Q','Q','Q','S1','S1','S2'x5] los tres) — el manifiesto mutado es byte-idéntico al sano. El claim 'film auto-suficiente, layout por nodo en el manifiesto' (cierre del hallazgo del juez F3) está testeado sólo vacuamente: un film con nodos heterogéneos jamás se graba ni se lee en ningún gate, y ahí el instrumento de fase leería índices Q equivocados sin ruido alguno.",
+      "donde": "src/study07/artifacts/recorder.py:77-80 (por_nodo); fixture homogéneo: tests/test_worldline_checkpoint.py::_f6_net (usado por las 4 suites)",
+      "severidad": "ALTO",
+      "evidencia": "Mutación aplicada: pytest tests/ completo = 26 passed. Demo: [caps de sp.modes por nodo] == [caps de specs[0].modes por nodo] es True para el f6 — la mutación es indistinguible EN ESTA POBLACIÓN, que es precisamente el agujero.",
+      "parche": "Fixture heterogéneo mínimo: red de 2 nodos con thetas de layouts DISTINTOS (n_modes y reparto de capas diferentes); grabar+cargar y assertar que manifest['por_nodo'][j]['capas_por_modo'] coincide con el spec j (y correr phase sobre él contra un cálculo directo de los specs). Sin heterogeneidad, ningún gate futuro puede proteger el layout."
+     },
+     {
+      "que": "MUTANTE VIVO M04: r_min 0.08→0.5 en DEFAULTS pasa los 6 gates. El film de referencia tiene r∈[0.6008, 0.9998]: cero ticks en [0.08, 0.5), omega_valid=1501/1501 idéntico bajo la mutación. El mecanismo de VALIDEZ — el nulo del instrumento, lo que decide cuándo ω_c es citable — no se ejercita nunca: no hay ni un tick de des-lock en la referencia, y gate F tampoco fija el default (sobreescribe r_min=0.10 y sólo asserta el valor sobreescrito). En Study06 la deriva empezó exactamente así: nulos mal elegidos que ningún dato pisaba.",
+      "donde": "src/study07/instruments/phase.py:21 (DEFAULTS r_min) y :67; gates: tests/test_instruments.py:71 (omega_valid) y :114-116 (gate F)",
+      "severidad": "MEDIO",
+      "evidencia": "Mutación aplicada: 6 passed (4.80s). Medido en la referencia f7: r.min()=0.6008, ticks con 0.08≤r<0.5 = 0/1501 ⇒ la máscara omega_valid es insensible a cualquier r_min ∈ (0, 0.6008].",
+      "parche": "(a) Gate F asserta también los DEFAULTS sin override: phase.run(wl) ⇒ observation_config['r_min']==0.08. (b) Sonda sintética del kernel escalar: wl artesanal (dict con estados/manifest/worldline_hash) cuya serie θ cruza r por debajo de r_min ⇒ assertar que omega_valid conmuta en el borde y omega es NaN en la banda inválida. (c) A futuro: un film de referencia con ventana des-lockeada."
+     },
+     {
+      "que": "MUTANTE VIVO M05b: eps_den hardcodeado 1e-6 en el cuerpo (dz y denominador de ω) con DEFAULTS intactos declarando 1e-12 pasa los 6 gates. Gate F verifica la DECLARACIÓN (el dict de config), no que el cómputo USE esa config — 'identidad declarada ≠ identidad usada', la clase exacta de 'identidades disfrazadas de testigos'. Nota agravante: en cualquier film físico eps_den es casi-inalcanzable (dt_ef=8e-5≫1e-6 y en ticks válidos r²≥r_min²=0.0064≫1e-6), o sea que es una constante-guardia cuyo valor real nada puede auditar hoy. El M05 (mismo cambio en DEFAULTS) murió SOLO por la declaración del gate F, jamás por la física.",
+      "donde": "src/study07/instruments/phase.py:64 y :69 (usos de cfg['eps_den']); gate F: tests/test_instruments.py:116",
+      "severidad": "MEDIO",
+      "evidencia": "M05b aplicada: 6 passed (4.85s). M05 (DEFAULTS): muere sólo en gate F (AssertionError: 1e-06 != 1e-12), con gates A-D en verde. Medido: dt_ef=8e-05 > 1e-6 y min(r² válidos)=0.361 > 1e-6 ⇒ ni un número de la vista cambia.",
+      "parche": "Sonda sintética donde eps_den sea load-bearing: wl artesanal con manifest['dt']=1e-13 (max(dt_ef, eps_den) pasa a decidir dz) ⇒ con eps_den=1e-12 vs 1e-6 los J difieren en órdenes de magnitud; assertar el valor esperado con 1e-12. Alternativa honesta: documentar eps_den como guardia inalcanzable y assertarlo por inspección de código no es medible — preferir la sonda."
+     },
+     {
+      "que": "MUERTOS (12/17) — residuo/efecto que cada gate detecta, todos en entorno pinned (exigencia 0.0 exacto; el piso alternativo TOL=3.86e-11 también los mataría a todos): M01 qi de S1 ⇒ gateA θ max|d|=4.895e+00. M02 todos los modos ⇒ gateA θ 4.871e+00. M03 atan2(X,V) ⇒ gateA θ 4.702e+00. M05 eps_den DEFAULTS ⇒ gateF (declaración; física intacta). M06 dz sin /dt ⇒ gateA J 1.710e+02 (θ y r exactos 0.0 — el gate por-canal aísla el culpable). M07 J=Re ⇒ gateA J 2.362e+02. M08 ω=J/R ⇒ gateA ω 8.567e+01 (θ/r/J exactos). M09 eps_omega=0 ⇒ gateB e_capa 4.751e-05. M10 sin κz² ⇒ gateB 6.431e-02. M11 sin masa cinética ⇒ gateB 3.178e+02 (masas 1.7/0.6/1.0 del f6 hacen el término observable). M12 b de capa fija 0 ⇒ gateB 4.751e-05. M14 config_hash sin config ⇒ gateC (config_hash idénticos '8f8a040f72a4f276'). Margen mínimo de detección: 4.75e-05 (M09/M12, término eps_omega·b·x² chico en esta ventana) — 6 órdenes sobre TOL, suficiente pero es el canal más débil del espejo de energía.",
+      "donde": "tests/test_instruments.py gates A (:63-75), B (:77-81), C (:90-91), F (:116) sobre src/study07/instruments/{phase,energy,api}.py",
+      "severidad": "NOTA",
+      "evidencia": "Salida completa de la batería (17 corridas independientes de tests/test_instruments.py, ~5s c/u, archivo restaurado y __pycache__ purgado entre mutaciones; driver en scratchpad/mutate_f4.py). Sandbox verificado limpio al final (git status vacío; recorder.py idéntico byte a byte al repo read-only).",
+      "parche": ""
+     }
+    ]
+   },
+   {
+    "resumen": "DOUBLE TAP F4 — LENTE 3 (INSTRUMENT_CONTRACT y specs vs código). LO QUE SOBREVIVE: la física de los espejos es genuina — TODAS las citas de docstrings verificadas RELEYENDO el oráculo son REALES y esencialmente exactas (theta_q 366-375 exacto; Z :996 exacto; lock_band_observables 93-108; compute_layer_energies 426-454 exacto; energies 377-388; el fallback «sin capa Q ⇒ todos los modos» EXISTE en differential_engine.py:231-232; eps_den/r_min transcriptos fieles; lock_band importada no reescrita; energ.T correcto vs step() que devuelve (3,n) POST-step). El residuo 0.000e+00 del baseline es real (6 passed, entorno pineado numpy 2.3.4/x86_64). LO QUE NO SOBREVIVE: el patrón F2/F3 se repite — construí mutantes y CUATRO viven con 6/6 verde: M1 canal z publicado con signo invertido (z jamás se compara contra la referencia; r/j/omega son invariantes ante z→−z), M2 omega inválido→0.0 en vez de NaN, M2b r_min IGNORADO por completo (el fixture tiene 1501/1501 ticks válidos, r∈[0.60,1.00]: la rama del umbral es código muerto para los gates — «nulos mal elegidos», el veneno exacto de Study06), M3 cache en disco degradado a float32 (Gate D dice «recompute==cache» pero compara recompute vs recompute en RAM; NADIE relee jamás una vista escrita; no existe load_view/verify_view). Además: colisión de identidad demostrada (dos films válidos con dt×2 comparten worldline_hash — sha_total sólo cubre chunks, no el manifiesto que phase/energy LEEN — misma ruta de vista, omega difiere 1.25e+02, el segundo write PISA el cache sin detección); view_hash() post-write ≠ hash sellado (write muta self.manifest); energy acepta constituciones no atadas al film (masa×2 → dE=2.1e-01 silencioso; el hashes_base_externa del test es el placeholder «local»); f7 SIN PIN (el sidecar study07_f7.sha256 no lo verifica ningún test, a diferencia de f1-f5 sellados y f6; y regenerar f7 en otro entorno degrada silenciosamente el gate de 0.0-exacto a TOL vía _pinned); gen_f7 verifica SÓLO el tick 0 contra f6 aunque f6 trae la trayectoria completa (1501,33) — una divergencia a mitad de corrida NO se notaría en el generador y aparecería después como residuo de Gate A atribuido al instrumento equivocado; oracle_commit=39f8df6 HARDCODEADO como prosa (hoy cierto, no medido); WORLDLINE_SCHEMA NO fue enmendado (522683e no tocó specs/ — por_nodo/capas_por_modo que phase EXIGE quedaron implícitos; views/<hash> del schema vs [:16] truncado en api.write); la cláusula dato/inferencia/veredicto no tiene forma ejecutable y api.py la reescribe debilitada («dato de configuración»); ventanas negativas producen vistas revueltas por wrap de numpy; claves de config con typo se aceptan y se DECLARAN. VEREDICTO: la candidata NO debe declararse hasta arreglos + re-matanza contra el código modificado (condición dura de F3). El corazón (espejo numérico + inversión arquitectónica) está sano; los gates que lo custodian tienen los mismos agujeros que costaron los double taps anteriores.",
+    "hallazgos": [
+     {
+      "que": "Gate A no compara el canal z ni los slots inválidos de omega, y la rama r_min JAMÁS se ejercita: el fixture f7 tiene 1501/1501 ticks válidos (r∈[0.60,1.00], umbral 0.08). Tres mutantes vivos con 6/6 verde: z con signo invertido (r/j/omega son invariantes ante z→−z), omega inválido→0.0 en vez de NaN, y r_min ignorado por completo. El «umbral DECLARADO» del contrato tiene gate de declaración (Gate F) pero CERO gate de efecto.",
+      "donde": "/Users/cagostino/code/doft-study07-worldline/tests/test_instruments.py:63-75 (gateA) vs /Users/cagostino/code/doft-study07-worldline/src/study07/instruments/phase.py:56,67,69",
+      "severidad": "BLOQUEA_F4",
+      "evidencia": "Sandbox: mutante z[k]=-complex(...) → 6 passed; omega[k]=0.0 si not ok → 6 passed; ok=bool(np.isfinite(rv)) sin r_min → 6 passed. np.load del f7: omega_valid=1501/1501, invalidos=0, NaN en omega ref=0, r∈[0.6008,0.9998].",
+      "parche": "En gateA comparar también v.arrays['z'] contra ref['z']; agregar sub-gate con r_min=0.99 sobre la MISMA película (r∈[0.60,1.00] ⇒ ambas ramas pobladas): assert omega_valid==(ref['r']>=0.99) y np.isnan(omega) en ~valid. Re-matanza de los 3 mutantes tras el arreglo."
+     },
+     {
+      "que": "La cláusula «recomputable y comparable contra su caché» no tiene implementación: Gate D compara recompute vs recompute en RAM y NINGÚN test relee una vista escrita; no existe load_view()/verify_view() en api.py. Mutante vivo: write() degradando todos los float64 a float32 en el data.npz — el cache que consumirá toda la física publicada — con 6/6 verde. Agravante: write() muta self.manifest (agrega view_hash), así que view_hash() post-write ≠ hash sellado en disco: el protocolo de verificación del cache ni siquiera está definido.",
+      "donde": "/Users/cagostino/code/doft-study07-worldline/src/study07/instruments/api.py:54-63 y tests/test_instruments.py:100-103 (gateD)",
+      "severidad": "BLOQUEA_F4",
+      "evidencia": "Sandbox: savez con astype(float32) → 6 passed. Y tras v.write(): manifest['view_hash']=ba94628286d10af7 pero v.view_hash() recomputado = 46a992aa27b71010 (≠).",
+      "parche": "api.load_view(path): leer manifest.json + data.npz, recomputar view_hash EXCLUYENDO la clave view_hash, comparar con la sellada, fail-loud. Gate nuevo: escribir, releer, comparar arrays bit a bit y hash. view_hash() debe calcular sobre copia del manifiesto sin mutar el objeto."
+     },
+     {
+      "que": "La identidad del film excluye el manifiesto: worldline_hash = sha_total del COMPLETE cubre SOLO los bytes de los chunks, pero phase/energy leen dt y por_nodo DEL MANIFIESTO. Dos films internamente válidos con el mismo estado pero dt×2 comparten worldline_hash y ruta de vista: la vista B (omega difiere 1.25e+02) PISA a la A en el cache sin ninguna detección — View.write sobrescribe silenciosamente un manifest.json existente.",
+      "donde": "/Users/cagostino/code/doft-study07-worldline/src/study07/instruments/api.py:20-23 (worldline_hash) y :54-63 (write con exist_ok+overwrite)",
+      "severidad": "ALTO",
+      "evidencia": "Sandbox: copytree del run + dt×2 en manifest + COMPLETE re-cerrado coherente → load_run pasa ambos, worldline_hash A==B (0ee43648a66b7cd9), config_hash A==B, max|d_omega|=1.250e+02, misma ruta views/0ee43648a66b7cd9/phase_lock/86678bd..., write B clobbering A.",
+      "parche": "worldline_hash = sha256(sha_total || manifest_sha) — ambos YA están en el COMPLETE, es una línea. View.write: si existe manifest.json con view_hash distinto, RECHAZAR (corrección de instrumento ⇒ nueva versión ⇒ nueva ruta, WORLDLINE_SCHEMA regla 2)."
+     },
+     {
+      "que": "energy.run no ata la constitución al film: sólo chequea n_nodes. Una constitución con masa×2 (misma forma, otra física) se acepta sin error y produce energías silenciosamente distintas en una vista con manifiesto válido. El desalineo de layout a veces revienta pero con KeyError críptico, no con el error de contrato. El hashes_base_externa que debería atarla es un placeholder ('local') que el recorder acepta — la clave obligatoria valida presencia, no contenido.",
+      "donde": "/Users/cagostino/code/doft-study07-worldline/src/study07/instruments/energy.py:31-32 y tests/test_worldline_checkpoint.py:22-23 (MAN placeholder)",
+      "severidad": "MEDIO",
+      "evidencia": "Sandbox: masa×2 en nodo0/modo0 → energy.run acepta, max|dE|=2.144e-01, vista escrita normal. Modo quitado → KeyError (<Layer.S2: 3>, 4) crudo. MAN={'hashes_base_externa': {'fixture_f6': 'local'}} pasa el gate de claves obligatorias.",
+      "parche": "Verificar spec vs manifiesto por_nodo: 2n+n_z+2n_layers==dims[j], capas_por_modo==[m.layer.name for m in spec.modes], layers_present — fail-loud con mensaje de contrato. Si el film trae hash de constitución en hashes_base_externa, exigir match con constitucion_sha256."
+     },
+     {
+      "que": "La referencia f7 — el ancla de los gates A/B — no está pineada: el sidecar study07_f7.sha256 existe pero NINGÚN test lo verifica (f1-f5 están sellados como constantes en código y f6 se verifica contra su sidecar; f7 no tiene ni eso). Tampoco se verifica la cadena meta7.f6_sha256 == sha(f6 usado). Regenerar f7 en otro entorno cambia meta7.numpy/machine y degrada SILENCIOSAMENTE el gate de 0.0-exacto a TOL (vía _pinned); regenerar f6 daría un residuo indiagnosticable en Gate A en vez de «f7 stale».",
+      "donde": "/Users/cagostino/code/doft-study07-worldline/tests/test_instruments.py:28,42-43 (np.load sin sha) vs test_conformance_oracle.py:44-50,191-193 (el patrón que f7 no sigue)",
+      "severidad": "MEDIO",
+      "evidencia": "grep sha en test_instruments.py: cero resultados; grep study07_f7.sha256 en tests/ y src/: sólo el generador lo escribe. _pinned() compara contra meta7 — quien regenera la referencia controla el modo del gate.",
+      "parche": "Sellar el sha de f7 como constante en test_instruments (patrón ORACLE_FIXTURE_SHA) + assert meta7['f6_sha256'] == sha256(F6.read_bytes()) en setUpClass."
+     },
+     {
+      "que": "gen_f7 verifica el estado inicial contra f6 (assert d==0.0, bien) pero NINGÚN tick posterior, aunque f6 contiene la trayectoria completa (estados_nodo0 shape (1501,33)) y el assert por-tick sería gratis dentro del loop. Si el oráculo re-corrido divergiera a mitad de corrida (p.ej. simple_blocks_canonical.json distinto — su hash NO se verifica y las omegas no afectan el estado inicial — o deriva del entorno), el generador produciría una referencia envenenada que sólo aparecería después como residuo de Gate A, atribuido al INSTRUMENTO equivocado. Además oracle_commit='39f8df6' está HARDCODEADO como prosa (hoy coincide con HEAD del oráculo, pero no se mide ni se chequea dirty — «la metadata miente»).",
+      "donde": "/Users/cagostino/code/doft-study07-worldline/tools/gen_f7_observables.py:56-60 (assert sólo fila 0), :44-46 (blocks sin hash), :89 (commit hardcodeado)",
+      "severidad": "MEDIO",
+      "evidencia": "Lectura directa: el loop de :75-81 no compara nada contra fx[estados_nodo{j}][tick]; np.load del f6 confirma trayectoria completa disponible (1501,33). git log del oráculo confirma 39f8df6 = HEAD hoy — verdad no verificada.",
+      "parche": "Dentro del loop: d=max|flat(o.state) − fx[estados_nodo{j}][tick]|; assert d==0.0 por tick. Medir oracle_commit con git rev-parse -C ORACLE + status --porcelain (el recorder ya tiene _git_info: reusar). Sellar sha del blocks JSON consumido en el payload."
+     },
+     {
+      "que": "La cláusula «distingue dato / inferencia / veredicto» del contrato no tiene forma ejecutable y api.py la reescribe DEBILITADA como «distingue dato de configuración». omega (inferencia con estimador dZ/dt) y omega_valid (veredicto por umbral) viajan como canales planos indistinguibles de theta (dato transformado). Mitigante: r_min y eps_den SÍ están declarados en la config con defaults resueltos (Gate F) — pero su efecto no tiene gate (ver hallazgo 1).",
+      "donde": "/Users/cagostino/code/doft-study07-worldline/specs/INSTRUMENT_CONTRACT.md:5 vs src/study07/instruments/api.py:6 y phase.py:71-74",
+      "severidad": "MEDIO",
+      "evidencia": "Diff textual de las dos formulaciones; el manifest de la vista no contiene ninguna taxonomía de canales — sólo la nota libre 'J[0]=0, omega[0] segun validez...'.",
+      "parche": "Campo estructurado en el manifest de la vista: canales={theta:dato, z:dato, r:inferencia, j:inferencia, omega:inferencia(umbral r_min), omega_valid:veredicto} + gate que lo exija; restaurar la redacción completa de la cláusula en el docstring de api.py."
+     },
+     {
+      "que": "WORLDLINE_SCHEMA no fue enmendado con el layout por nodo: 522683e no tocó specs/ (el diff lo confirma). La sección «Manifiesto de corrida» no menciona por_nodo/capas_por_modo/layers_present/dims — que phase.py EXIGE con fail-loud («film pre-esquema»): el esquema de facto vive implícito en el código, exactamente el patrón que el double tap F3 corrigió con «WORLDLINE_SCHEMA enmendado». Además el schema dice views/<worldline_hash>/ pero api.write trunca a [:16].",
+      "donde": "/Users/cagostino/code/doft-study07-worldline/specs/WORLDLINE_SCHEMA.md:56-63 (manifiesto sin por_nodo) y :37 (views/<worldline_hash>) vs src/study07/instruments/api.py:55 ([:16]) y phase.py:34-37",
+      "severidad": "MEDIO",
+      "evidencia": "git show --stat 522683e: sólo bitacora, src, tests, tools — cero specs/. El schema lista run_id/spec/hashes/git/entorno/topología/params/semilla/perfil/parent/finalización; por_nodo ausente.",
+      "parche": "Enmienda al schema: por_nodo (n_modes, n_z, n_layers, capas_por_modo, layers_present) como clave OBLIGATORIA del manifiesto v1 (films previos = pre-esquema, rechazados como ya hace phase); documentar el truncado [:16] o usar el hash completo."
+     },
+     {
+      "que": "Ventana de observación sin validar: t0_tick negativo se acepta y el fancy-indexing de numpy WRAPEA — phase.run({'t0_tick': -50}) sobre un film de 101 ticks devolvió una vista de 151 filas que arranca en el tick 51 (cola del film) y duplica [0..100]: vista silenciosamente corrupta bajo una config declarada válida. t1 fuera de rango revienta pero con IndexError crudo.",
+      "donde": "/Users/cagostino/code/doft-study07-worldline/src/study07/instruments/phase.py:29-30 y energy.py:33-34",
+      "severidad": "BAJO",
+      "evidencia": "Sandbox: v.arrays['ticks'][:5]=[51 52 53 54 55], shape (151,) para un film de 101 ticks.",
+      "parche": "Validar 0 <= t0 <= t1 < len(wl['ticks']) y stride >= 1 con error de contrato antes de indexar."
+     },
+     {
+      "que": "required_channels incompleto y config no cerrada: phase y energy usan wl['ticks'] sin declararlo en exigir_canales (canal ausente ⇒ KeyError crudo, no el error de contrato «FALLA, no sustituye»); y las claves desconocidas de observation_config se aceptan y se DECLARAN — un typo ('r_mim': 0.99) corre con el default r_min=0.08 mientras el manifiesto de la vista declara una config con la clave basura, cambiando el config_hash sin cambiar el cálculo.",
+      "donde": "/Users/cagostino/code/doft-study07-worldline/src/study07/instruments/phase.py:25-26,29 y energy.py:28-29,33",
+      "severidad": "BAJO",
+      "evidencia": "Sandbox: phase.run(wl, {'r_mim': 0.99}) → config declarada {'...','r_min': 0.08, 'r_mim': 0.99}, r_min efectivo 0.08, sin warning ni error.",
+      "parche": "Agregar 'ticks' a exigir_canales; rechazar claves fuera de DEFAULTS: set(obs) - set(DEFAULTS) ⇒ error de contrato."
+     },
+     {
+      "que": "Tres notas menores: (1) el J con stride>1 es OTRO estimador, no una decimación (max|d|=8.4e+01 vs J decimado) — declarado en la nota de la vista pero sin fixture; Gate C sólo compara hashes de config, jamás valores estriados. (2) El gate AST de arquitectura sólo mira imports DIRECTOS: instruments→artifacts.recorder→engine.network existe como cadena transitiva (import, no ejecución — la letra del contrato se cumple, la arquitectura declarada no del todo). (3) EPS_OMEGA=0.1 es constante compartida motor/instrumento (consistente por construcción dentro de study07) pero no viaja en el manifiesto del film ni en la config de la vista de energía — si algún día se parametriza, el instrumento quedaría silenciosamente desincronizado.",
+      "donde": "/Users/cagostino/code/doft-study07-worldline/src/study07/instruments/phase.py:52 (dt_ef), tests/test_conformance_oracle.py:269-282 (gate AST), src/study07/instruments/energy.py:18,58 + src/study07/artifacts/recorder.py:74-95 (manifiesto sin eps_omega)",
+      "severidad": "NOTA",
+      "evidencia": "Sandbox: max|j_estriado − j_decimado|=8.440e+01 con stride=5. recorder.py:17 importa engine.network (tipo Network). Manifiesto del recorder: dt/seed/temperature/k_global/gamma_c/topología — eps_omega ausente.",
+      "parche": "Opcional: fixture decimado para stride>1 o marcar el J estriado como inferencia distinta en el manifest; registrar eps_omega en el manifiesto del film; mover load_worldline a un módulo lector sin import de engine si se quiere la arquitectura pura."
+     }
+    ]
+   },
+   {
+    "resumen": "LENTE 4 (qué NO cubre F4) sobre 522683e — baseline verificado verde (6 passed, ~5s). El 0.000e+00 es real pero SOLO para: ventana completa, stride=1, constitución correcta, film COMPLETO, n=3. Fuera de ese punto, 8 sondas de 11 encontraron huecos VIVOS (script reproducible: /private/tmp/claude-501/-Users-cagostino-code-doft-study06-fundamental-lock-dynamics/a013d8a0-cafd-49d8-9f07-ba0ef540402e/scratchpad/probes_f4_lente4.py). El patrón de F2/F3 se repite en dos formas: (1) la lección F3-A4 (la física viaja verificada por huella) se aplicó a checkpoints pero NO a la frontera film↔instrumento — energy acepta cualquier constitución de dims compatibles (masa x2, kappa x3, nodos permutados: dE hasta 4.4e+02 en silencio) y el manifiesto del film no lleva spec_fingerprints, así que la constitucion_sha256 de la vista es un testigo incomprobable; (2) el gate D dice probar \"caché=recompute\" pero compara dos recomputes en memoria — no existe lector de vistas, el catálogo views/ es solo un árbol de dirs sin índice ni marca de cierre (manifest.json se escribe ANTES que data.npz: media-vista sin marca), y view_hash es INESTABLE al re-escribir el mismo View. Además: film INCOMPLETO fluye por phase.run y write() lo mete al catálogo con hash inventado (nada chequea wl[\"complete\"]); ventanas malformadas producen corrupción silenciosa (t0 negativo = wraparound numpy que re-etiqueta el final del film como principio; t0>t1 o stride<0 = vista VACÍA escrita al catálogo; t1 fuera de rango = IndexError crudo). LO QUE SÍ está cubierto de facto: T=0 (phase no usa kicks), film de 0 ticks (convención fila-0 espejada del oráculo, gate A la cubre), n=1 corre sin crash (pero R≡1 tautológico sin advertencia), y el stride de grabación hoy es imposible porque el loader exige ticks consecutivos (cubierto por accidente, supuesto índice==tick no declarado). LISTA NO-CUBIERTO para bitácora: [1] constitución↔film sin huella verificable (BLOQUEA), [2] validación de ventana (t0/t1/stride) inexistente, [3] wl incompleto no rechazado por el instrumento, [4] catálogo de vistas sin lector/índice/marca + overwrite silencioso del mismo path (corrección sin bump de versión pisa la vista anterior), [5] view_hash inestable en re-write, [6] J/omega con stride>1 = OTRO estimador sin referencia f7 (max|d|=8.4e+01 vs decimado) y borde de ventana redefine J[0]/omega[0] — dt_ef solo en nota prosa, no hay VIEW_SCHEMA en docs/, [7] observation_config sin whitelist (typo absorbido al hash), [8] n=1 degenerado sin advertencia, [9] exigir_canales solo caza listas vacías, [10] perfil campaña/stride de grabación, [11] hashes_base_externa acepta placeholders (\"local\") sin forma de hash. Veredicto propuesto: NO declarar F4 hasta parchar el BLOQUEA y los tres ALTOS — los parches son chicos y el patrón exacto ya existe en checkpoint.py.",
+    "hallazgos": [
+     {
+      "que": "energy.run acepta una constitución EQUIVOCADA de dims compatibles y produce energías erróneas en silencio: masa x2 en un modo → max|dE|=2.1e-01; kappa de memoria x3 → 1.5e-03; nodos permutados (1,0,2) → 4.4e+02. El único chequeo es len(thetas)==n_nodes. La constitucion_sha256 queda en la vista pero NO se compara contra nada — y no puede: el manifiesto del film no lleva huella de constitución (por_nodo es solo estructural; hashes_base_externa es texto libre del caller, en los tests vale literalmente {'fixture_f6':'local'}). Es el testigo disfrazado: un hash que certifica procedencia que nadie puede verificar — exactamente la clase de defecto por la que empezó la deriva de Study06.",
+      "donde": "src/study07/instruments/energy.py:31 (único chequeo) y :66-70 (huella sin contraparte); src/study07/artifacts/recorder.py:74-95 (manifiesto sin spec_fingerprints); contraste: src/study07/artifacts/checkpoint.py:100-107 (la verificación fail-loud que F3-A4 ya construyó para checkpoints)",
+      "severidad": "BLOQUEA_F4",
+      "evidencia": "Sonda P5: las tres mutaciones corren SIN error con vista publicable; huella buena=a214b3924f63 vs mala=0e7dde00a010 — distintas pero incomprobables. El gate B solo prueba la constitución CORRECTA.",
+      "parche": "El recorder escribe spec_fingerprints (la función ya existe en checkpoint.py:20 y net.specs está a mano) en el manifiesto del film; energy.run computa spec_fingerprint(spec) por nodo y falla fuerte si no coincide con man['spec_fingerprints'][j] — mismo mensaje y espíritu que network_from_checkpoint. Films viejos sin la clave: rechazo explícito 'film pre-esquema', igual que capas_por_modo en phase."
+     },
+     {
+      "que": "Ventanas de observación sin validación: t0_tick NEGATIVO dispara el indexing negativo de numpy y re-etiqueta EN SILENCIO el final del film como principio (t0=-30: fila 0 de la vista == fila -30 del film; el canal ticks delata [ticks[0]=31] pero nadie lo valida); t0>t1 o stride=-1 producen vista VACÍA (0 filas) que write() publica igual al catálogo; t1 fuera de rango da IndexError crudo de numpy ('index 61 is out of bounds' — ni menciona el t1_tick=9999 del usuario); stride=0 da ZeroDivisionError. La ventana es parte de la interfaz (lección de la frontera falsada) y acá es el parámetro menos protegido.",
+      "donde": "src/study07/instruments/phase.py:29-30 (sel sin validar) y energy.py:33-34 (idéntico); api.py:54-63 (write no rechaza arrays vacíos)",
+      "severidad": "ALTO",
+      "evidencia": "Sonda P2: t0=-30 corrió sin error con wraparound verificado; t0=50,t1=10 → vista de 0 filas ESCRITA a disco; t1=9999 → IndexError crudo; stride=0 → ZeroDivisionError; stride=-1 → vacía silenciosa.",
+      "parche": "Validar en un solo lugar (api, compartido por ambos instrumentos): 0 <= t0 <= t1 < len(ticks), stride entero >= 1, sel.size > 0 — fail-loud con mensaje de contrato que cite los valores pedidos y el rango del film."
+     },
+     {
+      "que": "Un film INCOMPLETO fluye por los instrumentos y entra al catálogo: phase.run no mira wl['complete'] (que load_worldline ya devuelve), así que un wl cargado con allow_incomplete=True más un worldline_hash inventado a mano produce una vista de 32/61 filas (solo el chunk flusheado — encima TRUNCADA en silencio) que write() publica bajo el hash falso. La única barrera es la convención 'los instrumentos SIEMPRE entran por load_run' — prosa, no código; la puerta lateral (load_worldline con allow_incomplete) vive en el mismo módulo importable. 'Sólo COMPLETE entra al catálogo' no está implementado en la capa que escribe al catálogo.",
+      "donde": "src/study07/instruments/phase.py:26 y energy.py:29 (exigir_canales no incluye 'complete'); api.py:66-70 (load_run es convención); recorder.py:166-177 (la puerta lateral)",
+      "severidad": "ALTO",
+      "evidencia": "Sonda P1: load_run rechaza correctamente (RuntimeError), pero load_worldline(allow_incomplete=True) + wl['worldline_hash']='hash_inventado_0000' → phase.run corrió (complete=False, 32 filas de 61 grabadas) y write() creó views/hash_inventado_0/phase_lock/86678bdedb4369da.",
+      "parche": "exigir_canales (o el arranque de cada run()) exige wl.get('complete') is True — un film de auditoría de restos puede observarse con un flag EXPLÍCITO del instrumento que quede declarado en observation_config y por lo tanto en el config_hash, nunca por defecto."
+     },
+     {
+      "que": "El catálogo de vistas no tiene cierre ni lector: (a) no existe índice ni marca tipo COMPLETE — es solo el árbol views/<hash16>/<instrumento>/<config_hash>/ declarado en el layout de F1; (b) manifest.json se escribe ANTES del data.npz, así que un crash entre ambos deja una media-vista (manifiesto sin datos) indistinguible de una válida — 'guardar a medias no es un artefacto' se aplicó al film pero no a las vistas; (c) mkdir exist_ok=True + rename pisan EN SILENCIO una vista previa en el mismo path: una corrección del instrumento sin bump manual de versión sobreescribe la vista vieja, violando 'corrección de instrumento ⇒ nueva vista'; (d) el gate D dice probar caché==recompute pero compara DOS recomputes en memoria — ninguna línea del repo lee una vista de disco y la compara: la mitad 'comparable con su caché' del INSTRUMENT_CONTRACT no es ejecutable hoy. Es el patrón F2/F3: un gate que nombra lo que no protege.",
+      "donde": "src/study07/instruments/api.py:54-63 (write: orden manifest→npz, exist_ok, sin verificación previa); tests/test_instruments.py:100-103 (gate D en memoria); grep 'views' en src/ y tools/: única referencia es api.py:54-55 — no hay lector",
+      "severidad": "ALTO",
+      "evidencia": "Inspección directa del código + sonda P6: 'recompute fresco == hash1 de disco: True (no hay loader de vistas que haga esta comparacion en el repo)' — la comparación la hizo la sonda porque el repo no puede hacerla.",
+      "parche": "load_view(dir) que verifique view_hash contra manifest+datos releídos (el verificador define el orden canónico: hash sobre manifiesto SIN la clave view_hash); write() escribe data primero y el manifiesto con view_hash al final como marca de cierre; si el path existe, comparar view_hash y fallar fuerte si difiere (misma config, contenido distinto = corrección sin bump de versión). Gate D pasa a comparar recompute vs DISCO."
+     },
+     {
+      "que": "view_hash INESTABLE al re-escribir: write() muta self.manifest agregándole view_hash, así que una segunda write() del mismo objeto View hashea un manifiesto que ya contiene el view_hash anterior y publica un hash DISTINTO para datos y config idénticos (1af8c0fbd2f9 → 7369eee2972c). Cualquier flujo que escriba dos veces (reintento, copy a otro root) deja en disco un view_hash que el recompute no reproduce — envenena precisamente la auditoría caché-vs-recompute del contrato.",
+      "donde": "src/study07/instruments/api.py:58 (self.manifest['view_hash'] = self.view_hash() — el hash entra a su propio insumo en la siguiente llamada)",
+      "severidad": "MEDIO",
+      "evidencia": "Sonda P6: dos write() consecutivos del mismo View sobre el mismo path publicaron manifest.json con view_hash distinto; el recompute fresco reproduce el primero, no el segundo.",
+      "parche": "view_hash() excluye siempre la clave 'view_hash' del manifiesto antes de hashear (pop sobre copia), o write() computa sobre una copia sin mutar self.manifest. Test: dos write() → mismo hash en disco."
+     },
+     {
+      "que": "J/omega con stride>1 es OTRO estimador sin referencia: la diferencia finita sobre dt_ef=dt·stride da max|d|=8.4e+01 contra el J de stride=1 decimado (valores O(30-70): discrepancia total, no ruido) — y no existe referencia f7 para stride>1, el gate C solo compara hashes y el recorte de theta, nunca valores de J/omega estridados. Además el borde de ventana REDEFINE la física: la sub-vista [30,59] tiene J[0]=0.0 y omega[0]=0.0 donde la vista completa mide J[30]=-3.1e+01, omega[30]=-73.0 — la sub-vista NO es un recorte de la completa para J/omega, solo para theta. Todo esto vive en una 'nota' prosa del extra_manifest; no hay VIEW_SCHEMA en docs/ (grep dt_ef/view_v1 en docs/: vacío) que declare la semántica del estimador ni el efecto borde.",
+      "donde": "src/study07/instruments/phase.py:52 (dt_ef), :63-64 (last_z=0j en el borde), :74 (la nota); tests/test_instruments.py:83-98 (gate C no compara J/omega); docs/ sin VIEW_SCHEMA",
+      "severidad": "MEDIO",
+      "evidencia": "Sonda P4: J(stride=5) vs J(stride=1)[::5] max|d|=8.440e+01; sub-vista t0=30: J[0]=0.0 vs J[30]completa=-3.082576e+01, omega 0.0 vs -73.02.",
+      "parche": "Declarar en un VIEW_SCHEMA (docs/) que J/omega estridados/ventaneados son estimadores dependientes de la config (la ventana ES parte de la interfaz) y que el primer tick de toda ventana tiene J=0 por construcción — o emitir omega_valid[0]=False en sub-ventanas; agregar un gate numérico mínimo para stride>1 (p.ej. autoconsistencia: theta estridada == theta[::s], y J estridado contra un cálculo independiente sobre los mismos z)."
+     },
+     {
+      "que": "observation_config sin whitelist: una clave desconocida (typo 'strid':5) se absorbe al cfg y al config_hash sin error — el instrumento corre con stride=1 (default) mientras la vista DECLARA una config que contiene 'strid':5: el usuario cree haber observado con otra cadencia y el manifiesto 'completo' del gate F lo respalda. La declaración miente por omisión de validación.",
+      "donde": "src/study07/instruments/phase.py:25 y energy.py:28 (cfg = {**DEFAULTS, **observation_config} sin verificar claves)",
+      "severidad": "MEDIO",
+      "evidencia": "Sonda P8: phase.run(wl, {'strid': 5}) corrió con stride=1, 'strid' presente en observation_config del manifiesto y por lo tanto en el config_hash.",
+      "parche": "Rechazar claves fuera de DEFAULTS (set difference, fail-loud listando las desconocidas y las válidas). Un renglón por instrumento."
+     },
+     {
+      "que": "n_nodes=1 corre sin crash pero produce el testigo tautológico perfecto: R≡1.0 exacto en todos los ticks y omega_valid=61/61 — el 'lock' es una identidad por construcción (|exp(iθ)|=1) y la vista lo presenta con la misma cara que un lock físico, sin advertencia en el manifiesto. La regla de F2-§48 (identidades-por-construcción DECLARADAS) no está aplicada al caso degenerado.",
+      "donde": "src/study07/instruments/phase.py:56-69 (Z de 1 nodo → R=1 siempre; ningún chequeo de n)",
+      "severidad": "BAJO",
+      "evidencia": "Sonda P3: wl sintético de 1 nodo → R en [1.0, 1.0] exacto, omega_valid total, manifiesto sin marca de degeneración.",
+      "parche": "Si n_nodes==1: registrar en el manifiesto de la vista una clave declarativa (p.ej. 'r_identidad_por_construccion': true) o directamente omega_valid=False con motivo — R de un nodo no es un observable de lock."
+     },
+     {
+      "que": "exigir_canales solo detecta listas vacías (isinstance(wl[c], list) and not wl[c]): un canal presente como array vacío, un estados con menos nodos que el manifiesto, o un string colado pasan el chequeo y revientan (o no) más adentro con errores crudos. El gate E solo prueba el caso estados=[].",
+      "donde": "src/study07/instruments/api.py:73-77; tests/test_instruments.py:105-109",
+      "severidad": "BAJO",
+      "evidencia": "Lectura directa del predicado: 'worldline_hash' como string vacío o estados=[array vacío x3] no dispararían el RuntimeError del contrato.",
+      "parche": "Chequeo por tipo esperado del canal (len>0 para colecciones, no-vacío para strings) o al menos len(wl['estados'])==manifest['n_nodes'] al inicio de cada run()."
+     },
+     {
+      "que": "Stride de GRABACIÓN (perfil campaña, F7 futuro): hoy es imposible porque load_worldline exige ticks==arange(len) — un film decimado se rechaza fuerte, así que los instrumentos están protegidos POR ACCIDENTE por un chequeo del loader pensado para pérdida/duplicado. Pero los instrumentos asumen índice==tick (t1 default = len(ticks)-1; sel indexa arrays con números de tick; dt_ef = dt·stride_observación ignorando cualquier stride de grabación) y ninguno lee man['perfil']. El día que el perfil campaña relaje el chequeo del loader, ambos instrumentos calculan mal EN SILENCIO. Supuesto no declarado en ningún schema.",
+      "donde": "src/study07/artifacts/recorder.py:213-216 (el chequeo accidental) y :85 (perfil, nunca leído por instrumentos); phase.py:29-30, 52; energy.py:33-34",
+      "severidad": "NOTA",
+      "evidencia": "grep 'perfil' en src/study07/instruments/: cero hits; el único guardián es la verificación de consecutividad del loader.",
+      "parche": "Para bitácora NO-CUBIERTO: declarar explícitamente que WORLDLINE_SCHEMA v1 solo admite grabación tick-completo y que los instrumentos F4 dependen de esa invariante; cuando llegue el perfil campaña, los instrumentos deben leer perfil/retención y fallar sobre films que no la cumplan."
+     },
+     {
+      "que": "T=0 (sin kicks) y film de 0 ticks: AMBOS corren correctamente — phase no consume los canales kicks/drive y el film de solo fila PRE-step da una vista de 1 fila con J[0]=0 y omega_valid[0] según R (convención espejada del oráculo, cubierta por el gate A en fila 0). No son huecos; van a bitácora como 'cubierto de facto, sin gate propio' para que nadie los re-audite desde cero.",
+      "donde": "src/study07/engine/network.py:125-135 (kicks=0 en T=0); sondas P7 sobre films t0_60 y cero_ticks",
+      "severidad": "NOTA",
+      "evidencia": "Sonda P7: T=0 → phase corrió (31 filas); film 0 ticks → phase (1 fila, J[0]=0.0, omega_valid[0]=True) y energy (shape (1,3,3)) corrieron.",
+      "parche": "Solo declarar en bitácora; opcional un test de humo de 2 líneas para fijar la conducta del film mínimo."
+     }
+    ]
+   }
+  ]
+ },
+ "workflowProgress": [
+  {
+   "type": "workflow_phase",
+   "index": 1,
+   "title": "Ataque"
+  },
+  {
+   "type": "workflow_phase",
+   "index": 2,
+   "title": "Sello"
+  },
+  {
+   "type": "workflow_agent",
+   "index": 1,
+   "label": "c1:test-del-test",
+   "phaseIndex": 1,
+   "phaseTitle": "Ataque",
+   "agentId": "ad62ce5a0961b55fd",
+   "model": "claude-fable-5",
+   "state": "done",
+   "startedAt": 1785416768205,
+   "queuedAt": 1785416760438,
+   "attempt": 1,
+   "lastToolName": "StructuredOutput",
+   "lastToolSummary": "DOUBLE TAP F4 — NO DECLARAR TODAVÍA. Los gates A-F están ve…",
+   "promptPreview": "DOUBLE TAP — regla de COA. REPO: /Users/cagostino/code/doft-study07-worldline @ 522683e (pusheado).\nORÁCULO read-only: /Users/cagostino/code/doft-study06-fundamental-lock-dynamics (congelado).\n\nQUÉ SE AUDITA — F4 candidata (gates 6/6 verdes, NO declarada): los PRIMEROS INSTRUMENTOS\nOFFLINE. Reproducen con residuo 0.000e+00 total, leyendo SÓLO la worldline, lo que el motor de\nStudy06 calculaba onli…",
+   "lastProgressAt": 1785417331632,
+   "tokens": 73067,
+   "toolCalls": 26,
+   "durationMs": 563427,
+   "resultPreview": "{\"resumen\":\"DOUBLE TAP F4 — NO DECLARAR TODAVÍA. Los gates A-F están verdes pero 6/6 mutantes construidos sobreviven con la suite en verde (patrón F2: 24 vivos, F3: 5 vivos, F4: 6 vivos). Lo que SÍ está clavado: el camino (t0=0, t1=full, stride=1) de phase y energy reproduce la referencia del oráculo a 0.0 exacto en el entorno pinned, y gateA es un testigo fuerte de identidad de trayectoria EN ESE…"
+  },
+  {
+   "type": "workflow_agent",
+   "index": 2,
+   "label": "c2:mutacion",
+   "phaseIndex": 1,
+   "phaseTitle": "Ataque",
+   "agentId": "aa0de9ffb5dc51fc0",
+   "model": "claude-fable-5",
+   "state": "done",
+   "startedAt": 1785416766946,
+   "queuedAt": 1785416760438,
+   "attempt": 1,
+   "lastToolName": "StructuredOutput",
+   "lastToolSummary": "DOUBLE TAP F4 — LENTE 2 (batería de mutación), sandbox en s…",
+   "promptPreview": "DOUBLE TAP — regla de COA. REPO: /Users/cagostino/code/doft-study07-worldline @ 522683e (pusheado).\nORÁCULO read-only: /Users/cagostino/code/doft-study06-fundamental-lock-dynamics (congelado).\n\nQUÉ SE AUDITA — F4 candidata (gates 6/6 verdes, NO declarada): los PRIMEROS INSTRUMENTOS\nOFFLINE. Reproducen con residuo 0.000e+00 total, leyendo SÓLO la worldline, lo que el motor de\nStudy06 calculaba onli…",
+   "lastProgressAt": 1785417333523,
+   "tokens": 58453,
+   "toolCalls": 19,
+   "durationMs": 566577,
+   "resultPreview": "{\"resumen\":\"DOUBLE TAP F4 — LENTE 2 (batería de mutación), sandbox en scratchpad, una mutación por vez, 17 mutantes (los 16 pedidos + variante M05b). Entorno PINNED (numpy 2.3.4/x86_64 == generador ⇒ los gates exigen 0.0 exacto). VEREDICTO: la física espejada está bien custodiada — 12 mutantes MUERTOS con márgenes enormes: fase θ (S1 en vez de Q: 4.9e+00; todos los modos: 4.9e+00; atan2 invertido:…"
+  },
+  {
+   "type": "workflow_agent",
+   "index": 3,
+   "label": "c3:contrato-vs-codigo",
+   "phaseIndex": 1,
+   "phaseTitle": "Ataque",
+   "agentId": "ac058ecbe210370cf",
+   "model": "claude-fable-5",
+   "state": "done",
+   "startedAt": 1785416769555,
+   "queuedAt": 1785416760438,
+   "attempt": 1,
+   "lastToolName": "StructuredOutput",
+   "lastToolSummary": "DOUBLE TAP F4 — LENTE 3 (INSTRUMENT_CONTRACT y specs vs cód…",
+   "promptPreview": "DOUBLE TAP — regla de COA. REPO: /Users/cagostino/code/doft-study07-worldline @ 522683e (pusheado).\nORÁCULO read-only: /Users/cagostino/code/doft-study06-fundamental-lock-dynamics (congelado).\n\nQUÉ SE AUDITA — F4 candidata (gates 6/6 verdes, NO declarada): los PRIMEROS INSTRUMENTOS\nOFFLINE. Reproducen con residuo 0.000e+00 total, leyendo SÓLO la worldline, lo que el motor de\nStudy06 calculaba onli…",
+   "lastProgressAt": 1785417588333,
+   "tokens": 102001,
+   "toolCalls": 51,
+   "durationMs": 818778,
+   "resultPreview": "{\"resumen\":\"DOUBLE TAP F4 — LENTE 3 (INSTRUMENT_CONTRACT y specs vs código). LO QUE SOBREVIVE: la física de los espejos es genuina — TODAS las citas de docstrings verificadas RELEYENDO el oráculo son REALES y esencialmente exactas (theta_q 366-375 exacto; Z :996 exacto; lock_band_observables 93-108; compute_layer_energies 426-454 exacto; energies 377-388; el fallback «sin capa Q ⇒ todos los modos»…"
+  },
+  {
+   "type": "workflow_agent",
+   "index": 4,
+   "label": "c4:cobertura-honesta",
+   "phaseIndex": 1,
+   "phaseTitle": "Ataque",
+   "agentId": "a9703e22d2abcfd36",
+   "model": "claude-fable-5",
+   "state": "done",
+   "startedAt": 1785416769094,
+   "queuedAt": 1785416760439,
+   "attempt": 1,
+   "lastToolName": "StructuredOutput",
+   "lastToolSummary": "LENTE 4 (qué NO cubre F4) sobre 522683e — baseline verifica…",
+   "promptPreview": "DOUBLE TAP — regla de COA. REPO: /Users/cagostino/code/doft-study07-worldline @ 522683e (pusheado).\nORÁCULO read-only: /Users/cagostino/code/doft-study06-fundamental-lock-dynamics (congelado).\n\nQUÉ SE AUDITA — F4 candidata (gates 6/6 verdes, NO declarada): los PRIMEROS INSTRUMENTOS\nOFFLINE. Reproducen con residuo 0.000e+00 total, leyendo SÓLO la worldline, lo que el motor de\nStudy06 calculaba onli…",
+   "lastProgressAt": 1785417239274,
+   "tokens": 63132,
+   "toolCalls": 19,
+   "durationMs": 470179,
+   "resultPreview": "{\"resumen\":\"LENTE 4 (qué NO cubre F4) sobre 522683e — baseline verificado verde (6 passed, ~5s). El 0.000e+00 es real pero SOLO para: ventana completa, stride=1, constitución correcta, film COMPLETO, n=3. Fuera de ese punto, 8 sondas de 11 encontraron huecos VIVOS (script reproducible: /private/tmp/claude-501/-Users-cagostino-code-doft-study06-fundamental-lock-dynamics/a013d8a0-cafd-49d8-9f07-ba0e…"
+  },
+  {
+   "type": "workflow_agent",
+   "index": 5,
+   "label": "juez:sello",
+   "phaseIndex": 2,
+   "phaseTitle": "Sello",
+   "agentId": "a4aed5c79819dbc4a",
+   "model": "claude-fable-5",
+   "state": "done",
+   "startedAt": 1785417593031,
+   "queuedAt": 1785417590557,
+   "attempt": 1,
+   "lastToolName": "Bash",
+   "lastToolSummary": "cd /private/tmp/claude-501/-Users-cagostino-code-doft-study…",
+   "promptPreview": "DOUBLE TAP — regla de COA. REPO: /Users/cagostino/code/doft-study07-worldline @ 522683e (pusheado).\nORÁCULO read-only: /Users/cagostino/code/doft-study06-fundamental-lock-dynamics (congelado).\n\nQUÉ SE AUDITA — F4 candidata (gates 6/6 verdes, NO declarada): los PRIMEROS INSTRUMENTOS\nOFFLINE. Reproducen con residuo 0.000e+00 total, leyendo SÓLO la worldline, lo que el motor de\nStudy06 calculaba onli…",
+   "lastProgressAt": 1785418012775,
+   "tokens": 75671,
+   "toolCalls": 15,
+   "durationMs": 419744,
+   "resultPreview": "Verificación completa. Ambos repos quedaron intactos (todo corrió sobre copia en scratchpad; el driver restauró pristine al final). Resultado para la bitácora:\n\n---\n\n# DOUBLE TAP F4 — VEREDICTO DEL JUEZ\n\nRepo auditado: `/Users/cagostino/code/doft-study07-worldline` @ 522683e. Entorno **pinned** confirmado (numpy 2.3.4 / x86_64 == meta7 ⇒ los gates exigen 0.0 exacto). Baseline reproducido: **6 pass…"
+  }
+ ],
+ "totalTokens": 372324,
+ "totalToolCalls": 130
+}
