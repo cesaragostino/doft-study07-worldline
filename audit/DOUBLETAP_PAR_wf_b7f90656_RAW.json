@@ -1,0 +1,368 @@
+{
+ "summary": "Double tap del instrumento de PAR (descubridor de links) — atacar antes de declarar la etapa 0 del norte",
+ "agentCount": 4,
+ "logs": [],
+ "result": {
+  "veredicto": "# DOUBLE TAP PAR-LINK — VEREDICTO DEL JUEZ\n\nAuditado: `src/study07/instruments/par.py` @ ffc8c72 (par.py y test_par_f0.py son BIT-idénticos en el HEAD actual 3456999, así que el veredicto aplica a ambos). Todo el trabajo en clones propios bajo `/private/tmp/claude-501/-Users-cagostino-code-doft-study06-fundamental-lock-dynamics/a013d8a0-cafd-49d8-9f07-ba0ef540402e/scratchpad/juez/` (git clone + checkout ffc8c72, regla §16). Baseline reproducido por el juez: **81 passed** (144s). No heredé ejecuciones: arnés propio (`juez/arnes_juez.py`), runner de mutantes propio (`juez/run_muts_juez.sh`), films construidos acá.\n\n## 1. Veredicto: **NO PASADA** (arreglos A1–A10, con parche EJECUTADO y re-matado)\n\nEl patrón de 6 taps (\"la física sale bien, los gates tienen agujeros\") **se rompe esta vez**: hay 1 BLOQUEA de física del estimador, confirmado por re-ejecución independiente con controles. Un descubridor de links que declara FIRME entre dos nodos muertos no puede ser la etapa 0 del norte: todo census downstream mediría fantasmas. Además, 12 de 20 mutantes sobreviven la suite de gates — el veredicto (umbral, t_lock, firmeza, n>2, pulling, FFT) está esencialmente sin proteger.\n\n**Re-ejecutado por el juez — 16/16 casos CONFIRMADOS, controles sanos (murieron como debían):**\n\n| # | Hallazgo (lente) | Evidencia del juez (arnés propio) |\n|---|---|---|\n| F1 **BLOQUEA** | Muertos dan FIRME (c1) | 2 nodos apagados (underflow real, 188990 ticks x==0.0): estado=2, rw=1.0000, t_lock=14.47 = la hora de la muerte. 2 constantes: FIRME t_lock=0. CONTROL: apagado+vivo=0, vivos dw=3 → MUERTO ✓ |\n| F2 ALTO | Armónico 2× rompe lock verdadero (c1) | A=0→FIRME rw=1.000; A=0.35→COQUETEO rw=0.941; A=0.5→COQUETEO rw=0.814 |\n| F3 ALTO | 1 tick NaN → MUERTO silencioso (c1) | estado=0, rw_final=nan, frac_coq=0.000, SIN excepción; CONTROL sin NaN → FIRME |\n| F4 ALTO | t_lock ANTES del lock (c1) | sesgo por dw_pre: 3.0→−0.54, 1.0→−1.17, 0.5→−1.98, 0.3→−3.26 u.t. (res declarada 0.008: subestimada 60–400×) |\n| F5 ALTO | Ventanas pulling sin validar (c3) | film 1.2 u.t. declara temprana=5.5/tardia=10 y corre; cfg del PROPIO gate8 (temprana=0.3) publica dw_temprana=NaN con estado=2; tardia_ut=0 = film entero |\n| Provenance ALTO (c3) | Umbrales cross-estimador | verificado por lectura: `tools/exprimir_c1.py` = theta CRUDO, `[::SUB=100]`, W_VENT=125 (1 u.t.), sin corrección §16; **cero** fixtures C1; el manifiesto dice \"MEDIDOS\" sin letra chica |\n| X1–X5, F6 | n=1 IndexError crudo; stride_det=−100 silencioso (serie invertida, t_lock=0/frac=1); stride_det=0 ZeroDivisionError; lock-que-muere=coqueteo t_lock=0; FIRME con t_lock=NaN; zona gris: falso-FIRME hasta dw=0.236 ≈ 1.1/W=0.275 vs 2π/W=1.571 declarado (5.7×) | todos CONFIRMADOS |\n\n**Arreglos (implementados en sandbox, branch `arreglos-juez` del clon; fuente en `juez/fixes/par_fixed.py` + `juez/fixes/test_par_f1_juez.py`; con ellos: F0 9/9 + F1 23/23 + suite completa 104 passed):**\n\n- **A1 (BLOQUEA)**: piso de mudez por nodo (std de la señal Q en ventana final < max(1e-12, 1e-3·std propio del film) ⇒ MUDO) → estado=3 para todo par con nodo mudo, canal `nodos_mudos` en el manifiesto. Gate: film que muere JAMÁS firme. Umbral PROVISORIO declarado.\n- **A2**: NaN/Inf en fase ⇒ RuntimeError fail-loud (contrato api).\n- **A3**: validación de valores — n_nodos≥2, ventana temprana (0.5, temprana_ut] dentro del film, 0<tardia_ut≤film, stride_det≥1, sosten_ventanas>0, w_ut>0 ⇒ RuntimeError. Obliga corregir la cfg del gate8 (temprana 0.3→0.8: el gate versionado ejercitaba el bug).\n- **A4**: detector de armónicos declarado (razón 2º/1º pico > 0.25 ⇒ `nodos_armonico` + nota de no-confiabilidad). El fix real (Hilbert/multi-armónico) queda NO-CUBIERTO.\n- **A5**: sesgo de t_lock DECLARADO en nota (medido −0.5…−3.3 u.t.) + gate cota [t*−W, t*+1]; gate4 apretado a t*+1 (la cota vieja 2W+0.5 dejaba vivo a M06).\n- **A6**: dos números declarados: `zona_falso_firme_dw`=1.1/W (frontera MEDIDA, cruce |sinc|=0.95) y `punto_ciego_dw`=2π/W (cero de la sinc); docstring corregido.\n- **A7**: semántica de borde en la nota: FIRME=firme AL FINAL; lock que muere=coqueteo aunque t_lock exista; franja final ~3W no fechable.\n- **A8**: `procedencia_umbrales` honesta: \"MEDIDOS en C1 con OTRO estimador (crudo, SUB=100, W=1) — transferidos POR HIPÓTESIS, NO re-ejecutados\" (conserva el substring que gate8 exige).\n- **A9**: manifiesto citable: `dt`, `w_ticks_efectivo`, `estados_codigo` máquina-legible; `ESTADOS` corregido (estaba invertido).\n- **A10**: fold de 13 kill-tests + 10 gates nuevos (23 tests, 0.9s, dt=8e-4).\n\n## 2. Tabla de mutantes (20 definidos; 15 re-corridos por el juez sobre F0 pristine, 12 vivos re-matados sobre el código arreglado)\n\n| Mutante | F0 pristine (juez) | Re-matanza F1 (juez, código arreglado) |\n|---|---|---|\n| M01 sin corrección fase | MUERTO gate1 (batch c2; no re-corrido: no era vivo) | — |\n| M02 w_full con signo | MUERTO gate1 (idem) | — |\n| M03 rw_final sin ventana | MUERTO gate4 (idem) | — |\n| M04 umbral_firme=0.9 | **VIVO 9/9** | **MUERE** kt_m04 (banda 0.90–0.949) |\n| M05 episodios sostén 2W | MUERTO gate3 (batch c2) | — |\n| M06 t_lock=fin del sostén | **VIVO 9/9** | **MUERE** kt_m06 (+gate4 apretado) |\n| M07 firme por sost_firme | **VIVO 9/9** | **MUERE** kt_m07 (lock que muere) |\n| M08 temprana desde tick 0 | **VIVO 9/9** | **MUERE** kt_m08 (transitorio) |\n| M09 pulling con w_full | MUERTO gate5 (batch c2) | — |\n| M10 pares solo (0,1) | **VIVO 9/9** | **MUERE** kt_m10 (3 nodos) |\n| M11 FFT sin Hann | **VIVO 9/9** | **MUERE** kt_m11 (tono+rampa) |\n| M12 FFT sin zeropad | **VIVO 9/9** | **MUERE** kt_m12 (w=4.9 entre bins; aplicado a mano sobre el arreglado: su patrón quedó duplicado por _razon_armonica) |\n| M13 punto ciego en muestras | **MUERTO gate7** (predicción c2 confirmada) | — |\n| M14 _rw_movil off-by-one | **VIVO 9/9** | **MUERE** kt_m14 (contrato unitario) |\n| M15 theta duplicado sin fallback | **VIVO 9/9** | **MUERE** kt_m15 (film sin capa Q) |\n| M16 estado string | **MUERTO gate1** (predicción c2 confirmada) | — |\n| M17 rw_final=max | **MUERTO gate3** — c2 lo tenía PENDIENTE; el juez lo mata en F0 (corrección al reporte de c2); kt_m17 foldeado igual como contrato | — |\n| M18 dphi_final film entero | **VIVO 9/9** | **MUERE** kt_m18 |\n| M19 umbral_coqueteo=0.5 | **VIVO 9/9** | **MUERE** kt_m19 (rw≈0.69) |\n| M20 min_firme=1 muestra | **VIVO 9/9** | **MUERE** kt_m20 (cruce breve) |\n\n**Balance: 12/20 vivos en F0 (60% de fuga del veredicto) → 12/12 muertos tras los arreglos.** Condición dura de la casa CUMPLIDA: re-matanza ejecutada contra el código arreglado, un mutante por vez, restore + purga de `__pycache__` (resultados: `juez/muts_juez_results.txt`, `juez/rematanza_results.txt`, logs `juez/log_M*.txt`/`rm_M*.txt`).\n\n## 3. Contrato por cláusula\n\n| Cláusula | Estado @ ffc8c72 |\n|---|---|\n| Extracción θ unificada con fase | **CUMPLE** (gate8 bit-exacto; M15 muestra que solo un gate con film Q lo protege — kt foldeado) |\n| Whitelist de config | CUMPLE en CLAVES, **VIOLA en VALORES** (stride_det −100/0, w_ut 0, ventanas imposibles corren o revientan crudo) → A3 |\n| Fail-loud (\"el instrumento FALLA, no sustituye\") | **VIOLADO**: NaN→veredicto MUERTO silencioso; n=1→IndexError crudo; ventanas clampean/NaN en silencio (la cfg del propio gate8 lo ejercita en los 81 passed) → A2/A3 |\n| Veredicto por par | **VIOLADO en el borde de amplitud** (BLOQUEA: sin piso, cadáveres firmes; la View no exporta amplitud — el juez §16 llevaba amp_min) → A1. Semántica FIRME=al-final legítima pero NO declarada → A7 |\n| Corrección §16 | Exacta a la del juez j3 (verificado por c1 línea a línea; consistente con lo que yo medí) pero asume TONO PURO: rompe con armónico 2× (14/150 bloques reales) → A4 declarativo, fix real pendiente |\n| Umbrales con procedencia MEDIDA | **SOBRE-DECLARADO**: medidos con OTRO estimador (crudo, decimado SUB=100, W=1) y transferidos sin re-ejecución a fase corregida W=4 → A8; recalibración = NO-CUBIERTO |\n| Punto ciego DECLARADO | Declarado 2π/W=1.571; frontera falso-FIRME MEDIDA ≈0.24–0.28 (=1.1/W del panel §16): conservador 5.7× y tira la franja útil [0.63, 1.57] → A6 |\n| t_lock con resolución stride_det | Resolución real dominada por el sesgo de ventana forward (−0.5…−3.3 u.t. según dw_pre), no por stride_det → A5 (declarado+acotado, convención early se mantiene) |\n| Manifiesto citable | Falta dt, W efectivo, mapa estado→nombre; `ESTADOS` en orden INVERSO al código; t_lock relativo a t0_tick sin declarar → A9 |\n| Escritura/relectura de vista, view_hash, film_intervenida | CUMPLE (c3 ejecutado; el juez no lo re-ejecutó — cubierto por gate8 en mis corridas 81/104 passed) |\n\n## 4. NO-CUBIERTO consolidado\n\n1. **Calibración de umbrales con ESTE estimador**: no existe adapter C1-npz→worldline ni gate que reproduzca los 7 links firmes/hombro de §13 con fase corregida y W=4 (films en /Volumes/ExternalDisk read-only). Riesgo direccional: la corrección SUBE rw ⇒ 0.95-crudo puede sobre-llamar FIRME. Debe resolverse (o declararse en el prereg del census) ANTES de que `estado` decida links.\n2. **Armónicos**: A4 solo DECLARA (`nodos_armonico`); el veredicto sigue degradándose con A≥0.35. Fix real (Hilbert/multi-armónico) + validación contra los 14 bloques reales 2× = siguiente iteración.\n3. **Default W=4 jamás ejecutado contra film real ≥3W**: el único film real (f8, 1.2 u.t.) corre con w_ut=0.24. Falta fixture real largo (≥150k ticks) con sha versionado.\n4. **Cableado al census**: `campana._vistas_y_metricas` corre solo energy+phase; ninguna fila de ledger lleva view_hash_par; nada en tools/ referencia par_link. La regla del census (¿estado==2, o estado==2 OR t_lock finito?) debe fijarse en el prereg citando la nota nueva (A7) — hoy la etapa 0 no está conectada al universo que dice descubrir.\n5. **Escala 11175 pares** (150 nodos, 750k ticks): medida por c3 — ~10.6 min/proceso (ajuste 123 ms/nodo + 55.4 ms/par, validado n=30 al 1.8%) y ~5.4–7 GB pico por worker; rw por par no se retiene (no crece con pares). NO re-ejecutada por el juez; es diseño viable, no bug — presupuestar por worker y considerar `del unw, grad` (−1.8 GB). Los arreglos A1/A4 agregan un rfft 8× por nodo (~+0.2 s/nodo a 750k ticks): despreciable frente a los 55 ms/par.\n6. **Umbrales nuevos de los arreglos sin procedencia medida**: PISO_AMP_REL=1e-3 y UMBRAL_ARMONICO=0.25 son PROVISORIOS (declarados en el código); medirlos contra e_floor y los bloques armónicos reales antes del census.\n7. Vistas por nivel (cláusula 2 de COA: onion/grumo/cluster) — pendiente igual que F4; `permitir_incompleto` y propagación `film_intervenida` sin test específico de par (dos asserts baratos, no foldeados por el juez).\n\n**Repos reales verificados INTACTOS al cierre**: `/Users/cagostino/code/doft-study07-worldline` → `git status --porcelain` vacío, HEAD 3456999 (commit de registro §18 posterior al tap, preexistente — par.py sin diff contra ffc8c72); `/Users/cagostino/code/doft-study06-fundamental-lock-dynamics` → limpio. Cero mutaciones fuera de los clones de scratchpad; clon del juez restaurado tras cada mutante (los arreglos viven solo en el branch `arreglos-juez` del clon y en `/private/tmp/claude-501/-Users-cagostino-code-doft-study06-fundamental-lock-dynamics/a013d8a0-cafd-49d8-9f07-ba0ef540402e/scratchpad/juez/fixes/{par_fixed.py,test_par_f1_juez.py}`, listos para foldear tras revisión de COA).",
+  "revs": [
+   {
+    "resumen": "DOUBLE TAP F8/par.py — LENTE c1 (física del estimador), clone en scratchpad/c1/par @ ffc8c72, suite base reproducida (81 passed), 5 baterías EJECUTADAS (scripts en /private/tmp/claude-501/-Users-cagostino-code-doft-study06-fundamental-lock-dynamics/a013d8a0-cafd-49d8-9f07-ba0ef540402e/scratchpad/c1/exp_par/). El patrón de 6 taps (\"la física sale bien\") NO se sostiene esta vez: el estimador tiene 1 BLOQUEA + 3 ALTO de física pura. (1) BLOQUEA: sin piso de amplitud, dos nodos APAGADOS (x,v→0 por underflow real) o constantes dan FIRME rw=1.0 con t_lock = la hora de la muerte — el descubridor de links declara links entre cadáveres y la View no exporta amplitud para filtrarlo (el juez §16 sí llevaba amp_min). (2) ALTO: la corrección §16 asume tono puro — un lock VERDADERO con armónico 2× (14/150 bloques reales) cae a COQUETEO en A=0.35 y a MUERTO en A=0.5; en A=1.0 el winding de un nodo salta a 2ω. La mediana NO es el fix (resucita el artefacto §15: da ~1.9). (3) ALTO: un solo tick NaN → w_full=NaN → max(NaN,1e-9)=NaN → toda la fase NaN → un lock real se publica MUERTO en silencio. (4) ALTO: t_lock sale sistemáticamente ANTES del lock real (ventana forward que pisa el borde): −0.54 u.t. incluso con deriva rápida (único caso del gate4) y hasta −3.3 u.t. con deriva lenta dw=0.3 (el régimen central del census Δω∈[0.05,20]); la \"resolución stride_det\" declarada (0.008 u.t.) subestima el error 60–400×. Zona gris REAL medida (barrido 20 dw × 5 fases, sin flicker): deriva pura = FIRME hasta dw=0.236, COQUETEO hasta 0.55, MUERTO desde 0.628 — la frontera falso-FIRME (~0.24–0.28) coincide con el 1.1/W del panel §16, pero el manifiesto declara 2π/W=1.571 (5.7×). Además: la config del PROPIO gate8 (temprana_ut=0.3<0.5 hardcodeado) publica dw_temprana=NaN sin que ningún assert lo vea; n=1 nodo revienta con IndexError crudo; FIRME con t_lock=NaN para locks al final del film. La fórmula de corrección sí es EXACTAMENTE la del juez j3 (verificado línea a línea contra juez_arnold/j3_films.py). Repo real verificado limpio; clone sin mutaciones, __pycache__ purgado.",
+    "hallazgos": [
+     {
+      "que": "Sin piso de amplitud: nodos MUERTOS dan link FIRME. Dos nodos que se apagan (envolvente exp, x y v underflowean a 0.0 exacto desde t≈14.9 — 'apagado real') dan estado=FIRME, rw_final=1.0000, t_lock=14.47 (la hora de la muerte, publicada como hora del lock). Dos nodos constantes (x=cte, v=0) dan FIRME con t_lock=0. atan2(0,0)=0 ⇒ dphi=0 exacto ⇒ rw=1. La View no exporta amplitud (el juez §16 en j3_films.py llevaba amp_min por arista justamente para esto), así que el census downstream NO puede filtrar estos links fantasma.",
+      "donde": "src/study07/instruments/par.py:124-130 (extracción de fase sin chequeo de amplitud) y :147-152 (veredicto solo por rw); EJECUTADO en exp_par/exp2_degenerados.py (D1, D1b, D3, D3b)",
+      "severidad": "BLOQUEA",
+      "evidencia": "D1 dos nodos APAGADOS (dw=3 si vivos): estado=FIRME rw_final=1.0000 t_lock=14.472 — 188990/374999 ticks con x==0.0 exacto. D3 dos x=cte v=0: FIRME rw=1.0 t_lock=0. Contraste: apagado+vivo y cte+vivo dan MUERTO (el veneno es simétrico: dos muertos = lock perfecto).",
+      "parche": "Piso de amplitud con procedencia: por nodo, A_k(t)=hypot(X, V/max(ω̂,eps)) en la misma ventana W; si media(A_k) en la ventana final < piso (relativo al máximo del film o e_floor declarado), el nodo es MUDO y todo par que lo contenga recibe estado propio (p.ej. 3=mudo, jamás firme) + exportar canal amp_min por par (como el juez). Gate nuevo: film que muere ⇒ NUNCA firme."
+     },
+     {
+      "que": "La corrección de fase §16 asume TONO PURO y rompe el veredicto de un lock verdadero con armónico 2×: misma ω, desfase π/2 (el caso del gate1), con x=cos θ + A·cos(2θ+ψ) y ψ distinto por nodo. A=0.35 ⇒ COQUETEO (rw=0.914); A=0.5 ⇒ MUERTO (rw=0.757); A=1.0 ⇒ el winding de un nodo salta a 2ω (w_full=12.36 vs 6.2) y la corrección divide por la ω equivocada. Población real afectada: 14/150 bloques con armónicos a 2× y 5 a 3-4× (panel §16). La MEDIANA de dθ/dt NO es la alternativa: medida da 1.5-2.8 ≈ el punto fijo del estimador saturado §15 — |media| es correcta; el agujero es la forma funcional de la corrección.",
+      "donde": "src/study07/instruments/par.py:125-130 (w_full=|media grad| + atan2(sinθ/ω̂, cosθ), válido solo para 1 armónico); EJECUTADO en exp_par/exp1_armonico.py",
+      "severidad": "ALTO",
+      "evidencia": "Barrido A∈{0,0.2,0.35,0.5,0.7,1.0}: FIRME/FIRME/COQUETEO/MUERTO/MUERTO/COQUETEO con rw_final 1.000/0.980/0.914/0.757/0.655/0.814; w_full nodo1 en A=1.0: 12.3585 (2ω). w_mediana: 1.96/2.80/1.94/1.74/1.61/1.51 (el artefacto −2ω²/(1+ω²)≈2 de §15 — peor).",
+      "parche": "Mínimo honesto: detectar y DECLARAR — por nodo comparar w_full contra portadora_fft (ya existe en el módulo) y medir razón 2º/1º pico del espectro; si discrepan >tol o razón>umbral, canal nuevo nodo_armonico=1 y nota de no-confiabilidad del veredicto para pares que lo contengan. Fix real (siguiente iteración): fase por señal analítica (Hilbert) o corrección multi-armónica, validada contra los 14 bloques reales; gate nuevo con el sintético de exp1."
+     },
+     {
+      "que": "Un solo tick NaN mata TODO el estimador en silencio y publica un veredicto definitivo falso: NaN en x ⇒ gradiente/unwrap propagan ⇒ w_full=NaN ⇒ max(NaN,1e-9)=NaN (quirk de Python max con NaN en primer argumento) ⇒ sinθ/NaN = TODA la fase del nodo NaN ⇒ cumsum envenena todo rw ⇒ estado=0 'MUERTO' con rw_final=NaN, rw_max=NaN, frac_coqueteo=0.000 — sin error, sin warning visible. Un lock REAL con un tick corrupto se cataloga MUERTO: 'no hay dato' se publica como 'no hay link' (viola el contrato fail-loud del propio api.py: 'el instrumento FALLA, no sustituye').",
+      "donde": "src/study07/instruments/par.py:118-129 (sin validación de finitud tras theta_por_nodo; max() de Python en :129); EJECUTADO en exp_par/exp2_degenerados.py (D5)",
+      "severidad": "ALTO",
+      "evidencia": "D5: film de lock real (misma ω, desfase π/2) + 1 NaN en el tick 200000 ⇒ NO revienta ⇒ estado=MUERTO rw_final=nan rw_max=nan t_lock=nan ep=0 frac_coq=0.000. El 53% del film anterior al NaN estaba perfectamente trabado y ni siquiera aparece en frac_coqueteo.",
+      "parche": "Tras theta = theta_por_nodo(...): if not np.isfinite(theta).all(): raise RuntimeError('film con NaN/Inf en la fase: N ticks no finitos en nodos [...] — el instrumento no veredicta datos corruptos'). Gate: film con 1 NaN ⇒ RuntimeError, jamás estado=0."
+     },
+     {
+      "que": "t_lock se reporta sistemáticamente ANTES de que el lock exista: rw[k] es ventana FORWARD [k, k+W) y el sostén marca el ARRANQUE de la racha, así que ventanas que pisan el borde disparan antes de t*. Con deriva previa rápida (dw=3, el ÚNICO caso que prueba gate4): sesgo −0.54 u.t. Con deriva lenta (el régimen central del census pre-registrado, Δω∈[0.05,20] con décadas enteras en 0.3-1.0): dw=0.45 ⇒ −2.16 u.t.; dw=0.30 ⇒ −3.26 u.t. La 'resolución stride_det' declarada en la nota del manifiesto (100 ticks = 0.008 u.t.) subestima el error real 60-400×. Subir stride_det no cura (D: −2.16 con stride 100 y 1000). gate4 tolera hasta −1.0 (bound 9.0) y no barre dw_pre.",
+      "donde": "src/study07/instruments/par.py:88-89 (primer_sosten = arranque de racha) + :145-146 (t_lock = sost*stride*dt) + :73-77 (ventana forward); tests/test_par_f0.py:129 (bound 9.0 ya admite el sesgo); EJECUTADO en exp_par/exp4_tlock.py",
+      "severidad": "ALTO",
+      "evidencia": "A) t*=10: dw_pre 3.0/1.5/1.0/0.8/0.6/0.5/0.45/0.40/0.35/0.30 ⇒ sesgo −0.536/−0.864/−1.168/−1.376/−1.712/−1.984/−2.160/−2.408/−2.736/−3.264 u.t. B) el sesgo es independiente de t* (−0.54 en t*=5/10/15). C) stride_det 100→25000 apenas lo mueve hasta que la resolución (2 u.t.) lo tapa. D) dw=0.45: −2.16 con stride 100 y 1000.",
+      "parche": "Convención conservadora declarada: reportar t_lock = (primer_sosten*stride_det + w_ticks)*dt (fin de la primera ventana sostenida: para entonces el lock EXISTE con certeza) o exportar ambos (t_lock_early/t_lock_late) y documentar el sesgo ~W dependiente de dw_pre. Gate4 debe barrer dw_pre∈{3,1,0.5,0.3} con bound inferior t_lock ≥ t*−ε real."
+     },
+     {
+      "que": "punto_ciego_dw declarado = 2π/W = 1.571 rad/u.t. (W=4) contradice la procedencia que el propio docstring cita: el panel §16 midió que W=4-8 'baja el punto ciego a ~0.15-0.3 rad/u.t.' (≈1.1/W). Medición directa (deriva pura, 20 valores de dw × 5 fases iniciales): falso FIRME hasta dw=0.236, falso COQUETEO hasta 0.55, MUERTO limpio recién desde 0.628. La frontera falso-FIRME medida (entre 0.236 y 0.283) clava el 1.1/W=0.275 del panel. El número declarado es 5.7× la frontera real: conservador (cubre la zona gris) pero descarta como 'ciega' la franja [0.63, 1.57] donde el instrumento discrimina perfectamente (rw≤0.36, MUERTO estable) — un census estratificado por Δω tiraría décadas útiles.",
+      "donde": "src/study07/instruments/par.py:179 (punto_ciego_dw=2π/(w_ticks·dt)) y :13-14 (docstring '~1.6 rad/u.t.'); vs audit/PANEL_ARNOLD_C1_wf_d3f0d9ff_VEREDICTO.md ('baja el punto ciego de ~1.1 a ~0.15-0.3'); EJECUTADO en exp_par/exp3_zona_gris.py",
+      "severidad": "MEDIO",
+      "evidencia": "Deriva pura: dw=0.236 ⇒ FIRME rw=0.963 t_lock=0.00 (5/5 fases); dw=0.283-0.550 ⇒ COQUETEO; dw≥0.628 ⇒ MUERTO. Sin flicker en 1.0-2.5×PC (rw≤0.212, 5/5 fases MUERTO — la zona sobre el punto ciego es limpia). |sinc| cruza 0.95 en u=0.176 ⇒ dw=1.1/W exacto.",
+      "parche": "Declarar DOS números en el manifiesto: zona_falso_firme_dw = 1.1/W (procedencia: cruce |sinc|=0.95, coincide con §16) y cero_sinc_dw = 2π/W; corregir el docstring. Gate7 debe anclar el primero contra el barrido analítico."
+     },
+     {
+      "que": "temprana_ut ≤ 0.5 (el arranque de la ventana temprana está HARDCODEADO en 0.5 u.t.) produce slice vacío ⇒ np.mean(vacío)=NaN ⇒ omega_nodo[:,1] y dw_temprana = NaN SILENCIOSOS (solo RuntimeWarnings). La config del PROPIO gate8 versionado (w_ut=0.24, temprana_ut=0.3) publica una vista con el canal dw_temprana=NaN y ningún assert de la suite lo mira: el bug está EJECUTÁNDOSE en los 81 passed.",
+      "donde": "src/study07/instruments/par.py:120 (a_temp=round(0.5/dt) fijo, b_temp de config sin validar contra 0.5) + :127; tests/test_par_f0.py:206 (la cfg del gate8 que lo dispara); EJECUTADO en exp_par/exp5_ventanas.py (b)",
+      "severidad": "MEDIO",
+      "evidencia": "par.run(wl, {'w_ut':0.24,'temprana_ut':0.3,'tardia_ut':0.3}) ⇒ dw_temprana=nan, omega_nodo[:,1]=[nan nan], warnings=['Mean of empty slice.','invalid value encountered in scalar divide'] — exactamente la config de test_gate8.",
+      "parche": "Validar en run(): temprana_ut > 0.5 + margen (o parametrizar el arranque y validar arranque < fin ≤ film); RuntimeError con mensaje de contrato. Gate8: assert np.isfinite de TODOS los canales publicados."
+     },
+     {
+      "que": "Film de 1 nodo (0 pares) revienta con IndexError crudo ('too many indices for array: array is 1-dimensional...') en vez del RuntimeError de contrato: filas=np.array([]) queda 1-D y filas[:,0] explota. El patrón F4-A8 (errores crudos = agujero de contrato) reaparece.",
+      "donde": "src/study07/instruments/par.py:161 (filas=np.array(filas) con lista vacía) + :166-171 (indexación 2-D); EJECUTADO en exp_par/exp2_degenerados.py (D4)",
+      "severidad": "MEDIO",
+      "evidencia": "D4 n=1 nodo: IndexError CRUDO: 'too many indices for array: array is 1-dimensional, but 2 were indexed'.",
+      "parche": "Al inicio: if n_nodos < 2: raise RuntimeError(f'par_link exige >=2 nodos (film de {n_nodos}): no hay pares que veredicto') — y gate en test_gate9."
+     },
+     {
+      "que": "temprana_ut/tardia_ut mayores que el film clampean en SILENCIO: con film de 30 u.t. y temprana_ut=40/tardia_ut=50 corre sin error y ambas ventanas colapsan a ~todo el film ⇒ dw_temprana≈dw_tardia por construcción ⇒ el canal de pulling queda desactivado sin declararlo (la ventana declarada en la config no es la observada — 'la ventana es parte de la interfaz').",
+      "donde": "src/study07/instruments/par.py:120-121 y :127-128 (slices numpy clampean); EJECUTADO en exp_par/exp5_ventanas.py (c)",
+      "severidad": "BAJO",
+      "evidencia": "temprana_ut=40, tardia_ut=50, film de 30 ⇒ corre; dw_temprana=0.9179, dw_tardia=0.9542 (deriva pura dw=1: idénticas dentro del solape ⇒ pulling ciego).",
+      "parche": "Validar b_temp < n_t y n_tard <= n_t (RuntimeError), o al menos exportar en el manifiesto las ventanas EFECTIVAS en u.t."
+     },
+     {
+      "que": "FIRME con t_lock=NaN: un lock real de 10 u.t. (2.5W) que arranca en t*=20 de un film de 30 da estado=FIRME (rw_final=0.995) pero t_lock=NaN — rw termina en la última ventana completa (n_t−W) y el sostén de 2W no cabe, así que ningún lock en los últimos ~3W del film es fechable. La nota declara 't_lock=NaN sin sostén' pero gate1 asume firme⇒t_lock existe (assertFalse(isnan)), y un census que use t_lock_ut para fechar links perderá sistemáticamente los locks tardíos.",
+      "donde": "src/study07/instruments/par.py:143-152 (veredicto por rw_final, fecha por sostén 2W truncado por el fin del rw); EJECUTADO en exp_par/exp5_ventanas.py (a)",
+      "severidad": "BAJO",
+      "evidencia": "lock real de 10 u.t. al FINAL: estado=FIRME rw_final=0.9952 t_lock=nan ep=1.",
+      "parche": "Documentar en la nota la franja no-fechable (~3W final) y/o t_lock de respaldo = arranque del último episodio sobre umbral_firme cuando rw_final≥umbral y no hubo sostén completo (flag t_lock_parcial=1)."
+     },
+     {
+      "que": "Dentro del punto ciego el instrumento no dice 'no sé': deriva PURA (cero acople) con dw≤0.236 emite estado=2 FIRME con t_lock=0.00 y episodios=1 — un veredicto positivo datado, indistinguible en la View de un lock genuino. Está cubierto por la declaración del punto ciego (por eso NOTA y no más), pero el census que consuma 'estado' sin cruzarlo contra dw_temprana/portadoras se llenará de falsos links en la década baja de Δω, que es justamente donde el pre-registro pone ~30 pares por década.",
+      "donde": "src/study07/instruments/par.py:147-152; EJECUTADO en exp_par/exp3_zona_gris.py (filas 0.05-0.15×PC)",
+      "severidad": "NOTA",
+      "evidencia": "dw=0.079/0.157/0.236 ⇒ FIRME rw=0.996/0.984/0.963, t_lock=0.00, ep=1, en 5/5 fases iniciales.",
+      "parche": "Canal derivado en la View: firme_bajo_punto_ciego = (estado==2) & (dw_tardia < zona_falso_firme_dw) para que el filtro sea del instrumento y no folclore del census."
+     },
+     {
+      "que": "Procedencia cruzada verificada + una deuda: la corrección de fase ES exactamente la del juez §16 (misma atan2(sinθ/max(w_full,1e-9), cosθ), mismo w_full=|media de gradiente del unwrap|, mismo unwrap posterior, mismas ventanas temprana 0.5-5.5/tardía últimas 10 u.t. — cotejado línea a línea contra juez_arnold/j3_films.py medir()). PERO los umbrales 0.95/0.80 fueron medidos en C1 con ventana W=1 u.t. (juez: W=125 muestras × dt_sub=8e-3; panel: 'con W=1 u.t.') y el default los aplica a W=4 sin remedición — el 'hombro' 0.80 a W=1 no significa lo mismo a W=4 (la sinc de deriva y la intermitencia escalan con W).",
+      "donde": "src/study07/instruments/par.py:33-35 (DEFAULTS w_ut=4.0 + umbrales '§13') y :176-178 (procedencia_umbrales); vs juez_arnold/j3_films.py:16-17 (SUB=100, W=125, DT=8e-3 ⇒ 1.0 u.t.)",
+      "severidad": "NOTA",
+      "evidencia": "j3_films.py: SUB=100, W=125, DT=8e-5*SUB=8e-3 ⇒ ventana = 125×8e-3 = 1.0 u.t.; PANEL_ARNOLD_C1 verdict: 'con W=1 u.t., lock y deriva son indistinguibles por debajo de Δω≈1.1'. par.py aplica 0.95/0.80 con W=4 default.",
+      "parche": "O remedir los umbrales sobre las mismas 144 aristas con W=4 (el juez es re-corrible), o declarar en procedencia_umbrales que fueron medidos a W=1 y se transfieren a W=4 por hipótesis — hoy el manifiesto dice 'MEDIDOS' sin la letra chica."
+     }
+    ]
+   },
+   {
+    "resumen": "Lente c2 (MUTACION) sobre instruments/par.py @ ffc8c72. Trabajo SOLO en clones (git clone, no cp): /private/tmp/claude-501/-Users-cagostino-code-doft-study06-fundamental-lock-dynamics/a013d8a0-cafd-49d8-9f07-ba0ef540402e/scratchpad/c2 (batch de mutantes) y .../scratchpad/c2_kt (kill-tests); repo real /Users/cagostino/code/doft-study07-worldline verificado LIMPIO (git status --porcelain vacio) y jamas tocado. 20 mutantes definidos (16 obligatorios + M17-M20 propios), aplicados de a UNO con restore + purga de __pycache__ (driver: .../scratchpad/c2_driver/{mutants.py,run_muts.sh}; veredictos: .../c2_driver/results.txt; logs por mutante en .../c2_driver/logs/). EJECUTADO al cierre: M01-M08 con veredicto de batch — MUERTOS M01 (gate1), M02 (gate1: el abs de w_full es load-bearing porque el theta extraido atan2(v,x) gira NEGATIVO aun con carrier positivo), M03 (gate4), M05 (gate3: el bug historico del sosten 2W SI lo caza el gate ahora); VIVOS con suite completa 81/81: M04 (umbral_firme hardcodeado 0.9), M06 (t_lock=FINAL del sosten: reporta 17.46 vs ~9.5 real y la cota de gate4 10+2W+0.5=18.5 lo deja pasar), M07 (FIRME sin exigir rw_final: un link que muere al final queda firme); M08 paso los 9 gates F0 (suite completa aun corriendo al cierre). M09-M20 en cola del batch al cierre (analisis estatico: M09/M13/M16 mueren en gate5/gate7/gate1; M10/M11/M12/M14/M15/M18/M19/M20 sobreviven F0 porque ningun gate los ejercita). Los 14 KILL-TESTS estan ESCRITOS y EJECUTADOS bidireccionalmente en c2_kt: 14/14 pasan sobre pristine (6.6s) y cada uno FALLA bajo su mutante (archivo listo para foldear a tests/: .../scratchpad/c2_driver/kt_c2_kill.py). Extra ejecutado sobre pristine: agujero de contrato en pulling — film corto valido (>=3W) emite vista con dw_temprana=NaN y omega_nodo NaN SIN fail-loud, y ventanas temprana/tardia truncadas/solapadas en silencio. Patron de los 6 taps CONFIRMADO: ningun mutante revelo bug en la fisica del codigo entregado; los agujeros estan en los GATES del veredicto (firme/t_lock/umbral), en n>2, en pulling y en el estimador FFT.",
+    "hallazgos": [
+     {
+      "que": "M07 VIVO: mutante que declara FIRME con solo sost_firme (sin exigir rw_final) pasa los 9 gates F0 y la suite completa 81/81 — un link que locked 15 u.t. y MUERE (deriva) los ultimos 15 u.t. queda declarado FIRME; el descubridor de links puede reportar firme un link muerto y ningun gate lo caza",
+      "donde": "src/study07/instruments/par.py:147-152 (decision de estado) — ningun gate de tests/test_par_f0.py construye lock-que-muere",
+      "severidad": "ALTO",
+      "evidencia": "EJECUTADO: results.txt 'M07_firme_solo_sost_firme VIVO', logs/M07...full.log '81 passed'; kill-test test_kt_m07_lock_que_muere_no_es_firme PASA pristine y FALLA bajo el mutante (estado=2 con rw_final<0.5)",
+      "parche": "Foldear a tests/test_par_f0.py el KT de kt_c2_kill.py: lock 15 u.t. + deriva 15 u.t. => assert estado==1 (coqueteo), rw_final<0.5, t_lock no-NaN"
+     },
+     {
+      "que": "M06 VIVO: t_lock devolviendo el FINAL del sosten (primer_sosten=k en vez de k-min_muestras+1) pasa 81/81 — reporta t_lock=17.46 u.t. cuando el lock empieza en 10; la cota superior de gate4 (10+2W+0.5=18.5) es tan laxa que absorbe el corrimiento entero de +2W",
+      "donde": "src/study07/instruments/par.py:89 (_episodios) y :145 (t_lock); cota laxa en tests/test_par_f0.py:130",
+      "severidad": "ALTO",
+      "evidencia": "EJECUTADO: results.txt 'M06 VIVO', full 81 passed; KT test_kt_m06 bajo mutante: 'AssertionError: 17.456 not less than or equal to 11.0' — pristine da ~9.5 y pasa",
+      "parche": "Apretar la cota de gate4 a t*+1.0 (11.0): el inicio del sosten esta a resolucion stride_det del inicio real del lock; el KT ya lo hace"
+     },
+     {
+      "que": "M04 VIVO: umbral_firme hardcodeado a 0.9 (ignora cfg y la procedencia MEDIDA 0.95) pasa 81/81 — ningun gate pone un par en la banda discriminante [0.90,0.95); gate9 solo verifica que el DEFAULT figure en el manifiesto, no que la decision lo USE",
+      "donde": "src/study07/instruments/par.py:147; tests/test_par_f0.py:238 (solo chequea manifest)",
+      "severidad": "ALTO",
+      "evidencia": "EJECUTADO: results.txt 'M04 VIVO', full 81 passed; KT test_kt_m04 (deriva dw=0.35 => rw_final≈0.92 por |sinc|) FALLA bajo mutante (estado==2) y pasa pristine (coqueteo)",
+      "parche": "Foldear KT: par con rw_final en [0.90,0.949] (dw=0.35, W=4) => assert estado != 2; opcional segundo brazo con cfg umbral_firme=0.93"
+     },
+     {
+      "que": "Agujero de gates (M10): TODOS los films de F0 tienen n=2 nodos y gate8 exige shape (1,2) — un descubridor que solo mira el par (0,1) pasa el F0 entero; para el instrumento cuyo proposito es descubrir QUE esta conectado con QUE en censos n>2, no hay ni un gate multi-nodo",
+      "donde": "src/study07/instruments/par.py:138-139 (doble loop i<j); tests/test_par_f0.py (todos los _wl_sintetico son de 2 nodos; :216 exige (1,2))",
+      "severidad": "ALTO",
+      "evidencia": "EJECUTADO: KT test_kt_m10_tres_nodos_tres_pares (3 nodos => pares {(0,1),(0,2),(1,2)}, (0,1) firme y (1,2) muerto) pasa pristine y FALLA bajo M10; estaticamente ningun gate F0 puede matarlo (no existe film n>2); veredicto de batch en cola al cierre",
+      "parche": "Foldear KT de 3 nodos con veredictos mixtos por par a tests/test_par_f0.py"
+     },
+     {
+      "que": "M08 pasa los 9 gates F0 (suite completa corriendo al cierre): dw_temprana medida desde el tick 0 (sin saltar el transitorio [0,0.5)) es indistinguible para gate5 porque su rampa es suave desde t=0 — el canal pulling queda sin proteccion contra el transitorio que la ventana temprana existe para excluir",
+      "donde": "src/study07/instruments/par.py:120 (a_temp); tests/test_par_f0.py:133-144 (gate5 sin transitorio)",
+      "severidad": "MEDIO",
+      "evidencia": "EJECUTADO: logs/M08...f0.log '9 passed'; KT test_kt_m08 (nodo con omega=50 en [0,0.5) y despues identico al companero) pasa pristine (dw_temprana≈0) y FALLA bajo mutante (dw_temprana>0.5, contaminada por el transitorio)",
+      "parche": "Foldear KT del transitorio brutal en [0,0.5) => assert dw_temprana < 0.5"
+     },
+     {
+      "que": "Agujero de gates (M19): umbral_coqueteo hardcodeado a 0.5 sobrevive estaticamente — en gate3 los valles (~0.12) y mesetas (~1.0) no discriminan el umbral; un par con rw≈0.65 sostenido (bajo el hombro MEDIDO 0.80) seria declarado COQUETEO en vez de MUERTO",
+      "donde": "src/study07/instruments/par.py:143; tests/test_par_f0.py:91-116 (gate3 no discrimina el valor del umbral)",
+      "severidad": "MEDIO",
+      "evidencia": "EJECUTADO: KT test_kt_m19 (deriva dw=0.7245 => rw≈0.65 por |sinc|) pasa pristine (0 episodios, muerto) y FALLA bajo M19 (episodios>=1, coqueteo); batch en cola al cierre",
+      "parche": "Foldear KT rw≈0.65 => assert episodios==0 y estado==0"
+     },
+     {
+      "que": "Agujero de gates (M20): sosten de firmeza colapsado a 1 muestra sobrevive los gates — un cruce breve de 0.95 (lock de solo 4.5 u.t. al inicio, luego deriva) fabrica t_lock≈0 donde el contrato exige NaN; la cota inferior de gate4 (9.0) no lo caza porque alli el primer cruce legitimo llega ~9.8",
+      "donde": "src/study07/instruments/par.py:136 (min_firme); tests/test_par_f0.py:118-131",
+      "severidad": "MEDIO",
+      "evidencia": "EJECUTADO: KT test_kt_m20 (lock [0,4.5] + deriva 25.5) pasa pristine (t_lock NaN) y FALLA bajo M20 (t_lock numerico); batch en cola al cierre",
+      "parche": "Foldear KT del cruce breve => assert isnan(t_lock_ut)"
+     },
+     {
+      "que": "Agujero de gates (M12): portadora_fft SIN zeropad sobrevive gate6 — el w=6.168 del gate cae a solo 0.115 rad del bin coarse 2·2pi/(n·dt)=6.283, dentro de la tolerancia 3·resol=1.178; el gate no prueba ningun w ENTRE bins coarse",
+      "donde": "src/study07/instruments/par.py:68-69; tests/test_par_f0.py:146-158 (gate6 con w casi-bin)",
+      "severidad": "MEDIO",
+      "evidencia": "EJECUTADO (exploracion numerica + KT): w=4.9 (entre bins) da err 1.759 sin zeropad vs 0.188 con zeropad (tol 1.178); KT test_kt_m12 pasa pristine y FALLA bajo M12; batch en cola al cierre",
+      "parche": "Foldear KT: portadora_fft de cos(4.9·t) => assert err < 3·resol_8x"
+     },
+     {
+      "que": "Agujero de gates (M11): portadora_fft SIN hann sobrevive con tono puro (err<0.4 rad en todo el rango util) — el hann solo es load-bearing con TENDENCIA secular (caso real: emisiones de film con drift): tono+rampa amp 2.5-4.5 da err 4.20 sin hann vs 0.51 con hann",
+      "donde": "src/study07/instruments/par.py:68; tests/test_par_f0.py:146-158 (gate6 solo tono puro)",
+      "severidad": "MEDIO",
+      "evidencia": "EJECUTADO (barrido en .../c2_driver/explora_hann.py): amp∈[2.5,4.0] discrimina robusto (hann 0.5076 < 1.178 < rect 4.2046); KT test_kt_m11 (tono 6.168 + rampa amp=3) pasa pristine y FALLA bajo M11; batch en cola al cierre",
+      "parche": "Foldear KT tono+rampa amp=3 => assert err < 3·resol"
+     },
+     {
+      "que": "Contrato pulling SIN fail-loud (codigo pristine, no mutante): un film corto VALIDO para el gate 3W emite la vista con dw_temprana=NaN y omega_nodo NaN en silencio (solo RuntimeWarning de numpy), y en films < temprana_ut/tardia_ut las ventanas se truncan/solapan calladas — la tardia default (10 u.t.) sobre un film de 3 u.t. es el film ENTERO incluido el transitorio",
+      "donde": "src/study07/instruments/par.py:120-128 (a_temp/b_temp/n_tard sin validar contra n_t)",
+      "severidad": "MEDIO",
+      "evidencia": "EJECUTADO sobre pristine: film 0.32 u.t. con w_ut=0.1 => dw_temprana=nan, omega_nodo=[5.13, nan, 5.13], estado emitido 2.0, warnings 'Mean of empty slice'; film 3 u.t. => temprana [0.5,3] truncada y tardia=film entero (dw 0.625 vs 0.725 solapadas)",
+      "parche": "Fail-loud como el resto del contrato: exigir n_t·dt >= max(temprana_ut, 0.5+tardia_ut) o declarar el truncamiento en el manifiesto de la vista"
+     },
+     {
+      "que": "Agujero de gates (M18): dphi_final calculado sobre el film ENTERO (en vez de la ventana final) sobrevive — gate1 usa desfase constante (media global == final) y gate4 no asserta dphi; el canal reportaria la media circular historica, no el desfase VIGENTE del link",
+      "donde": "src/study07/instruments/par.py:153-155; gate1 tests/test_par_f0.py:68",
+      "severidad": "BAJO",
+      "evidencia": "EJECUTADO: KT test_kt_m18 (lock a desfase 0 la primera mitad y pi/2 la segunda) pasa pristine (|dphi_final|≈pi/2) y FALLA bajo M18 (≈pi/4); batch en cola al cierre",
+      "parche": "Foldear KT de desfase que cambia a mitad de film => assert |dphi_final|≈pi/2"
+     },
+     {
+      "que": "Agujero de gates (M15): la unificacion theta par==fase solo se verifica en films CON capa Q (gate8/f8) — un duplicado local sin el fallback qi.size==0 devuelve theta=0 SILENCIOSO en films sin capa Q (suma sobre indice vacio) y una DERIVA PURA queda declarada FIRME (rw=1)",
+      "donde": "src/study07/instruments/par.py:110 (import unificado, correcto hoy); fallback en phase.py:45-46; gate8 tests/test_par_f0.py:205-211 solo film Q",
+      "severidad": "BAJO",
+      "evidencia": "EJECUTADO: KT test_kt_m15 (film con capas_por_modo=['X'], dos nodos en deriva) pasa pristine (theta identico a fase, estado=0) y FALLA bajo M15 (theta=0 => firme); batch en cola al cierre",
+      "parche": "Foldear KT del film sin capa Q comparando theta par vs fase + estado==0"
+     },
+     {
+      "que": "M14 (off-by-one W+1 en _rw_movil) es indetectable por comportamiento a W tipico (50000 muestras => sesgo 0.002%) — solo un contrato directo de _rw_movil lo fija: largo n-W+1 y valor EXACTO 0 para dphi alternante 0,pi con W par",
+      "donde": "src/study07/instruments/par.py:73-77",
+      "severidad": "BAJO",
+      "evidencia": "EJECUTADO: KT test_kt_m14 (largo + 0 exacto con atol 1e-12) pasa pristine y FALLA bajo M14 (largo n-W, ventana desbalanceada da 1/(W+1)≠0); batch en cola al cierre",
+      "parche": "Foldear el KT de contrato unitario de _rw_movil"
+     },
+     {
+      "que": "Gates FUERTES confirmados (mutantes MUERTOS ejecutados): M01 sin correccion de fase muere en gate1; M02 w_full con signo muere en gate1 por razon SUTIL: el theta extraido atan2(v,x) gira NEGATIVO aun con carrier positivo (v=-w·sin), asi que el abs es load-bearing siempre; M03 rw_final sin ventana final muere en gate4; M05 sosten 2W en episodios (el bug historico) SI lo caza gate3 ahora",
+      "donde": "tests/test_par_f0.py gates 1,3,4; .../c2_driver/results.txt M01,M02,M03,M05",
+      "severidad": "NOTA",
+      "evidencia": "EJECUTADO: results.txt 'M01 MUERTO_F0 gate1', 'M02 MUERTO_F0 gate1', 'M03 MUERTO_F0 gate4', 'M05 MUERTO_F0 gate3'",
+      "parche": "Ninguno — registrar en bitacora que el gate del sosten (bug previo) quedo cubierto"
+     },
+     {
+      "que": "Estado del batch al cierre (transparencia): veredictos F0 ejecutados M01-M08; M09-M20 en cola (proceso corriendo, logs y results.txt siguen escribiendose en scratchpad). Prediccion estatica: M09 muere en gate5 (dw_temprana==dw_tardia viola dw_tardia<0.5·dw_temprana), M13 muere en gate7 (2pi/50000 ≠ 2pi/4), M16 muere en gate1 (int('firme') ValueError); M17 (rw_final=max) tiene KT ejecutado (pristine pasa: lock final de 6 u.t. => rw_final≈0.87<0.95 y rw_max>0.99 => estado 0; bajo mutante FALLA) pero su veredicto F0 quedo pendiente",
+      "donde": ".../scratchpad/c2_driver/results.txt y logs/ (driver reproducible: run_muts.sh + mutants.py)",
+      "severidad": "NOTA",
+      "evidencia": "EJECUTADO parcial: 8/20 veredictos de batch + 14/14 kill-tests bidireccionales (14 passed en pristine 6.61s; 1 failed bajo cada mutante, uno por vez con restore y purga de __pycache__); repo real limpio verificado (git status --porcelain vacio)",
+      "parche": "Dejar terminar el batch (results.txt) antes del veredicto final del tap; foldear kt_c2_kill.py (14 tests, ya validados en ambas direcciones) a tests/test_par_f0.py"
+     }
+    ]
+   },
+   {
+    "resumen": "LENTE c3 (contrato + cobertura honesta) sobre instruments/par.py @ ffc8c72. Baseline re-ejecutado en el clon: 81 passed (118s). CONTRATO clausula por clausula: la mecanica central CUMPLE y esta ejecutada — whitelist de config (gate9 + probe), ventana validada compartida (api.ventana), solo-COMPLETE con permitir_incompleto explicito, view_hash estable, write con cierre + re-write idempotente verificado, load_view relee y recomputa OK con pares_ij int64 y estado float64 (estado==2 por igualdad float selecciona exacto), taxonomia dato/inferencia/VEREDICTO declarada para los 14 canales, film_intervenida/linaje_intervenido con las claves correctas del manifiesto de hija.py, sin import de engine. Los agujeros estan donde el patron de 6 taps predice: (1) las ventanas de pulling temprana/tardia NO pasan por ninguna validacion — se recortan/redefinen EN SILENCIO (film de 1.2 u.t. con defaults temprana=5.5/tardia=10 corre sin error y el manifiesto declara ventanas jamas medidas; tardia_ut=0 => 'ultimas 0 u.t.' = film ENTERO; film <0.5 u.t. => dw_temprana=NaN silencioso con veredicto publicado); (2) la procedencia de los umbrales 0.95/0.80 es CROSS-ESTIMADOR sin ejecucion: se midieron en §13 con exprimir_c1.py (theta CRUDO pre-correccion §16, SUB=100 decimado — lo que el propio par.py llama 'OTRO estimador' al exigir stride=1 — y W=1 u.t.), par.py los aplica sobre fase corregida a tasa completa con W=4, la nota del manifiesto misma dice 'no comparable con rw de fase cruda', y NO existe adapter C1-npz→worldline ni gate que reproduzca los 7 links firmes con ESTE instrumento (los films estan en /Volumes/ExternalDisk read-only; el adapter es posible — los tests arman wl dicts a mano y C1 tiene raw float32 — pero hoy NO CUBIERTO; direccion del sesgo: la correccion SUBE rw, o sea 0.95-crudo aplicado a rw-corregido puede SOBRE-llamar links); (3) stride_det/sosten_ventanas sin validar (stride_det=-100 corre silencioso sobre la serie INVERTIDA fabricando t_lock=0/frac=1; =0 revienta con ZeroDivisionError crudo); (4) el default W=4 tiene CERO tests con film real (el unico real, f8=1.2 u.t., se usa con w_ut=0.24 y gate9 afirma que el default lo RECHAZA; todos los veredictos W=4 corren sobre sinteticos x=cosθ); (5) el manifiesto de la vista NO carga lo que el census necesita citar: sin dt, sin w_ticks efectivo, mapa estado→nombre solo en prosa (y ESTADOS del modulo esta en orden INVERSO al codigo 0/1/2), t_lock relativo a t0_tick sin declararlo (medido: 9.464 vs 4.464 para el mismo lock fisico); (6) campana.py hoy NO puede citar el veredicto: _vistas_y_metricas corre solo energy+phase, ninguna fila de ledger tiene view_hash_par, nada en tools/ referencia par_link; (7) semantica de borde ejecutada: FIRME = firme AL FINAL (lock solo en las ultimas 2W => estado=2 con t_lock=NaN; lock de 26 u.t. que muere al final => COQUETEO con t_lock=0.0 — el census que lea estado==2 pierde ese par). ESCALA (lente 4, MEDIDA): n=10→3.7s, n=20→13.0s a 750k ticks; ajuste 123 ms/nodo + 55.4 ms/par, VALIDADO en n=30 (27.3s medido vs 27.8s predicho, 1.8%); extrapolacion 150 nodos/11175 pares ≈ 10.6 min un proceso, memoria ~5.4-7 GB (estados 1.8 + theta/unw/grad 2.7 + fases 0.9 + copia tobytes 0.9 al hashear; rw por par NO se retiene => no crece con pares). ESCALA — es diseño viable, no bug. Repo real verificado limpio @ ffc8c72; clon purgado de __pycache__; cero mutaciones al codigo.",
+    "hallazgos": [
+     {
+      "que": "Ventanas de pulling (temprana_ut/tardia_ut) sin validar: se recortan o redefinen EN SILENCIO y el manifiesto declara ventanas que jamas se midieron. Ejecutado: film 1.2 u.t. + defaults (temprana=5.5, tardia=10) corre sin error ni warning — dw_temprana se midio sobre [0.5,1.2] y dw_tardia sobre el film ENTERO mientras observation_config declara 5.5/10.0; tardia_ut=0.0 => grad[-0:] = film entero (omega_tardia==omega_full verificado); film de 0.4 u.t. => slice temprano VACIO => dw_temprana=NaN silencioso (solo RuntimeWarning de numpy) con estado=2 publicado. Es la misma clase de bug que el t0 negativo de F4 A8 que motivo api.ventana.",
+      "donde": "src/study07/instruments/par.py:120-128 (a_temp/b_temp/n_tard y slices de grad)",
+      "severidad": "ALTO",
+      "evidencia": "probe1_ventanas.py casos A/B/C: A) dw_temprana=1.1515, dw_tardia=0.0520 con config declarada 5.5/10.0 en film de 15000 ticks, sin excepcion; B) omega_nodo[:,1]=nan, dw_temprana=[nan], estado=[2.]; C) tardia=6.485338 == full=6.485338. b_temp=68750 y n_tard=125000 > n_t=15000.",
+      "parche": "En run(), tras calcular a_temp/b_temp/n_tard: exigir a_temp < b_temp <= n_t y 0 < n_tard <= n_t con RuntimeError estilo el chequeo de 3 ventanas (o, si se decide permitir clipeo, declarar en el manifiesto temprana/tardia EFECTIVAS medidas — pero fail-loud es lo coherente con api.ventana). Gate nuevo en test_par_f0 que lo mate."
+     },
+     {
+      "que": "Procedencia de los umbrales NO ejecutable con este instrumento: 0.95/0.80 se midieron en §13 con exprimir_c1.py sobre theta CRUDO (pre-correccion §16), SUB=100 decimado (exactamente lo que par.py prohibe como 'decimar redefine el estimador') y W=1 u.t.; par.py los aplica sobre fase CORREGIDA a tasa completa con W=4 — y su propia nota dice 'no comparable con rw de fase cruda'. No existe adapter C1-npz→worldline ni gate que reproduzca los 7 links firmes / el hombro coqueteo con ESTE estimador (el census heredara un decision boundary jamas calibrado bit-ejecutado contra su ancla; direccion del riesgo: la correccion §16 SUBE rw en locks con desfase => 0.95-crudo sobre rw-corregido puede sobre-llamar FIRME).",
+      "donde": "src/study07/instruments/par.py:34-35,176-178 (DEFAULTS y procedencia_umbrales) vs tools/exprimir_c1.py:33-34,44-67 (SUB=100, W_VENT=1 u.t., theta_nodes crudo) y docs/bitacora/2026-07-30.md §13/§16",
+      "severidad": "ALTO",
+      "evidencia": "grep ejecutado: exprimir_c1.py usa theta_nodes[::100] y convolve W_VENT=125 sub-muestras sin correccion de fase; §16 (bitacora L658+) documenta que ese rw castigaba desfase (0.43 en lock a pi/2) y que el panel siguio con W=1; tests/fixtures no contiene ningun fixture C1; grep 'par.run' en tests: solo sinteticos + f8; instruments/ solo lee worldlines via load_run o wl-dict.",
+      "parche": "NO CUBRIRLO en silencio: (a) adapter minimo read-only C1-npz→wl-dict (los tests ya arman wl dicts a mano; C1 trae raw float32 — declarar la degradacion float32) + gate: los 7 links firmes de §13 dan estado=2 y el hombro da 1 con los defaults del instrumento, o el numero medido que de — y si NO separa, recalibrar umbral y version nueva; o (b) mientras no exista, degradar procedencia_umbrales a 'valores §13 con estimador crudo W=1 decimado; NO re-ejecutados con este estimador' — el manifiesto no puede citar como medido lo que no se ejecuto."
+     },
+     {
+      "que": "Default w_ut=4.0 sin NINGUN test con film real: el unico film real de la suite (f8, 15000 ticks = 1.2 u.t.) se observa con w_ut=0.24 y gate9 afirma que el default lo RECHAZA; todos los caminos de veredicto con W=4 corren sobre sinteticos x=cos(theta) fabricados. El census correra films reales de >= 60 u.t. (750k ticks) con W=4-8 (prescripcion §16) — esa configuracion (la que decide links) no fue ejecutada jamas contra un film del recorder real.",
+      "donde": "tests/test_par_f0.py:195-206 (w_ut=0.24 sobre f8) y 227-228 (el default solo aparece como rechazo)",
+      "severidad": "MEDIO",
+      "evidencia": "grep 'par.run' tests/: 13 llamadas — las 7 con default W=4 son todas _wl_sintetico; las 2 sobre self.wl (f8 real) usan w_ut=0.24 o esperan RuntimeError. Un film real con W=4 necesita >= 150000 ticks (3W a dt=8e-5): no existe fixture asi.",
+      "parche": "Fixture real largo unico (composicion f8-style corrida >= 150k ticks, generada una vez con sha versionado como f6/f7/f8) + gate que corra par.run(wl) con TODOS los defaults y ancle veredictos y punto_ciego; alternativa barata: film real con dt mayor donde W=4 quepa en 3 ventanas."
+     },
+     {
+      "que": "stride_det y sosten_ventanas sin validacion de VALOR (la whitelist solo valida claves): stride_det=-100 corre SIN error sobre rw[::-100] — la serie INVERTIDA en el tiempo — fabricando t_lock=0.0, episodios=1, frac_coqueteo=1.0; stride_det=0 revienta con ZeroDivisionError crudo (no el RuntimeError de contrato); sosten_ventanas=-5 clampa a 1 muestra en silencio (t_lock=0.0). Misma leccion F4 A8 (valores invalidos, no solo typos).",
+      "donde": "src/study07/instruments/par.py:132-136,141 (int(cfg[stride_det]) sin chequeo; min_ep/min_firme con max(...,1); rw[::stride_det])",
+      "severidad": "MEDIO",
+      "evidencia": "probe1_ventanas.py casos E/F/G ejecutados: E) episodios=[1.], t_lock=[0.], frac_coqueteo=[1.] sin excepcion; F) ZeroDivisionError: division by zero; G) t_lock=[0.] sin error.",
+      "parche": "Validar en run(): stride_det >= 1 y sosten_ventanas > 0 con RuntimeError de contrato; opcional: exigir stride_det <= w_ticks para que la grilla de deteccion no saltee ventanas enteras (o declararlo). Gates que maten -100 y 0."
+     },
+     {
+      "que": "El manifiesto de la vista NO carga lo que el census/ledger necesita para citar el veredicto sin ambiguedad: falta dt (t_lock_ut/dur_max_ut/punto_ciego_dw inconvertibles a ticks sin recargar el film via worldline_hash), falta w_ticks EFECTIVO (w_ut=0.0 corre clampada a 4 ticks mientras config y config_hash declaran 0.0), el mapa estado→nombre existe solo en prosa dentro de strings, y t_lock/dur_max son RELATIVOS a t0_tick sin declararlo (ejecutado: el mismo lock fisico en t=10 da t_lock=9.464 con film entero y 4.464 con t0_tick=5 u.t.). Ademas ESTADOS=('firme','coqueteo','muerto') esta en orden INVERSO al codigo (ESTADOS[0] seria 'firme' para estado=0=muerto) y no se usa ni se testea.",
+      "donde": "src/study07/instruments/par.py:43 (ESTADOS invertido), 112 (clamp), 172-182 (extra_manifest sin dt/w_eff/mapa)",
+      "severidad": "MEDIO",
+      "evidencia": "probe3_manifiesto.py: claves del manifiesto impresas — sin dt, sin w_ticks, mapa maquina-legible ausente; probe2_tlock.py caso a: 9.464 vs 4.464; probe1 caso D: w_ut=0.0 corre con punto_ciego=19634.95 (W efectivo 3.2e-4 u.t.).",
+      "parche": "En extra_manifest agregar: dt del film, w_ticks_efectivo (y rechazar w_ut <= 0), estados_codigo={0:'muerto',1:'coqueteo',2:'firme'}, y en la nota: 't_lock_ut/dur_max_ut relativos a t0_tick de la ventana'. Corregir o borrar ESTADOS. Gate que verifique el mapa y el marco temporal."
+     },
+     {
+      "que": "Semantica de borde del VEREDICTO ejecutada y sin declarar en el manifiesto: FIRME = 'firme AL FINAL', no 'estuvo firme'. Un par que traba SOLO en las ultimas 2W da estado=2 con t_lock=NaN (link sin momento de lock citable); un par FIRME 26 u.t. que deriva al final da estado=1 con t_lock=0.0 (t_lock no-NaN NO implica firme, estado=2 NO implica t_lock). El census que lea estado==2 como 'link' pierde pares que estuvieron trabados casi todo el film y cuenta pares trabados solo en la ultima ventana — legitimo como definicion, pero la nota del manifiesto no lo dice.",
+      "donde": "src/study07/instruments/par.py:147-152 (decision solo por rw_final) y 180-182 (nota)",
+      "severidad": "MEDIO",
+      "evidencia": "probe2_tlock.py: b) estado=2, rw_final=0.994, t_lock=nan; c) estado=1, rw_max=0.999, t_lock=0.0 con 26 u.t. de lock previo.",
+      "parche": "Declarar en la nota: 'firme = rw_final (ultima ventana) >= umbral; un lock que muere antes del final es coqueteo aunque t_lock exista; firme con t_lock=NaN = lock sin sosten 2W detectado'. El census debera decidir su regla (estado==2, o estado==2 OR t_lock finito) EN el prereg citando esta nota — hoy no puede porque no esta escrita."
+     },
+     {
+      "que": "campana.py hoy NO puede citar el veredicto de par: _vistas_y_metricas corre SOLO energy+phase, la fila del ledger lleva view_hash_energy/view_hash_phase y metricas basicas_v1 — ningun view_hash_par, ningun canal de par; nada en tools/ (correr_census, genera_census_spec) referencia par_link. La etapa 0 del norte ('descubriendo el link corremos el universo') no tiene cableado al census: es estado de diseño (campana se mergeo antes que par), pero el gap concreto es este.",
+      "donde": "src/study07/artifacts/campana.py:212-225 (_vistas_y_metricas) y 378-387 (fila de ledger)",
+      "severidad": "NOTA",
+      "evidencia": "grep 'par_link|par.run|instruments' en campana.py y tools/: unica importacion de instrumentos es 'from ..instruments import api, energy, phase' (campana.py:215). Cero hits de par en tools/.",
+      "parche": "Para el census F-siguiente: extender _vistas_y_metricas (o una variante census) a correr par.run con la config del prereg, escribir la vista, y agregar a la fila view_hash_par + resumen citable (n_firmes, n_coqueteo, pares firmes como lista (i,j), config_hash de par). Con eso + el hallazgo 5 resuelto, una fila cita veredicto, umbral, W, punto ciego y procedencia por hash sin recargar el film."
+     },
+     {
+      "que": "Escala a census de emergencia (150 nodos, 11175 pares, 750k ticks): MEDIDO y extrapolado — el instrumento ESCALA en un proceso: ~10.6 min y ~5.4-7 GB de RAM pico. No es bug ni bloqueo; es diseño con numeros. Detalle: theta+unw+grad+fases coexisten (3.6 GB a n=150) aunque unw/grad solo se usan para omega_nodo — liberarlos tras el loop por nodo ahorra ~1.8 GB; el view_hash/write copia theta via tobytes (+0.9 GB transitorio); rw por par NO se retiene (solo resumenes) asi que la memoria no crece con los pares.",
+      "donde": "src/study07/instruments/par.py:117-141 (arrays por nodo vivos durante el loop de pares)",
+      "severidad": "NOTA",
+      "evidencia": "probe4_escala.py ejecutado: n=10 => 3.72s / RSS 0.80 GB; n=20 => 12.99s / 1.83 GB; ajuste alfa=123.2 ms/nodo + beta=55.4 ms/par a 750k ticks; VALIDADO n=30: 27.3s medido vs 27.8s predicho (1.8%); extrapolacion n=150: 637s = 10.6 min; memoria analitica: estados 1.80 + theta/unw/grad 2.70 + fases 0.90 + transitorios 0.02 = 5.4 GB (+0.9 tobytes).",
+      "parche": "Opcional (no exigido): del unw, grad tras llenar omega_nodo/fases; si el census corre en paralelo por unidad (campana workers), presupuestar ~6-7 GB por worker con films de 750k ticks."
+     },
+     {
+      "que": "Cobertura menor sin ejecutar para par: (a) permitir_incompleto=True jamas se prueba en par (solo phase lo cubre, test_instruments.py:338); (b) propagacion de film_intervenida/film_linaje_intervenido=True al manifiesto de la vista par sin test (0 hits en test_par_f0.py) — las claves leidas SI son las correctas del manifiesto de hija.py (linaje_intervenido), verificado por lectura cruzada con recorder/hija; (c) clausula 2 de COA (vistas POR NIVEL onion/grumo/cluster) sigue PENDIENTE tambien para par — solo nivel red, como F4.",
+      "donde": "tests/test_par_f0.py (0 hits de film_intervenida/permitir_incompleto); src/study07/instruments/par.py:173-175",
+      "severidad": "BAJO",
+      "evidencia": "grep -c 'film_intervenida' tests/test_par_f0.py => 0; grep permitir_incompleto tests/ => solo phase; grep intervenida src/study07 => hija.py:191-192 escribe 'intervenida'+'linaje_intervenido' (las claves que par lee), 'intervenida_linaje' es solo el estampado del checkpoint.",
+      "parche": "Dos asserts baratos en test_par_f0: par.run sobre wl sin COMPLETE con permitir_incompleto=True (y que quede en config_hash), y wl con manifest intervenida=True => film_intervenida=True en la vista. La clausula por-nivel queda declarada PENDIENTE como en F4."
+     }
+    ]
+   }
+  ]
+ },
+ "workflowProgress": [
+  {
+   "type": "workflow_phase",
+   "index": 1,
+   "title": "Ataque"
+  },
+  {
+   "type": "workflow_phase",
+   "index": 2,
+   "title": "Sello"
+  },
+  {
+   "type": "workflow_agent",
+   "index": 1,
+   "label": "c1:fisica-estimador",
+   "phaseIndex": 1,
+   "phaseTitle": "Ataque",
+   "agentId": "ab04c9e9e2d2849eb",
+   "model": "claude-fable-5",
+   "state": "done",
+   "startedAt": 1785549809312,
+   "queuedAt": 1785549803283,
+   "attempt": 1,
+   "lastToolName": "StructuredOutput",
+   "lastToolSummary": "DOUBLE TAP F8/par.py — LENTE c1 (física del estimador), clo…",
+   "promptPreview": "DOUBLE TAP — regla de COA. REPO: /Users/cagostino/code/doft-study07-worldline @ ffc8c72 (pusheado). NUNCA leer R_f.\nTrabaja SOLO en copia bajo /private/tmp/claude-501/-Users-cagostino-code-doft-study06-fundamental-lock-dynamics/a013d8a0-cafd-49d8-9f07-ba0ef540402e/scratchpad/<tu-lente>/ (git clone /Users/cagostino/code/doft-study07-worldline + checkout ffc8c72 —\nclone, NO cp: regla de proceso §16)…",
+   "lastProgressAt": 1785550644756,
+   "tokens": 80520,
+   "toolCalls": 28,
+   "durationMs": 835444,
+   "resultPreview": "{\"resumen\":\"DOUBLE TAP F8/par.py — LENTE c1 (física del estimador), clone en scratchpad/c1/par @ ffc8c72, suite base reproducida (81 passed), 5 baterías EJECUTADAS (scripts en /private/tmp/claude-501/-Users-cagostino-code-doft-study06-fundamental-lock-dynamics/a013d8a0-cafd-49d8-9f07-ba0ef540402e/scratchpad/c1/exp_par/). El patrón de 6 taps (\\\"la física sale bien\\\") NO se sostiene esta vez: el est…"
+  },
+  {
+   "type": "workflow_agent",
+   "index": 2,
+   "label": "c2:mutacion",
+   "phaseIndex": 1,
+   "phaseTitle": "Ataque",
+   "agentId": "a6949386143654362",
+   "model": "claude-fable-5",
+   "state": "done",
+   "startedAt": 1785549809697,
+   "queuedAt": 1785549803283,
+   "attempt": 1,
+   "lastToolName": "StructuredOutput",
+   "lastToolSummary": "Lente c2 (MUTACION) sobre instruments/par.py @ ffc8c72. Tra…",
+   "promptPreview": "DOUBLE TAP — regla de COA. REPO: /Users/cagostino/code/doft-study07-worldline @ ffc8c72 (pusheado). NUNCA leer R_f.\nTrabaja SOLO en copia bajo /private/tmp/claude-501/-Users-cagostino-code-doft-study06-fundamental-lock-dynamics/a013d8a0-cafd-49d8-9f07-ba0ef540402e/scratchpad/<tu-lente>/ (git clone /Users/cagostino/code/doft-study07-worldline + checkout ffc8c72 —\nclone, NO cp: regla de proceso §16)…",
+   "lastProgressAt": 1785551088237,
+   "tokens": 99646,
+   "toolCalls": 32,
+   "durationMs": 1278539,
+   "resultPreview": "{\"resumen\":\"Lente c2 (MUTACION) sobre instruments/par.py @ ffc8c72. Trabajo SOLO en clones (git clone, no cp): /private/tmp/claude-501/-Users-cagostino-code-doft-study06-fundamental-lock-dynamics/a013d8a0-cafd-49d8-9f07-ba0ef540402e/scratchpad/c2 (batch de mutantes) y .../scratchpad/c2_kt (kill-tests); repo real /Users/cagostino/code/doft-study07-worldline verificado LIMPIO (git status --porcelain…"
+  },
+  {
+   "type": "workflow_agent",
+   "index": 3,
+   "label": "c3:contrato-cobertura",
+   "phaseIndex": 1,
+   "phaseTitle": "Ataque",
+   "agentId": "a77eb23a51d29ce71",
+   "model": "claude-fable-5",
+   "state": "done",
+   "startedAt": 1785549808577,
+   "queuedAt": 1785549803283,
+   "attempt": 1,
+   "lastToolName": "StructuredOutput",
+   "lastToolSummary": "LENTE c3 (contrato + cobertura honesta) sobre instruments/p…",
+   "promptPreview": "DOUBLE TAP — regla de COA. REPO: /Users/cagostino/code/doft-study07-worldline @ ffc8c72 (pusheado). NUNCA leer R_f.\nTrabaja SOLO en copia bajo /private/tmp/claude-501/-Users-cagostino-code-doft-study06-fundamental-lock-dynamics/a013d8a0-cafd-49d8-9f07-ba0ef540402e/scratchpad/<tu-lente>/ (git clone /Users/cagostino/code/doft-study07-worldline + checkout ffc8c72 —\nclone, NO cp: regla de proceso §16)…",
+   "lastProgressAt": 1785550639683,
+   "tokens": 99080,
+   "toolCalls": 33,
+   "durationMs": 831105,
+   "resultPreview": "{\"resumen\":\"LENTE c3 (contrato + cobertura honesta) sobre instruments/par.py @ ffc8c72. Baseline re-ejecutado en el clon: 81 passed (118s). CONTRATO clausula por clausula: la mecanica central CUMPLE y esta ejecutada — whitelist de config (gate9 + probe), ventana validada compartida (api.ventana), solo-COMPLETE con permitir_incompleto explicito, view_hash estable, write con cierre + re-write idempo…"
+  },
+  {
+   "type": "workflow_agent",
+   "index": 4,
+   "label": "juez:sello",
+   "phaseIndex": 2,
+   "phaseTitle": "Sello",
+   "agentId": "ab2bb1c1206ab9df7",
+   "model": "claude-fable-5",
+   "state": "done",
+   "startedAt": 1785551092378,
+   "queuedAt": 1785551089900,
+   "attempt": 1,
+   "lastToolName": "Bash",
+   "lastToolSummary": "cd /Users/cagostino/code/doft-study07-worldline && git diff…",
+   "promptPreview": "DOUBLE TAP — regla de COA. REPO: /Users/cagostino/code/doft-study07-worldline @ ffc8c72 (pusheado). NUNCA leer R_f.\nTrabaja SOLO en copia bajo /private/tmp/claude-501/-Users-cagostino-code-doft-study06-fundamental-lock-dynamics/a013d8a0-cafd-49d8-9f07-ba0ef540402e/scratchpad/<tu-lente>/ (git clone /Users/cagostino/code/doft-study07-worldline + checkout ffc8c72 —\nclone, NO cp: regla de proceso §16)…",
+   "lastProgressAt": 1785552321120,
+   "tokens": 122614,
+   "toolCalls": 36,
+   "durationMs": 1228742,
+   "resultPreview": "# DOUBLE TAP PAR-LINK — VEREDICTO DEL JUEZ\n\nAuditado: `src/study07/instruments/par.py` @ ffc8c72 (par.py y test_par_f0.py son BIT-idénticos en el HEAD actual 3456999, así que el veredicto aplica a ambos). Todo el trabajo en clones propios bajo `/private/tmp/claude-501/-Users-cagostino-code-doft-study06-fundamental-lock-dynamics/a013d8a0-cafd-49d8-9f07-ba0ef540402e/scratchpad/juez/` (git clone + ch…"
+  }
+ ],
+ "totalTokens": 401860,
+ "totalToolCalls": 129
+}

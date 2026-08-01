@@ -203,7 +203,9 @@ class TestParFilmReal(unittest.TestCase):
         cls._shutil.rmtree(cls.tmp, ignore_errors=True)
 
     def test_gate8_theta_identico_al_de_fase_y_vista_completa(self):
-        cfg = {"w_ut": 0.24, "temprana_ut": 0.3, "tardia_ut": 0.3}
+        # temprana 0.8 (>0.5: el A3 del tap valida la ventana — 0.3 era inválido y el
+        # gate viejo ejercitaba el bug sin saberlo)
+        cfg = {"w_ut": 0.24, "temprana_ut": 0.8, "tardia_ut": 0.3}
         v = par.run(self.wl, cfg)
         vf = phase.run(self.wl)
         np.testing.assert_array_equal(v.arrays["theta"], vf.arrays["theta"],
