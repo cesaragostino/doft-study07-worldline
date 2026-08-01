@@ -1,10 +1,11 @@
 """CENSUS ARNOLD — runner de lotes [M1]. Un nohup por batch (protocolo).
 
 Corre los SPEC_lote*.json en orden, salteando los que ya tienen REPORTE.json. Cada lote:
-correr_campana (workers=8, spawn) → archivo ATÓMICO VERIFICADO al disco externo → REPORTE.
-Si el preflight de disco de un lote no pasa (los films del lote anterior siguen locales),
-PARA LIMPIO y lo dice: la liberación local es archivo-verificado + GO de COA, jamás
-automática (regla de la casa)."""
+correr_campana (workers=8, spawn) → archivo ATÓMICO VERIFICADO al disco externo → REPORTE
+→ LIBERACIÓN local de unidades/ y views/ (GO EXPLÍCITO de COA 2026-08-01, bitácora §2;
+patrón §93-e): re-verificación INDEPENDIENTE sha-por-sha contra el archivo ANTES del rm,
+marcador LIBERADO.json con el conteo. Los papeles (SPEC/REPORTE/ledger) quedan locales."""
+import hashlib
 import json
 import shutil
 import sys
@@ -15,6 +16,45 @@ STUDY07 = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(STUDY07 / "src"))
 OUT = STUDY07 / "data/census_arnold"
 ARCHIVO = Path("/Volumes/ExternalDisk/study07_census_arnold")
+
+
+def _sha(p: Path) -> str:
+    h = hashlib.sha256()
+    with p.open("rb") as f:
+        for ch in iter(lambda: f.read(1 << 20), b""):
+            h.update(ch)
+    return h.hexdigest()
+
+
+def liberar_lote(base: Path, destino: Path) -> None:
+    """Libera unidades/ y views/ de un lote YA archivado: re-verifica INDEPENDIENTE
+    sha-por-sha (no confía en la verificación del archivado) y recién ahí borra.
+    GO de COA 2026-08-01 (§2). Fail-loud ante cualquier discrepancia."""
+    if (base / "LIBERADO.json").exists() or not (base / "unidades").exists():
+        return
+    if not (base / "REPORTE.json").exists():
+        raise RuntimeError(f"liberar {base.name}: sin REPORTE — no se libera un lote a medias")
+    if not (destino / "ARCHIVADO.json").exists():
+        raise RuntimeError(f"liberar {base.name}: el archivo {destino} no está sellado")
+    verificados = 0
+    for sub in ("unidades", "views"):
+        for p in sorted((base / sub).rglob("*")):
+            if not p.is_file():
+                continue
+            q = destino / p.relative_to(base)
+            if not q.exists() or _sha(p) != _sha(q):
+                raise RuntimeError(f"liberar {base.name}: {p.relative_to(base)} difiere o "
+                                   "falta en el archivo — NO SE BORRA NADA (fail-loud)")
+            verificados += 1
+    for sub in ("unidades", "views"):
+        shutil.rmtree(base / sub, ignore_errors=False)
+    (base / "LIBERADO.json").write_text(json.dumps(
+        {"go": "COA 2026-08-01 (bitacora 2026-08-01 §2)", "destino": str(destino),
+         "archivos_reverificados_sha256": verificados,
+         "borrado": ["unidades/", "views/"], "papeles_locales": "SPEC/REPORTE/ledger"},
+        indent=1))
+    print(f"[census] {base.name}: liberado local tras re-verificar {verificados} archivos",
+          flush=True)
 
 
 def main():
@@ -32,6 +72,9 @@ def main():
     for n in (1, 2, 3):
         spec_p = OUT / f"SPEC_lote{n}.json"
         base = OUT / f"lote{n}"
+        # liberar lotes ANTERIORES ya archivados (GO COA §2) antes del preflight de éste
+        for m in range(1, n):
+            liberar_lote(OUT / f"lote{m}", ARCHIVO / f"lote{m}")
         if (base / "REPORTE.json").exists():
             print(f"[census] lote{n}: REPORTE ya existe — salteado", flush=True)
             continue
