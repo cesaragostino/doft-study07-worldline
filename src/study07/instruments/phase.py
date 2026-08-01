@@ -31,14 +31,9 @@ CANALES = {"ticks": "dato", "theta": "dato", "z": "dato",
            "omega_valid": "veredicto (r >= r_min)"}
 
 
-def run(wl: Dict, observation_config: Dict | None = None) -> View:
-    cfg = armar_config(DEFAULTS, observation_config)
-    exigir_canales(wl, ["estados", "manifest", "worldline_hash", "ticks"])
-    exigir_completo(wl, cfg["permitir_incompleto"])
-    man = wl["manifest"]
-    dt = float(man["dt"])
-    sel = ventana(wl, cfg)
-
+def theta_por_nodo(wl: Dict, man: Dict, sel: np.ndarray) -> np.ndarray:
+    """Extracción de la fase Q por nodo — LA MISMA para fase y para par (par_link la
+    importa: un solo camino de extracción, cero divergencia entre instrumentos)."""
     thetas = []
     for j, info in enumerate(man["por_nodo"]):
         capas = info.get("capas_por_modo")
@@ -53,7 +48,17 @@ def run(wl: Dict, observation_config: Dict | None = None) -> View:
         X = est[:, qi].sum(axis=1)
         V = est[:, n + qi].sum(axis=1)
         thetas.append(np.arctan2(V, X))
-    theta = np.stack(thetas, axis=1)                        # (t, nodo)
+    return np.stack(thetas, axis=1)                         # (t, nodo)
+
+
+def run(wl: Dict, observation_config: Dict | None = None) -> View:
+    cfg = armar_config(DEFAULTS, observation_config)
+    exigir_canales(wl, ["estados", "manifest", "worldline_hash", "ticks"])
+    exigir_completo(wl, cfg["permitir_incompleto"])
+    man = wl["manifest"]
+    dt = float(man["dt"])
+    sel = ventana(wl, cfg)
+    theta = theta_por_nodo(wl, man, sel)
 
     # ESPEJO ESCALAR del oráculo (atlas/observables.py:93-109 + differential_engine.py:996):
     # z_val es un complex de PYTHON por tick y las operaciones son escalares — la versión
