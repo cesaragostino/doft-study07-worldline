@@ -69,25 +69,29 @@ def main():
                        (OUT / "carriers_fft.json").read_bytes()).hexdigest(),
                    "seleccion": hashlib.sha256(
                        (OUT / "seleccion.json").read_bytes()).hexdigest()}
-    for n in (1, 2, 3):
-        spec_p = OUT / f"SPEC_lote{n}.json"
-        base = OUT / f"lote{n}"
+    # COLA post-tap de diseño (wf_4d2144d4): lote1 (ola A) → ola B sub1..4.
+    # lote2/lote3 SUPERSEDIDOS via centinelas REPORTE.json (C1) — no aparecen acá.
+    cola = [("SPEC_lote1.json", "lote1")] + \
+           [(f"SPEC_olaB_sub{s}.json", f"olaB_sub{s}") for s in (1, 2, 3, 4)]
+    for k, (spec_nombre, nombre) in enumerate(cola):
+        spec_p = OUT / spec_nombre
+        base = OUT / nombre
         # liberar lotes ANTERIORES ya archivados (GO COA §2) antes del preflight de éste
-        for m in range(1, n):
-            liberar_lote(OUT / f"lote{m}", ARCHIVO / f"lote{m}")
+        for _, previo in cola[:k]:
+            liberar_lote(OUT / previo, ARCHIVO / previo)
         if (base / "REPORTE.json").exists():
-            print(f"[census] lote{n}: REPORTE ya existe — salteado", flush=True)
+            print(f"[census] {nombre}: REPORTE ya existe — salteado", flush=True)
             continue
         spec = json.loads(spec_p.read_text())
         t0 = time.time()
-        print(f"[census] lote{n}: {len(spec['unidades'])} unidades, arrancando "
+        print(f"[census] {nombre}: {len(spec['unidades'])} unidades, arrancando "
               f"(libre local: {shutil.disk_usage(OUT).free / 1e9:.0f} GB)", flush=True)
         try:
             reporte = correr_campana(spec, base, hashes_base=hashes_base, workers=8,
-                                     archivar_en=ARCHIVO / f"lote{n}")
+                                     archivar_en=ARCHIVO / nombre)
         except RuntimeError as exc:
             if "preflight" in str(exc):
-                print(f"[census] lote{n} BLOQUEADO por disco: {exc}\n"
+                print(f"[census] {nombre} BLOQUEADO por disco: {exc}\n"
                       "[census] PARO LIMPIO — liberar local = archivo verificado + GO de "
                       "COA; relanzar este runner después", flush=True)
                 return
@@ -95,7 +99,7 @@ def main():
         (base / "REPORTE.json").write_text(json.dumps(reporte, indent=1, default=str))
         completas = sum(1 for f in reporte.get("filas", reporte.get("unidades", []))
                         if (f.get("estado") == "completa")) if isinstance(reporte, dict) else "?"
-        print(f"[census] lote{n} TERMINADO en {(time.time()-t0)/3600:.1f} h — "
+        print(f"[census] {nombre} TERMINADO en {(time.time()-t0)/3600:.1f} h — "
               f"completas: {completas}", flush=True)
     print("[census] todos los lotes procesados", flush=True)
 
