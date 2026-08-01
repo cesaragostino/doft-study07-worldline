@@ -1,0 +1,267 @@
+{
+ "summary": "Panel adversarial: intentar VOLTEAR el resultado \"no hay lengua de Arnold, las bandas predicen\" antes de sellarlo",
+ "agentCount": 4,
+ "logs": [],
+ "result": {
+  "veredicto": "Both repos are clean and everything re-executed. Final verdict:\n\n# PANEL ESCÉPTICO ARNOLD-C1 — VEREDICTO\n**Juez [M1-análisis], 2026-07-31.** Regla aplicada: descreer, medir solo el número. Todo hallazgo VOLTEA/DEBILITA fue **re-ejecutado en sandbox propio** (código nuevo, no heredado): `j1_tabla.py` (tabla+clusters), `j2_sintetico.py` (patologías de estimador), `j3_films.py` (repaso de los 144 films, read-only, con sanidad bit-exacta: max|rw_pipe recalc − tabla| = 0.00e+00), `j3b_stats.py` + `j4_adjudica.py` (adjudicación), en `/private/tmp/claude-501/-Users-cagostino-code-doft-study06-fundamental-lock-dynamics/a013d8a0-cafd-49d8-9f07-ba0ef540402e/scratchpad/juez_arnold/`.\n\n**Hecho estructural que gobierna TODA la inferencia de C1 (confirmado):** las 288 aristas son exactamente **72 pares-de-bloques únicos × 4 celdas κ×τ**, con compat y Δω idénticos en las 4 réplicas (multiplicidad `{4:72}`, 0 pares con compat no-constante). El n efectivo para cualquier predictor de par es 72. Toda p citada abajo es de permutación por cluster de par (10k), salvo indicación.\n\n## Estado de cada claim tras el ataque\n\n### (a) \"NO hay lengua de Arnold\" — **VOLTEADO**\nEl claim muere por doble artefacto de estimador, ambos reproducidos por mí desde cero:\n1. **ω_llegada es un punto fijo del estimador, no física.** La mediana del gradiente de `atan2(v,x)` sin normalizar satura en −2ω²/(1+ω²)≈−2 para cualquier portadora (derivación analítica + numérica: ω=6.168 → medido −1.944, predicho −1.949; la MEDIA sí da −ω exacto). El eje \"de llegada\" del pipeline (mediana −1.95) medía la constante del artefacto. Carriers reales (FFT hann+zeropad del ring de cápsula, validado contra Hilbert, ρ=+0.959): Δω_llegada real mediana **2.16 rad/u.t.**, solo 19.4% ≤0.4.\n2. **rw_final sin normalizar castiga el desfase del lock:** par perfectamente trabado con δ=π/2 mide rw=0.431 (sintético propio).\n\nCon fase normalizada + eje de llegada real: **rw_corr~Δω_fft ρ=−0.637, p_cluster=0.0001** (sobrevive el clustering n=72 que mata a las bandas), monotónica: lock final ≥0.95 por cuartil **88.9% → 58.3% → 33.3% → 8.3%**; robusta a la cola (Δω≤10: −0.653; ≤5: −0.473; ≤1: −0.359) y con el outcome viejo también (−0.459, p_cluster=0.0001).\n\n**Disciplina sobre la lectura positiva (mi aporte de juez):** parte de esa pendiente es mecánica de ventana, no interacción — un par NO interactuante da rw = |sinc(Δω·W/2)| exacto (verificado), rw_corr~sinc(Δω_late)=+0.90, y el **fresh muestra casi la misma pendiente (−0.525, p_cluster=0.0001)**. La evidencia de interacción genuina es diferencial: **transported traba MÁS que fresh apareado por film en Q1–Q3 (Δlock +0.22/+0.38/+0.23, Wilcoxon global p<1e-4, Q1 p=0.0035) y la ventaja desaparece en Q4 (−0.07 n.s.)** — la biografía ayuda a trabar solo a detuning chico/medio, forma de lengua. Sub-claim que SÍ sobrevive: el eje **constitucional** es genuinamente ciego (rw_corr~Δω_const: +0.040, p=0.50). Y el adorno \"el bin mayor traba MÁS / signo contrario\": no reproducible — con terciles del eje viejo da 15.6/15.6/15.6 (plano), p_cluster=0.35.\n\n### (b) \"la compatibilidad de bandas SÍ predice\" — **DEBILITADO (fuerte)**\n- El −0.206 (p=4.3e-04) reproduce exacto, pero es **p_cluster=0.048** / colapso n=72: ρ=−0.244, p=0.039 — borderline, no sobrevive Holm con m≥2 sobre la familia de §13.\n- **No predice ningún indicador de lock:** frac95 +0.002 (p_cluster=0.98); episodio≥1 +0.104 signo contrario (p_cluster=0.32); en aristas CON episodio: −0.04 n.s. Todo el efecto vive en las **209 aristas drift-only (−0.403, p_cluster=0.0009)** — predice coherencia de deriva, no trabarse.\n- **En conjunto con el detuning de llegada real muere:** outcome corregido β_compat=−0.038, IC95_cluster [−0.22,+0.16]; outcome viejo β=−0.130, IC [−0.29,+0.03] — el predictor principal es Δω_fft (β=−0.63 / −0.44).\n- Métrica mal descrita: \"17 bandas\" es falso (conteos 11–30, solo 3/150 tienen 17) y compat~Σn_bandas = +0.703; parcial en drift-only cae a −0.200.\n- Fresh nulo global (−0.020, p=0.73). Hilo rescatable, no citable aún: t_lock95~compat = −0.418 (compatible⇒traba antes, ¡signo pro-bandas!) pero n=13 pares, p_cluster=0.075; y en drift-only conjunto queda β_compat=−0.260 junto a Δω_fft. Estructura fina residual PENDIENTE de census, no titular.\n\n### (c) \"τ=0.2 traba más en todos los estratos\" — **DEBILITADO**\nCon el estimador del pipeline: real pero débil — Δfrac95 pareado por par Wilcoxon **p=0.0047** (28+/14−), Δrw pareado p=0.079, MW global p=0.253. Con el estimador corregido: **muere en rw_corr (pareado p=0.915, mediana Δ=0.0000; MW global con dirección invertida p=0.918)** y queda marginal en frac95_corr (p=0.084). Es un efecto sobre el estadístico sesgado de lock sostenido, no robusto a la corrección de fase. Citable solo como tendencia condicionada al estimador.\n\n### (d) \"todos llegan a ~2 ⇒ todos DENTRO de la lengua\" — **VOLTEADO**\nLa premisa es el artefacto de (a): \"~2 rad/u.t.\" es −2ω²/(1+ω²). Con carriers reales: los onions emiten a 1× su ω_ref (mediana del cociente en-film 1.006) pero con armónicos poblados (14 bloques a 2×, 5 a 3–4×, max 4.4×); Δω_llegada real llega a >10 rad/u.t. en 13.9% de aristas. La población NO está comprimida dentro de ninguna lengua — cubre ambos lados y por eso la estructura de (a) es medible. (La \"biblioteca angosta p95=0.43\" de la lente e3 usaba el mismo eje saturado.) Queda un punto ciego honesto heredado de la ventana: con W=1 u.t., lock y deriva son indistinguibles por debajo de Δω≈1.1 rad/u.t. — \"adentro\" de esa franja el instrumento no discrimina.\n\n## Qué medición NUEVA decidiría lo que queda abierto\n1. **Census Arnold pre-registrado, estratificado por Δω_fft** (el estimador de cápsula es barato: 150 carriers en 8 s): ≥150 **composiciones únicas nuevas** (sin réplicas ×4; las 4 celdas κ×τ solo para el subconjunto τ/κ), cubriendo décadas Δω∈[0.05, 20] con ~30 pares por década. Outcomes primarios pre-registrados: (i) **curva de pulling** Δω_late/Δω_llegada (convergencia de portadoras — inmune a la ventana), (ii) evento de lock con fase normalizada y **ventana W=4–8 u.t.** (baja el punto ciego de ~1.1 a ~0.15–0.3 rad/u.t.), (iii) contraste transported−fresh apareado por film como test de biografía. Costo: ~150 films de 60 u.t. = una corrida C1 (horas de cómputo, un nohup).\n2. **Bandas sin confundidos:** métrica de compat con conteo de bandas igualado (remuestreo a n común) y en unidades absolutas de ω, testeada como UNA hipótesis en conjunto con Δω_fft sobre las composiciones nuevas; el hilo t_lock~compat (−0.418, 13 pares) se decide ahí con n_lock decente.\n3. **τ:** decidirlo dentro del mismo census con el estimador corregido declarado de antemano (pareado por composición); si solo aparece en el estadístico viejo, es del instrumento.\n\n## Integridad\n`git status` limpio en ambos repos (study06 en `39f8df6`, study07 en `f51e194`, sin cambios, sin commits); disco `/Volumes/ExternalDisk` solo leído (films `lock_band_*.npz` del sweep); cápsulas y `runs_full.jsonl` del oráculo solo leídos; ningún archivo `R_f` tocado. Todo lo escrito vive en `scratchpad/juez_arnold/` (scripts + `aristas_juez.json`).",
+  "revs": [
+   {
+    "hallazgos": [
+     {
+      "que": "El claim (b) 'la compatibilidad de bandas SÍ predice [el lock]' está volteado como afirmación sobre LOCK: compat_bandas no predice NINGÚN indicador de episodio/lock, y en los que sí miden lock el signo es CONTRARIO al predicho. Toda la correlación −0.206 vive en las 209 aristas que NUNCA trabaron: compat predice la coherencia de la deriva de fase de pares NO trabados, no el trabarse.",
+      "severidad": "VOLTEA",
+      "evidencia": "panel_e1_ataque2.py (cluster-perm por par-de-bloques, 4000 shuffles): compat~frac95 rho=+0.002 p=0.985; compat~t_lock95_sostenido rho=+0.164 (SIGNO CONTRARIO, p=0.107); compat~ep>=1 rho=+0.104 (contrario, p=0.318); entre las 79 aristas CON episodio, compat~frac95=+0.233 (contrario, p_cluster=0.099). En cambio en las 209 aristas drift-only (0 episodios, sin t_lock95): compat~rw rho=−0.403 p=1.5e-09, p_cluster=0.0005 — robusto. Control fresh limpio: compat~rw_fresh=−0.020 p=0.73 (no es confundido estructural del film).",
+      "parche": "Reescribir el claim: 'compat de bandas predice rw_final SOLO en pares sin episodios de lock (coherencia de deriva, rho=−0.403, p_cluster=5e-04, específico del transported)'. El número citable es ese, no el −0.206. La hipótesis 'bandas compatibles ⇒ lock' queda SIN soporte y con signo contrario n.s. en los indicadores de episodio."
+     },
+     {
+      "que": "Pseudo-replicación masiva: las 288 aristas son solo 72 pares-de-bloques únicos, cada uno repetido EXACTAMENTE 4 veces (una por celda κ×τ), con compat_bandas y Δω idénticos en las 4 réplicas. La p=4.3e-04 del titular está inflada ~100×; la p honesta es marginal y no sobrevive multiplicidad (§13 probó ≥8 hipótesis).",
+      "severidad": "DEBILITA",
+      "evidencia": "panel_e1_ataque.py: 'pares-de-bloques unicos=72, repeticiones Counter({4:72})'; perm NAIVE p=0.0010 vs perm CLUSTER por par p=0.0510 (2000 sh.) y 0.0420 (4000 sh., otra semilla); colapso a n=72 (mediana de 4 réplicas): rho=−0.244 p=0.039; bootstrap por par IC95 [−0.393, −0.007]. Con Holm/Bonferroni sobre la familia de §13 (Arnold×3, bandas, fricción, exclusividad, sin-ruptura, τ, topología): p_corr>0.10 con cualquier m≥2.",
+      "parche": "Toda inferencia con predictores de par (compat, Δω constitucional, Δω llegada) debe correr a n=72 (colapso) o con permutación por cluster de par. Registrar en la bitácora que el n efectivo de C1 es 72, no 288."
+     },
+     {
+      "que": "El claim (a) 'NO hay lengua de Arnold' es un nulo SIN PODER: rw_final con ventana W=1 u.t. no tiene rango dinámico contra el detuning en este rango de Δω — bajo deriva pura el rw esperado |sinc(Δω·W/2)| es ≥0.95 para el 97-100% de las aristas con las TRES definiciones de Δω. Y la evidencia 'anti-Arnold' positiva (signo contrario, bin mayor traba más) muere bajo clustering y es artefacto del binning.",
+      "severidad": "DEBILITA",
+      "evidencia": "panel_e1_ataque.py: sinc pred mediana 0.9992 (dw_llegada), 0.9997 (dw_tardío contemporáneo); pred>=0.95 en 98.6-100%. Lo MEDIDO: rw_final mediana ~0.53, residuo rw−sinc mediana −0.46 (|res|<0.10 solo en 8%) ⇒ rw_final mide difusión de fase, ni lock ni detuning. Anti-Arnold: dw_llegada~rw +0.099 p_cluster=0.346 (n.s.); el contraste de bins (repro: 20.8% vs 8.3% @rw≥0.8 cuartiles; el 21.9/5.6 exacto NO reproduce con las definiciones declaradas) da Fisher p=0.057 sin cluster, MWU pareado por par p=0.083, y con TERCILES desaparece por completo: 15.6% vs 15.6%.",
+      "parche": "Declarar Arnold INDECIDIBLE con este diseño. Para testearlo: estadístico de episodios (no rw_final), Δω exógeno (llegada), ventanas W≥2π/Δω_min o rango de Δω extendido, y n de pares reales, no réplicas."
+     },
+     {
+      "que": "La frase del claim (a) 'probado con TRES definiciones de Δω: NO decrece' es falsa con la propia tabla: usando indicadores de EPISODIO (lo que pedía la lente), el Δω constitucional da señal con SIGNO ARNOLD en los 4 indicadores, con la misma magnitud que el celebrado −0.206 de compat. Marginal tras clustering, pero el veredicto 'no-Arnold' depende del estadístico elegido.",
+      "severidad": "MATIZA",
+      "evidencia": "panel_e1_ataque.py/ataque2.py: dw_const~ep>=1 rho=−0.206 p_naive=4.3e-04, p_cluster=0.043; dw_const~frac95 −0.176 p_cluster=0.096; dw_const~t_lock95_sost −0.180 p_cluster=0.074; dw_const~coqueteo_frac −0.124 p=0.035. Nótese la simetría: el mismo rho=−0.206 que sostiene el claim de bandas sostiene aquí un Arnold constitucional — con la misma (in)significancia honesta.",
+      "parche": "Retirar 'probado con tres definiciones'. Redactar: 'con rw_final ninguna definición muestra Arnold (test sin poder); con indicadores de episodio, el Δω constitucional muestra signo Arnold marginal (p_cluster 0.04-0.10) — indecidido'."
+     },
+     {
+      "que": "La métrica compat_bandas está mal descrita y cargada en un confundido trivial por-nodo: la descripción dice '17 bandas de cada onion' pero los conteos reales van de 11 a 30 (solo 3/150 onions tienen 17), y compat correlaciona rho=+0.703 con la SUMA de conteos de bandas. En el subsample drift-only donde vive el efecto, controlar n_bandas reduce el rho a la mitad: la mitad de la 'compatibilidad' es 'menos bandas ⇒ más coherencia' (complejidad por nodo, no compatibilidad de a pares).",
+      "severidad": "MATIZA",
+      "evidencia": "runs_full.jsonl: Counter de n bandas {12:44, 11:40, 30:13, 22:11, ... 17:3}. compat~nb_sum rho=+0.703 p=3e-44; compat~spacing_medio +0.682. Drift-only: rw~nb_sum=−0.371 vs rw~compat=−0.403; parcial rw~compat|nb_sum = −0.200 (cae de −0.403). Compat no es reducible del todo (en muestra completa parcial rw~nb_sum|compat=+0.002, o sea compat domina a nb), y confundidos de energía no la matan (parciales −0.19..−0.21 dado dlogE0/dlogEint/dw_llegada, con dlogE0~dlogEint rho=+0.83).",
+      "parche": "Corregir '17 bandas' en bitácora §12-§13 y RESULTADO. Reportar la partición: ~mitad conteo-de-bandas (por nodo), ~mitad estructura fina (parcial −0.20). Probar una métrica de compat que no dependa del conteo (p.ej. spacing-normalizada por par con n igualado por remuestreo de bandas)."
+     },
+     {
+      "que": "Autocorrección del panel: la aparente señal Arnold del Δω EFECTIVO en-film (rho −0.196..−0.240, p_film 5e-04 — que a primera vista VOLTEABA el claim) es una mezcla de dos artefactos: la cola sinc (28 aristas con dwe>0.5 donde la ventana sí pierde rango) y endogeneidad (el lock arrastra las frecuencias: dwe medido en [0.5,5.5] u.t. pero el pulling opera también sin lock firme). Filtrando ambos canales la señal desaparece.",
+      "severidad": "NOTA",
+      "evidencia": "Ola 5 inline: rw~dwe TODAS rho=−0.196 p=8.4e-04; SOLO dwe<0.5 (sinc plano): −0.141 p=0.023; drift-only (sin lock que arrastre): −0.187 p=0.007; drift-only ∧ dwe<0.5: rho=−0.068 p=0.357 n=186 — MUERTA. dwe percentiles [p50=0.073, p95=0.706, max=16.6]: la cola manda el rank.",
+      "parche": "No citar dw_efectivo como evidencia Arnold ni anti-Arnold: es endógeno y su cola es artefacto de ventana."
+     },
+     {
+      "que": "El claim (c) 'τ=0.2 traba más que τ=0.05' SOBREVIVE el test honesto — es el único de los tres que se refuerza bajo ataque: pareando por par-de-bloques (mismo par, distinto τ), la diferencia en frac95 es significativa y en la dirección declarada.",
+      "severidad": "SOSTIENE",
+      "evidencia": "panel_e1_ataque2.py + ola 3: Δfrac95 (τ0.2−τ0.05) pareado por los 72 pares: 28 positivos vs 14 negativos (42 no-cero), Wilcoxon p=0.0047; Δrw mediana +0.009, 43/72 positivos, p=0.079; Δtlock p=0.098. Direccionalmente consistente en los tres indicadores, significativo en frac95.",
+      "parche": "Citable tal cual, con el test pareado por par como respaldo (frac95 Wilcoxon p=0.0047)."
+     },
+     {
+      "que": "El punto (d) ('quizá todos DENTRO de la lengua y adentro discrimina la estructura fina') es observacionalmente indistinguible de 'la lengua es invisible para rw_final': ambas hipótesis predicen exactamente lo mismo en estos datos (sinc≥0.95 en todo el rango). No es citable como lectura positiva; es la descripción del punto ciego del instrumento.",
+      "severidad": "NOTA",
+      "evidencia": "Del cálculo sinc de panel_e1_ataque.py: el rango completo de Δω_llegada [0, 1.01] produce supresión por detuning ≤5% en ventana de 1 u.t., mientras el rw medido varía 0.1-1.0 por difusión de fase. Cualquier estructura 'adentro de la lengua' y cualquier ausencia de lengua son idénticas bajo este estadístico.",
+      "parche": "Si se quiere testear 'adentro discrimina estructura fina': fijar el estadístico de episodios como primario, pre-registrar UNA hipótesis, y correr con pares nuevos (no las 4 réplicas de los mismos 72)."
+     }
+    ],
+    "resumen": "Los tres numeros reportados reproducen exactamente (+0.092, +0.099, -0.206), pero la inferencia no aguanta. (1) El dataset tiene n efectivo 72, no 288: cada par-de-bloques aparece 4 veces con compat/dw identicos; la p=4.3e-04 de compat es p_cluster=0.042-0.051 y muere bajo cualquier correccion por las >=8 hipotesis de la familia. (2) Peor: compat NO predice ningun indicador de lock (frac95 +0.002; t_lock y episodios con SIGNO CONTRARIO); su correlacion entera vive en las 209 aristas que nunca trabaron (rho=-0.403, p_cluster=0.0005) — predice coherencia de deriva de pares NO trabados, no lock; ademas esta cargada +0.70 en el conteo de bandas (que no es 17 fijo: va de 11 a 30) y controlarlo la reduce a la mitad. (3) El 'NO hay Arnold' es un nulo sin poder: bajo deriva pura sinc(dw*W/2)>=0.95 para 97-100% de aristas con las tres definiciones — rw_final (mediana 0.53, residuo -0.46) mide difusion de fase, ciego al detuning en este rango; el anti-Arnold positivo muere con clustering (p=0.35) y el contraste de bins desaparece con terciles (15.6% vs 15.6%); con indicadores de episodio el dw constitucional da signo ARNOLD marginal (p_cluster 0.04-0.10) — indecidido, no falsado. La senal Arnold del dw_efectivo que parecia voltear todo es artefacto (cola sinc + endogeneidad; drift-only y dwe<0.5: -0.068 n.s.). Lo unico que se REFUERZA: tau=0.2 traba mas (pareado por par, frac95 Wilcoxon p=0.0047). Y el hallazgo rescatable y robusto: compat~rw en drift-only, -0.403, p_cluster=5e-04, especifico del transported (fresh: -0.02 n.s.). Scripts: /private/tmp/claude-501/-Users-cagostino-code-doft-study06-fundamental-lock-dynamics/a013d8a0-cafd-49d8-9f07-ba0ef540402e/scratchpad/panel_e1_ataque.py y panel_e1_ataque2.py."
+   },
+   {
+    "resumen": "LENTE e2 (física del estimador) EJECUTADA sobre capsulas reales, runs_full y los 144 films del disco (read-only; scripts en /private/tmp/claude-501/-Users-cagostino-code-doft-study06-fundamental-lock-dynamics/a013d8a0-cafd-49d8-9f07-ba0ef540402e/scratchpad/ataque{1..6}*.py). VEREDICTO: el resultado se VOLTEA en sus dos patas principales. (1) ω_llegada es un ARTEFACTO puro del estimador: la mediana del gradiente de atan2(v,x) SIN normalizar satura en −2ω²/(1+ω²)≈−2 para cualquier portadora ω∈[6,12] — reproduje los valores del pipeline dígito a dígito y una sinusoide pura ω=6.17 da −1.898 (pipeline capsula ω_ref=6.17: −1.894, IQR 4.25 vs 4.28 sintético); la FFT de la emisión real pica en 5.9–21.2 rad/u.t., nunca en ~2. \"Todos llegan a ~2 / misma banda\" (claim d) es el punto fijo del estimador. (2) rw sobre theta sin normalizar castiga el DESFASE del lock: un par PERFECTAMENTE trabado en cuadratura mide rw=0.487; en films reales el triángulo f3804cf tiene sus 3 aristas con fase analítica 0.998–1.000 donde el pipeline reporta 0.531/0.555/0.992. (3) Con AMBOS corregidos (fase normalizada validada contra Hilbert + Δω_llegada = pico FFT de la capsula), LA LENGUA DE ARNOLD APARECE: Spearman rw_corr~Δω_fft = −0.627 (p=7e-33), monotónica 88.9%→58.3%→27.8%→8.3% de lock por cuartil; incluso con el outcome VIEJO da −0.438 (p=6e-15). No es \"nodo muerto\" (β estable controlando amplitud; en la mitad de amp alta sube a −0.754). (4) Las BANDAS quedan reducidas a proxy débil del detuning de llegada: en regresión conjunta con Δω_fft, compat muere con outcome corregido (t=−0.7) y queda marginal con el viejo (t=−2.5 vs t=−7.7 del detuning); además band_energies_GEV son ω_peaks con ESCALA POR-RUN (rango ×27.9) — la métrica compara formas relativas, no frecuencias absolutas (en absolutas predice más fuerte: −0.335 vs −0.149, pero igual muere contra Δω_fft). (5) τ=0.2>τ=0.05 no tiene soporte: MW global p=0.918 corregido (dirección invertida), p=0.253 incluso con el estimador original. Lo único que SOSTIENE: el Δω constitucional (omega_ref) genuinamente no predice (+0.04, p=0.50) — la biografía sí desafina la portadora (hay capsulas emitiendo a ~2× su ω_ref), pero la consecuencia es la contraria a la publicada: con el eje correcto la lengua clásica está ahí y la \"estructura fina de bandas\" es mayormente su sombra.",
+    "hallazgos": [
+     {
+      "que": "ω_llegada (mediana del gradiente de atan2(Σv,Σx) sin normalizar) es un artefacto que satura en −2ω²/(1+ω²)≈−2 para cualquier portadora ω≫1. El claim (d) 'todos llegan a ~2 rad/u.t., misma banda' y la lectura 'todos dentro de la lengua' son el punto fijo del estimador, no física. La portadora real de llegada (FFT de la emisión de la capsula) es 5.9–21.2 rad/u.t. y varía entre onions (mediana 8.25, rango [0.39,59.7]); el detuning real tiene mediana 2.16 rad/u.t. y solo 19.4% de aristas ≤0.4 (no 'Δω≤0.4 mayormente').",
+      "severidad": "VOLTEA",
+      "evidencia": "python3 ataque1_capsulas.py (scratchpad): sintético ω=6.17 puro → mediana grad=−1.898, IQR 4.28 (predicción −2ω²/(1+ω²)=−1.949); capsula ea49ca8 (ω_ref=6.168): pipeline w_lleg=−1.894 IQR 4.25, reproducido EXACTO −1.894/4.25, FFT emisión pica en 5.89 (no en 2), estimador normalizado −6.13; 108114 (ω_ref=10.25): pipeline −1.973, FFT 21.2; a9b6958 (ω_ref=6.12): FFT 13.35. Los 6/6 casos reproducen el valor del pipeline y contradicen su lectura. omega_llegada.json completo: mediana −1.95 = saturación exacta del artefacto para ω_ref mediana 7.11 (−2·7.11²/(1+7.11²)=−1.961).",
+      "parche": "Medir portadora de llegada con FFT (hann, zero-pad) del ring full-rate, o con fase normalizada atan2(v/ω,x) / mediana tras normalizar; jamás mediana-del-gradiente de atan2(v,x) crudo. El eje 'Δω efectivo en-film' (v2/v3, mediana 1.98≈2) tiene el mismo artefacto y debe recalcularse."
+     },
+     {
+      "que": "Con estimadores corregidos LA LENGUA DE ARNOLD SÍ EXISTE en las 288 aristas: rw_corr~Δω_llegada(FFT) Spearman −0.627 (p=7.0e-33), monotónica por cuartiles (lock@0.95: 88.9%→58.3%→27.8%→8.3%); con el eje w_mean corregido −0.496 (p=2.8e-19); e incluso manteniendo el outcome ORIGINAL rw_pipe: −0.438 (p=6.4e-15). El claim (a) 'NO hay lengua, el bin de mayor Δω traba MÁS' queda invertido: era doble artefacto (eje de llegada saturado + rw sesgado por desfase). Controles: no es amplitud/nodo muerto (rw_corr~log(amp_min)=+0.042; β_dwfft estable −0.613 a −0.638 con controles; en la mitad de amp alta sube a −0.754).",
+      "severidad": "VOLTEA",
+      "evidencia": "python3 ataque4_fullpass.py (144 films, theta+fresh, 55s) + ataque5_veredicto.py + ataque6_controles.py (scratchpad): 'dw llegada FFT: −0.627 (p=7.01e-33, n=288)'; bins dw_fft [0,0.79]/[0.79,2.16]/[2.16,5.10]/[5.10,20]: lock95 88.9/58.3/27.8/8.3%; 'VIEJO outcome: rw_pipe~dw_fft: −0.438 (p=6.4e-15)'; regresión de rangos: dw_fft=−0.631(t=−13.7) con log_amp=+0.073(t=1.6); amp alta: −0.754 (p=5.8e-27, n=140). Sanidad: rw_pipe reproducido contra tabla_aristas.csv con max|dif|=0.00e+00.",
+      "parche": "Re-hacer el barrido Arnold con Δω = |pico FFT_i − pico FFT_j| de los rings de capsula y outcome de fase normalizada; citar la lengua con esa tabla de cuartiles."
+     },
+     {
+      "que": "El estimador de lock rw sobre theta_nodes (fase Q, atan2 sin normalizar) castiga el DESFASE de equilibrio del lock, no su ausencia: dos sinusoides PERFECTAMENTE trabadas al mismo ω con offset δ=π/2 miden rw_final=0.487 (δ=π/4: 0.688). En films reales: triángulo f3804cf tiene las 3 aristas trabadas (Hilbert 0.998/0.998/1.000; corrección barata 1.000×3) donde el pipeline reporta 0.531/0.555/0.992 — el censo publicado (7 links firmes, t_lock 11–36, triángulo>par>cadena, coqueteo) está construido sobre esta escala sesgada; con fase corregida el 46.2% de aristas termina ≥0.95 (vs 2.4% del pipeline), fresh 28.5%, nulos sin arista 22.9%.",
+      "severidad": "DEBILITA",
+      "evidencia": "python3 ataque3b_mecanismo.py (scratchpad): tabla δ→rw {0:1.000, π/8:0.871, π/4:0.688, π/2:0.487, π:1.000} con lock real=1.000; f3804cf: w por nodo 8.535/8.551/8.546 (¡portadoras convergidas!), rw_pipe 0.531/0.555/0.992 vs rw_CORR 1.000/1.000/1.000 vs rw_HIL 0.998/0.998/1.000; 875539c: la corrección discrimina (0.980/0.185/0.070) — no satura todo a 1. ataque5: rw_corr mediana 0.904 vs rw_pipe 0.533; spearman(rw_pipe,rw_corr)=+0.668.",
+      "parche": "Lock por par con fase normalizada φ=atan2(−sin θ/ω, cos θ) (ω=−media del gradiente de unwrap(θ) por nodo; validada contra Hilbert) o fase analítica de Σx. Declarar el límite de ventana: con W=1 u.t. un beat |Δω|≲0.5 rad/u.t. es indistinguible de lock (nulos 22.9% ≥0.95) — usar nulos/fresh como piso y sostener el lock en ventanas más largas."
+     },
+     {
+      "que": "El claim (b) 'la compatibilidad de bandas predice INDEPENDIENTE de Δω' pierde su cláusula de independencia: la compat era proxy débil del detuning de llegada bien medido. En regresión de rangos conjunta con Δω_fft: outcome corregido → compat_abs t=−0.3, compat_gev t=−0.7 (muertas) con dw_fft t=−9.3; outcome ORIGINAL → β_cgev=−0.131 (t=−2.5) vs β_dwfft=−0.414 (t=−7.7): queda a lo sumo un aporte marginal, no el predictor principal. El Spearman crudo −0.206 se reproduce exacto, pero su lectura causal ('la banda importa; su portadora no') se invierte.",
+      "severidad": "DEBILITA",
+      "evidencia": "python3 ataque2_bandas.py: 'reproduccion de la metrica publicada: max|c_gev − compat_tabla| = 0.00e+00'; Spearman rw~compat_GEV −0.206 (p=4.3e-04) replicado. ataque6_controles.py: 'dw_fft=−0.613(t=−9.2) · c_abs=−0.012(t=−0.2) · c_gev=−0.043(t=−0.7)'; bloque final: 'VIEJO outcome conjunto: beta_dwfft=−0.414(t=−7.7) beta_cgev=−0.131(t=−2.5)'. La 'independencia' publicada se probó solo contra el Δω constitucional, que es el único eje genuinamente ciego.",
+      "parche": "Toda afirmación de bandas debe testearse en conjunto con Δω_fft de llegada; si sobrevive un residuo (t~−2.5 con el outcome viejo), reportarlo como estructura fina RESIDUAL, no como predictor principal."
+     },
+     {
+      "que": "band_energies_GEV SÍ son frecuencias mapeadas (E_k = s·ω_k, lineal exacto, CV intra-run 4.9e-16) PERO la escala s es POR-RUN (rango ×27.9 entre onions; anclada ≈2 GeV al pico propio: mediana s·ω_ref=1.997, rango [0.095,3.507]): la métrica publicada compara FORMAS relativas per-onion, no alineación absoluta de frecuencias — no es del todo 'peras con peras'. En unidades absolutas (rad/u.t.) la misma métrica predice MÁS fuerte (−0.335 vs −0.149 con outcome corregido; −0.171 vs −0.206 con el viejo) y ambas versiones están anti-correlacionadas entre sí (−0.415).",
+      "severidad": "MATIZA",
+      "evidencia": "python3 ataque2_bandas.py: 'escala s intra-run CV max 4.87e-16; entre runs min 0.0119 max 0.3319 ratio 27.854; s*omega_ref mediana 1.9972 rango [0.095, 3.507]'; 'Spearman rw~compat_ABSOLUTA: −0.171 (p=3.7e-03)'; 'compat_GEV~compat_ABS: −0.415'. ataque5: con rw_corr, c_abs −0.335 (p=5.5e-09) vs c_gev −0.149 (p=1.2e-02).",
+      "parche": "Calcular compat sobre omega_peaks absolutos (no GeV per-run); si se quiere forma relativa, declararlo como métrica de FORMA."
+     },
+     {
+      "que": "El claim (c) 'τ=0.2 traba más que τ=0.05 en todos los estratos' no tiene soporte estadístico y su dirección se invierte con la fase corregida: global MW p=0.918 (medianas 0.922 τ=.05 vs 0.897 τ=.2; lock95 47.9% vs 44.4%), los 6 estratos κ×topo dan p≥0.67; incluso con el estimador ORIGINAL la diferencia global no es significativa (0.528 vs 0.549, MW p=0.253).",
+      "severidad": "DEBILITA",
+      "evidencia": "python3 ataque6_controles.py, bloque TAU: 6 estratos con MW p∈[0.67,0.98]; 'GLOBAL: tau.05=0.922 vs tau.2=0.897 (MW p=0.918)'; 'VIEJO: tau.05=0.528 vs tau.2=0.549 (MW p=0.253)'.",
+      "parche": "Retirar (c) o re-testearlo con el estimador corregido y un test declarado por estrato."
+     },
+     {
+      "que": "La parte del claim (a) sobre el eje CONSTITUCIONAL sí se sostiene: omega_ref no predice ni siquiera con el outcome corregido (Spearman +0.040, p=0.50). La hipótesis de §13 'la biografía desafina' se confirma y con mecanismo visible: hay capsulas cuya emisión dominante está en ~2× su ω_ref (108114: 10.25→21.2; a9b6958: 6.12→13.35) — la portadora de llegada es otra variable que la constitución no fija.",
+      "severidad": "SOSTIENE",
+      "evidencia": "ataque5_veredicto.py: 'dw constitucional: +0.040 (p=5.01e-01, n=288)' contra rw_corr; ataque1_capsulas.py: picos FFT vs ω_ref por capsula (5.89 vs 6.17; 9.82 vs 9.61; 21.2 vs 10.25; 13.35 vs 6.12; 7.07 vs 6.91; 8.25 vs 8.03).",
+      "parche": "Citar (a) solo como 'el eje constitucional es ciego'; el no-Arnold general se retira."
+     },
+     {
+      "que": "Lock de fase Q vs lock de EMISIÓN (Σ todos los modos): en 11/12 nodos inspeccionados la emisión está dominada por Q (var S1S2/var Q entre 4.5e-4 y 1.4e-2) y el rw de emisión ≈ rw de Q (dif ≤0.07); la excepción es real y grave cuando ocurre: film 0033823c nodo 0 tiene la emisión dominada por S1/S2 (ratio 3.3e4) y ahí el lock de emisión analítica es 0.025 donde la fase Q analítica dice 0.985 — para llegadas S-dominadas el theta_nodes no mide lo que el medio ve.",
+      "severidad": "NOTA",
+      "evidencia": "python3 ataque3_films.py (4 films, aristas con 4 variantes de fase): f3804cf/0162348d/875539c: ALL_un≈Q_un y ALL_hil≈Q_hil en todas las aristas; 0033823c arista(0,2): Q_hil=0.985 vs ALL_hil=0.025, con 'nodo 0: var(Σx_Q)=8.1e-07 var(Σx_S1S2)=2.7e-02 ratio 3.3e+04'. Verificación de identidad: max|atan2(Σv_Q,Σx_Q) − theta_nodes| ≤ 4.1e-05 rad en los 4 films.",
+      "parche": "Flag por nodo: fracción de varianza de emisión fuera de Q; si domina S, medir el lock también sobre la fase analítica de la emisión total."
+     }
+    ]
+   },
+   {
+    "resumen": "NO VOLTEADO, pero recalibrado fuerte. (a) \"no hay lengua\" SOBREVIVE al ataque de censura en su pata de LLEGADA: la selección del explorer NO recortó Δω_llegada (sobre-muestrea la cola: frac>0.4 = 11.1% vs 6.4% de los 11175 pares posibles, KS D=0.095) — pero la BIBLIOTECA entera es angosta (p95=0.43, max=1.14 rad/u.t.), lo que refuerza la lectura (d): la lengua no es testeable con esta población. La pata CONSTITUCIONAL de (a) sí está contaminada por diseño (el sight del explorer ES un proxy de omega_ref, ρ=−0.49 p=7e-19 con Δω_const, y la muestra está corrida a Δω_const bajos, KS p=3.2e-05), y el adorno \"el bin de MAYOR Δω traba MÁS / signo contrario\" muere a nivel cluster (medianas planas con IC solapados; 21.9%/5.6% no reproducible de la tabla committeada; 3 pares únicos cargan el bin alto). (b) las bandas SOBREVIVEN en signo y robustez (más fuerte sin los locks: −0.296 quitando rw≥0.8; compat no censurada, KS p=0.37) pero su evidencia real es p≈0.04–0.05, no 4.3e-04: las 288 aristas son exactamente 72 pares únicos ×4 combos (permutación por cluster p=0.052). El fresh NO muestra la correlación (−0.02 p=0.73, nulo con poder) ⇒ la biografía carga la predicción — aunque el contraste formal transported−fresh roza cero con cluster ([−0.39,+0.02]). (c) τ=0.2 es descriptivamente cierto pero pareado por par da p=0.079 (4 vs 1 pares lock-only-τ0.2). Todo ejecutado desde tabla_aristas.csv + omega_llegada.json + runs_full.jsonl + evaluations.jsonl (read-only); scripts en scratchpad/panel_e3/.",
+    "hallazgos": [
+     {
+      "que": "PSEUDOREPLICACIÓN ×4 en el claim de bandas (b): las 288 aristas son EXACTAMENTE 72 pares de bloques únicos, cada uno repetido en los 4 combos κ×τ (multiplicidad {4:72} verificada). Agregando por par: Spearman rw~compat = −0.236 (p=0.046, media) / −0.244 (p=0.039, mediana), n=72; permutación por cluster (10k, permutando compat entre pares): p_two=0.052. El p=4.3e-04 del veredicto sobreestima la evidencia ~10× en p; el número honesto es borderline 0.04–0.05. La consistencia entre los 4 estratos (−0.18..−0.23) NO son 4 réplicas: comparten los mismos 72 pares.",
+      "severidad": "DEBILITA",
+      "evidencia": "ataque_e3.py A2: '288 aristas -> pares únicos: 72 · multiplicidad {4:72} · [agg=mean] n=72 rw~compat -0.236 p=0.0461 · [agg=median] -0.244 p=0.0391 · permutación por-cluster (10k): obs=-0.2063 p_two=0.0522'. Reproducción A0 previa confirma el −0.2063 p=4.26e-04 de la tabla.",
+      "parche": "Citar el claim (b) siempre con n_eff=72 y p≈0.04–0.05 (permutación por cluster), nunca el p=4.3e-04 crudo. El census debe decidirlo con composiciones NO repetidas o con modelo mixto por par."
+     },
+     {
+      "que": "La pata CONSTITUCIONAL del anti-Arnold está contaminada por el diseño: el explorer que eligió las composiciones MIRA omega_ref (explorer_sight_input_semantics='omega_ref_surface_proxy'), su score correlaciona fuerte con el detuning constitucional (ρ(explorer_R_lock, Δω_const)=−0.491, p=6.9e-19) y hay umbral de inclusión explorer_R_lock_min=0.6 (23/36 entidades candidate). Resultado medible: la muestra está corrida a Δω_const bajos vs los 11175 pares posibles (mediana 0.934 vs 1.487, KS D=0.139 p=3.2e-05). El '+0.09 n.s. constitucional' se midió sobre un rango restringido POR una función de esa misma variable — esa definición no puede citarse como test limpio de Arnold.",
+      "severidad": "DEBILITA",
+      "evidencia": "B2/C3: 'compat~expl_rlock +0.221 p=1.56e-04; dω_const~expl_rlock: -0.491 p=6.85e-19'. A1: 'dω_CONSTITUCIONAL todos med=1.487 vs selec med=0.934, KS D=0.139 p=3.20e-05'. evaluations.jsonl: explorer_R_lock_min=0.6, explorer_candidate True en 92/144 evals (23/36 entidades), sight=omega_ref_surface_proxy.",
+      "parche": "Retirar la definición constitucional de la lista 'probado con TRES definiciones' o citarla con la advertencia de rango restringido por diseño. La de llegada queda como la definición limpia."
+     },
+     {
+      "que": "El adorno anti-Arnold 'el bin de MAYOR Δω traba MÁS (21.9% vs 5.6%)' y el 'SIGNO CONTRARIO' no sobreviven: (i) 21.9%/5.6% NO reproduce desde tabla_aristas.csv con las definiciones declaradas (con rw≥0.95 y cuartiles de Δω_llegada da 0.0/2.8/1.4/5.6%; con rw≥0.8 da 8.3/20.8/12.5/20.8% — no monotónico); (ii) los locks del bin alto los cargan 3 pares únicos de 18; (iii) a nivel cluster la mediana de rw por bin es PLANA con IC bootstrap solapados (0.531/0.549/0.547/0.568) y la permutación por cluster del Spearman de llegada da p=0.355. Lo defendible es 'sin gradiente en ninguna dirección', no 'traba más'.",
+      "severidad": "MATIZA",
+      "evidencia": "C1: fracs por cuartil (thr 0.95): 0.000 0.028 0.014 0.056; (thr 0.8): 0.083 0.208 0.125 0.208. B4: 'pares únicos trabados=3 (de 18) en bin alto'. D4: medianas por bin con IC95 cluster [0.383,0.618]/[0.361,0.664]/[0.451,0.653]/[0.511,0.694]. A2: 'permutación por-cluster dω_lleg: obs=+0.0985 p_two=0.3548'. grep de '21.9' en docs/ y tools/ del repo: sin match (el número no está en material committeado).",
+      "parche": "Reemplazar 'traba MÁS' por 'plano dentro del rango testeable'; documentar la definición exacta que produjo 21.9/5.6 o retirar la cifra."
+     },
+     {
+      "que": "FRESH (ataque 3, mandato explícito): la compatibilidad de bandas NO predice en el fresh apareado — rw_fresh~compat = −0.020 p=0.73 (n=288) y +0.014 p=0.91 agregado por par — con un nulo CON PODER (sd de rw_fresh 0.230 vs 0.243 transported; IC bootstrap del ρ fresh [−0.140,+0.101] excluye el −0.206 transported). LA BIOGRAFÍA CARGA LA PREDICCIÓN: las bandas (medidas en la vida ola1) predicen solo cuando el estado transportado está presente. CAVEAT honesto: el contraste formal Δρ(transported−fresh) roza cero bajo bootstrap por cluster ([−0.508,+0.012] por par; [−0.392,+0.019] por arista) — direccionalmente claro, no cerrado al 95%.",
+      "severidad": "MATIZA",
+      "evidencia": "A3: 'rw_FRESH~compat -0.0203 p=7.32e-01 · agregado n=72: +0.014 p=0.906'. B5: 'sd fresh=0.230 vs 0.243; IC95 boot fresh~compat [-0.140,+0.101] excluye -0.206: True'. Último script: 'Δrho par obs=-0.250 IC95=[-0.508,+0.012]; por arista cluster obs=-0.186 IC95=[-0.392,+0.019]'.",
+      "parche": "Enunciar (b) como efecto de BIOGRAFÍA (transported-only, fresh nulo con poder), con el caveat de que el contraste formal queda al borde; un census con más composiciones lo cierra."
+     },
+     {
+      "que": "compat predice el GRADIENTE de rw, no el EVENTO link: quitando las aristas rw≥0.95 el efecto se mantiene (−0.226 p=1.4e-04) y quitando rw≥0.8 se FORTALECE (−0.296 p=2.7e-06) — robusto, no lo cargan los locks — pero compat NO discrimina el lock binario @0.95 (ρ=+0.035 p=0.55, signo equivocado, n_lock=7 sin poder). El titular 'las bandas predicen el lock' debería ser 'las bandas predicen el alineamiento (rw) sub-lock; el evento LINK queda indeterminado'.",
+      "severidad": "MATIZA",
+      "evidencia": "C2: 'sin rw>=0.95: n=281 Spearman -0.226 p=0.000137 · sin rw>=0.8: n=243 -0.296 p=2.65e-06 · compat~[lock binario 0.95]: +0.035 p=0.551 (n_lock=7)'.",
+      "parche": "Redactar (b) sobre rw continuo; reservar 'predice el link' para cuando haya n_lock decente (census)."
+     },
+     {
+      "que": "Claim (c) 'τ=0.2 traba más en todos los estratos': descriptivamente cierto (frac rw≥0.8: 0.22/0.21 vs 0.097/0.097; rw≥0.95: 0.028-0.042 vs 0.014) pero a nivel cluster la evidencia es débil: Wilcoxon pareado por par (media sobre κ) p=0.079, mediana Δrw=+0.009, sube en 43/72; pares que lockean SOLO con τ0.2: 4, SOLO con τ0.05: 1. Bonus no pedido: κ0.3 vs κ0.2 pareado da p=0.044.",
+      "severidad": "MATIZA",
+      "evidencia": "D3: tabla frac por τ×κ + 'pares lock SOLO τ0.2: 4 · SOLO τ0.05: 1'. C4: 'n=72 mediana Δrw=+0.0092, 43/72, Wilcoxon p=7.90e-02; κ: +0.0020, 43/72, p=0.044'.",
+      "parche": "Citar (c) como tendencia (p≈0.08 pareado por composición), no como hecho por-estrato."
+     },
+     {
+      "que": "CENSURA DE Δω_LLEGADA (ataque 1, mandato explícito): NO EXISTE — la selección del explorer va en dirección ANTI-censura: las 288 aristas sobre-muestrean la cola de detuning vs los 11175 pares posibles (frac Δω>0.4: 11.1% vs 6.4%; KS D=0.095 p=0.012 con la selección más ANCHA). El 'no hay lengua' de llegada no es sesgo de selección. Lo que sí: la BIBLIOTECA entera de 150 bloques llega comprimida (mediana pairwise 0.125, p95=0.43, max=1.14 rad/u.t.) — la lengua clásica es intesteable con esta población por construcción, lo que REFUERZA la lectura (d) 'todos dentro de la lengua'. Además compat_bandas tampoco está censurada (KS D=0.054 p=0.37): el rango del predictor de (b) está intacto.",
+      "severidad": "SOSTIENE",
+      "evidencia": "A1: 'dω_LLEGADA todos n=11175 med=0.125 p95=0.430 max=1.139 vs selec med=0.135 p95=0.481 max=1.005; KS D=0.095 p=1.23e-02; frac>0.4: 0.064 vs 0.111'. 'COMPAT_BANDAS: KS D=0.054 p=3.72e-01'. B3 (Berkson): sin compensación de compat en los pares de alto Δω seleccionados (MW p=0.40/0.41).",
+      "parche": "Para testear la lengua de verdad hace falta población con Δω_llegada > 1 rad/u.t. — no existe en la biblioteca de 150; anotarlo como límite de diseño, no como resultado."
+     },
+     {
+      "que": "Heterogeneidad por diseño a vigilar (no concluyente): el efecto compat vive casi entero en las composiciones CANDIDATE del explorer (ρ=−0.295 p=1.5e-04, 40 pares únicos) y es nulo en las no-candidate (−0.020 p=0.82, 32 pares); pero los no-candidate tienen rango de compat 2.7× más chico (IQR 3.69 vs 9.96 — restricción de rango plausible) y la permutación por cluster de la interacción da p=0.17: no separable con estos n. También: C1 usa solo 73/150 bloques, compat difiere por topología (Kruskal p=0.0125; efecto dentro de par −0.297 p=0.04 y cadena −0.236 p=0.02, débil en triángulo −0.130 p=0.12), y explorer_R_lock NO predice el rw real de los films (−0.071 p=0.23) — la 'vista' del explorer no transfiere.",
+      "severidad": "NOTA",
+      "evidencia": "C3: 'cand=False: rw~compat -0.020 p=0.82 · cand=True: -0.295 p=0.00015'. D1: 'IQR compat 3.69 vs 9.96'. D2: 'Δspearman obs=-0.275 p_perm_cluster=0.1686'. A1: '73 bloques de 150'. C5: Kruskal p=0.0125 + correlaciones por topología. B2: 'rw~expl_rlock -0.071 p=2.27e-01; regresión de rangos b_compat=-0.194 b_rlock=-0.024'.",
+      "parche": "En el census: muestrear compat en rango completo INDEPENDIENTE del explorer (estratificar por compat, no por explorer_R_lock) y cubrir los 150 bloques."
+     }
+    ]
+   }
+  ]
+ },
+ "workflowProgress": [
+  {
+   "type": "workflow_phase",
+   "index": 1,
+   "title": "Ataque"
+  },
+  {
+   "type": "workflow_phase",
+   "index": 2,
+   "title": "Sello"
+  },
+  {
+   "type": "workflow_agent",
+   "index": 1,
+   "label": "e1:estadistica",
+   "phaseIndex": 1,
+   "phaseTitle": "Ataque",
+   "agentId": "afdfa732c24626a39",
+   "model": "claude-fable-5",
+   "state": "done",
+   "startedAt": 1785546506002,
+   "queuedAt": 1785546499712,
+   "attempt": 1,
+   "lastToolName": "StructuredOutput",
+   "lastToolSummary": "Los tres numeros reportados reproducen exactamente (+0.092,…",
+   "promptPreview": "PANEL ESCÉPTICO [M1-análisis] — regla de la casa: descreer, medir solo el número.\nREPO study07: /Users/cagostino/code/doft-study07-worldline (podés leer todo; NO commitees). Oráculo /Users/cagostino/code/doft-study06-fundamental-lock-dynamics y disco /Volumes/ExternalDisk/doft-study06-fundamental-lock-dynamics:\nREAD-ONLY ABSOLUTO. NUNCA leer archivos R_f. Trabajá en /private/tmp/claude-501/*/scrat…",
+   "lastProgressAt": 1785547290086,
+   "tokens": 117626,
+   "toolCalls": 24,
+   "durationMs": 784083,
+   "resultPreview": "{\"hallazgos\":[{\"que\":\"El claim (b) 'la compatibilidad de bandas SÍ predice [el lock]' está volteado como afirmación sobre LOCK: compat_bandas no predice NINGÚN indicador de episodio/lock, y en los que sí miden lock el signo es CONTRARIO al predicho. Toda la correlación −0.206 vive en las 209 aristas que NUNCA trabaron: compat predice la coherencia de la deriva de fase de pares NO trabados, no el t…"
+  },
+  {
+   "type": "workflow_agent",
+   "index": 2,
+   "label": "e2:estimador",
+   "phaseIndex": 1,
+   "phaseTitle": "Ataque",
+   "agentId": "a7f289b5a03c8266a",
+   "model": "claude-fable-5",
+   "state": "done",
+   "startedAt": 1785546507642,
+   "queuedAt": 1785546499712,
+   "attempt": 1,
+   "lastToolName": "StructuredOutput",
+   "lastToolSummary": "LENTE e2 (física del estimador) EJECUTADA sobre capsulas re…",
+   "promptPreview": "PANEL ESCÉPTICO [M1-análisis] — regla de la casa: descreer, medir solo el número.\nREPO study07: /Users/cagostino/code/doft-study07-worldline (podés leer todo; NO commitees). Oráculo /Users/cagostino/code/doft-study06-fundamental-lock-dynamics y disco /Volumes/ExternalDisk/doft-study06-fundamental-lock-dynamics:\nREAD-ONLY ABSOLUTO. NUNCA leer archivos R_f. Trabajá en /private/tmp/claude-501/*/scrat…",
+   "lastProgressAt": 1785547483041,
+   "tokens": 127790,
+   "toolCalls": 39,
+   "durationMs": 975399,
+   "resultPreview": "{\"resumen\":\"LENTE e2 (física del estimador) EJECUTADA sobre capsulas reales, runs_full y los 144 films del disco (read-only; scripts en /private/tmp/claude-501/-Users-cagostino-code-doft-study06-fundamental-lock-dynamics/a013d8a0-cafd-49d8-9f07-ba0ef540402e/scratchpad/ataque{1..6}*.py). VEREDICTO: el resultado se VOLTEA en sus dos patas principales. (1) ω_llegada es un ARTEFACTO puro del estimador…"
+  },
+  {
+   "type": "workflow_agent",
+   "index": 3,
+   "label": "e3:confundidos",
+   "phaseIndex": 1,
+   "phaseTitle": "Ataque",
+   "agentId": "aebb95f49c168263c",
+   "model": "claude-fable-5",
+   "state": "done",
+   "startedAt": 1785546506746,
+   "queuedAt": 1785546499712,
+   "attempt": 1,
+   "lastToolName": "StructuredOutput",
+   "lastToolSummary": "NO VOLTEADO, pero recalibrado fuerte. (a) \"no hay lengua\" S…",
+   "promptPreview": "PANEL ESCÉPTICO [M1-análisis] — regla de la casa: descreer, medir solo el número.\nREPO study07: /Users/cagostino/code/doft-study07-worldline (podés leer todo; NO commitees). Oráculo /Users/cagostino/code/doft-study06-fundamental-lock-dynamics y disco /Volumes/ExternalDisk/doft-study06-fundamental-lock-dynamics:\nREAD-ONLY ABSOLUTO. NUNCA leer archivos R_f. Trabajá en /private/tmp/claude-501/*/scrat…",
+   "lastProgressAt": 1785547170542,
+   "tokens": 86942,
+   "toolCalls": 22,
+   "durationMs": 663796,
+   "resultPreview": "{\"resumen\":\"NO VOLTEADO, pero recalibrado fuerte. (a) \\\"no hay lengua\\\" SOBREVIVE al ataque de censura en su pata de LLEGADA: la selección del explorer NO recortó Δω_llegada (sobre-muestrea la cola: frac>0.4 = 11.1% vs 6.4% de los 11175 pares posibles, KS D=0.095) — pero la BIBLIOTECA entera es angosta (p95=0.43, max=1.14 rad/u.t.), lo que refuerza la lectura (d): la lengua no es testeable con est…"
+  },
+  {
+   "type": "workflow_agent",
+   "index": 4,
+   "label": "juez:sello",
+   "phaseIndex": 2,
+   "phaseTitle": "Sello",
+   "agentId": "aa5ee769b4b672089",
+   "model": "claude-fable-5",
+   "state": "done",
+   "startedAt": 1785547489363,
+   "queuedAt": 1785547484836,
+   "attempt": 1,
+   "lastToolName": "Bash",
+   "lastToolSummary": "git status --porcelain | head; git rev-parse HEAD; cd /User…",
+   "promptPreview": "PANEL ESCÉPTICO [M1-análisis] — regla de la casa: descreer, medir solo el número.\nREPO study07: /Users/cagostino/code/doft-study07-worldline (podés leer todo; NO commitees). Oráculo /Users/cagostino/code/doft-study06-fundamental-lock-dynamics y disco /Volumes/ExternalDisk/doft-study06-fundamental-lock-dynamics:\nREAD-ONLY ABSOLUTO. NUNCA leer archivos R_f. Trabajá en /private/tmp/claude-501/*/scrat…",
+   "lastProgressAt": 1785548312433,
+   "tokens": 114575,
+   "toolCalls": 38,
+   "durationMs": 823070,
+   "resultPreview": "Both repos are clean and everything re-executed. Final verdict:\n\n# PANEL ESCÉPTICO ARNOLD-C1 — VEREDICTO\n**Juez [M1-análisis], 2026-07-31.** Regla aplicada: descreer, medir solo el número. Todo hallazgo VOLTEA/DEBILITA fue **re-ejecutado en sandbox propio** (código nuevo, no heredado): `j1_tabla.py` (tabla+clusters), `j2_sintetico.py` (patologías de estimador), `j3_films.py` (repaso de los 144 fil…"
+  }
+ ],
+ "totalTokens": 446933,
+ "totalToolCalls": 123
+}
