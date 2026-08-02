@@ -89,3 +89,11 @@ parejas aisladas no sostienen.
 Se inicia por #1. Es la combinación más barata y más destructiva de hipótesis: usa las
 fases ya archivadas para comparar cada remoto transported con su fresh idéntico en genoma,
 par y semilla, sin generar datos nuevos.
+
+## Estado de cosecha
+
+- Gate A / prioridad 1: completado.
+- Gate B / prioridades 2–3: primera pasada completada; `rho` temprano emerge como candidato
+  de orden, pero falta holdout transported con más outcomes y resolver horizonte largo.
+- Prioridad 4: siguiente frente barato — transferencia/notches para calcular cuánto de
+  `rho` es respuesta forzada esperable y cuánto queda como residuo.

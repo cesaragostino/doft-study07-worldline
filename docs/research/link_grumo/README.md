@@ -47,6 +47,7 @@ masivas al worktree.
 - `docs/research/link_grumo/ORDEN_COSTO_VALOR.md`: secuencia de gates por CPU e información.
 - `audit/LINK_GRUMO_BASELINE.md`: auditoría inicial que abre este frente.
 - `audit/LINK_GRUMO_GATE_A_CINEMATICA.md`: primer gate sobre remotos y fresh apareados.
+- `audit/LINK_GRUMO_GATE_B_COSECHA.md`: llegada, dominancia temprana y endpoints separados.
 - `tools/link_grumo/`: lectores reproducibles, sin escritura sobre fuentes.
 - `logs/link_grumo/`: derivados locales descartables y reproducibles.
 
