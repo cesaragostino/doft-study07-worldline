@@ -44,7 +44,9 @@ masivas al worktree.
 ## Estructura del frente
 
 - `docs/research/link_grumo/PREREGISTRO_DINAMICA.md`: hipótesis, firmas y reglas de decisión.
+- `docs/research/link_grumo/ORDEN_COSTO_VALOR.md`: secuencia de gates por CPU e información.
 - `audit/LINK_GRUMO_BASELINE.md`: auditoría inicial que abre este frente.
+- `audit/LINK_GRUMO_GATE_A_CINEMATICA.md`: primer gate sobre remotos y fresh apareados.
 - `tools/link_grumo/`: lectores reproducibles, sin escritura sobre fuentes.
 - `logs/link_grumo/`: derivados locales descartables y reproducibles.
 
