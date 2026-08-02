@@ -1,0 +1,922 @@
+{
+ "par132_t": {
+  "par": "par132",
+  "brazo": "t",
+  "C_fit": 9.9492,
+  "resid_max": 0.0079,
+  "bq_lider": [
+   61.794356739767636,
+   102.54625029305839
+  ],
+  "bq_receptor_max_Q": 7.005855994447112e-05,
+  "cruce_S1": {
+   "banda_S1": [
+    29.9166,
+    30.4215
+   ],
+   "t_entra": 24.4688,
+   "t_sale": 28.826400000000003,
+   "w_L_max": 33.377576321356706,
+   "w_L_ini": 26.658421900402434
+  },
+  "modos": {
+   "Q0": {
+    "w_self": 7.064,
+    "w_llegada": 7.064,
+    "w_final": 7.064,
+    "stft": {
+     "episodios_rho>1": [],
+     "consolidado_desde": null,
+     "rho_max": 0.8216371635954186,
+     "rho_fin": 0.46839980434636364
+    },
+    "demod": {
+     "episodios_rho>1": [],
+     "consolidado_desde": null,
+     "rho_max": 0.9061445612998802,
+     "rho_fin": 0.5090773861745835
+    }
+   },
+   "Q1": {
+    "w_self": 6.842,
+    "w_llegada": 6.842,
+    "w_final": 6.829,
+    "stft": {
+     "episodios_rho>1": [],
+     "consolidado_desde": null,
+     "rho_max": 1.0482516487356484,
+     "rho_fin": 1.0482516487356484
+    },
+    "demod": {
+     "episodios_rho>1": [],
+     "consolidado_desde": null,
+     "rho_max": 1.1176599342707068,
+     "rho_fin": 1.1176599342707068
+    }
+   },
+   "Q2": {
+    "w_self": 5.951,
+    "w_llegada": 5.951,
+    "w_final": 6.025,
+    "stft": {
+     "episodios_rho>1": [],
+     "consolidado_desde": null,
+     "rho_max": 0.7501638906796342,
+     "rho_fin": 0.7209096273000577
+    },
+    "demod": {
+     "episodios_rho>1": [],
+     "consolidado_desde": null,
+     "rho_max": 0.8075669555416111,
+     "rho_fin": 0.6601834278018549
+    }
+   }
+  },
+  "degenerado_par132": {
+   "Q0_delta0.5": [],
+   "Q0_delta1.0": [],
+   "Q1_delta0.5": [],
+   "Q1_delta1.0": [],
+   "Q2_delta0.5": [],
+   "Q2_delta1.0": []
+  }
+ },
+ "par133_t": {
+  "par": "par133",
+  "brazo": "t",
+  "C_fit": 9.9493,
+  "resid_max": 0.0079,
+  "bq_lider": [
+   61.794356739767636,
+   102.54730045226819
+  ],
+  "bq_receptor_max_Q": 8.500494725155248e-05,
+  "cruce_S1": {
+   "banda_S1": [
+    39.5106,
+    43.1056
+   ],
+   "t_entra": null,
+   "t_sale": null,
+   "w_L_max": 33.377960384682815,
+   "w_L_ini": 26.65860427466248
+  },
+  "modos": {
+   "Q0": {
+    "w_self": 6.962,
+    "w_llegada": 6.962,
+    "w_final": 6.937,
+    "stft": {
+     "episodios_rho>1": [],
+     "consolidado_desde": null,
+     "rho_max": 0.6970460003578473,
+     "rho_fin": 0.689809307915499
+    },
+    "demod": {
+     "episodios_rho>1": [],
+     "consolidado_desde": null,
+     "rho_max": 0.7691279068316048,
+     "rho_fin": 0.6823847237489137
+    }
+   },
+   "Q1": {
+    "w_self": 6.663,
+    "w_llegada": 6.663,
+    "w_final": 32.949,
+    "stft": {
+     "episodios_rho>1": [
+      [
+       35.75,
+       58.75
+      ]
+     ],
+     "consolidado_desde": 35.75,
+     "rho_max": 2.1992620667009524,
+     "rho_fin": 2.1992620667009524
+    },
+    "demod": {
+     "episodios_rho>1": [
+      [
+       36.75,
+       58.75
+      ]
+     ],
+     "consolidado_desde": 36.75,
+     "rho_max": 2.3339407869506807,
+     "rho_fin": 2.3339407869506807
+    }
+   },
+   "Q2": {
+    "w_self": 6.561,
+    "w_llegada": 6.561,
+    "w_final": 32.949,
+    "stft": {
+     "episodios_rho>1": [
+      [
+       19.25,
+       24.75
+      ],
+      [
+       29.25,
+       58.75
+      ]
+     ],
+     "consolidado_desde": 29.25,
+     "rho_max": 2.138360409341779,
+     "rho_fin": 2.064781372362462
+    },
+    "demod": {
+     "episodios_rho>1": [
+      [
+       18.75,
+       24.75
+      ],
+      [
+       29.75,
+       58.75
+      ]
+     ],
+     "consolidado_desde": 29.75,
+     "rho_max": 2.348558215852352,
+     "rho_fin": 2.1895518634224307
+    }
+   }
+  },
+  "degenerado_par132": null
+ },
+ "par134_t": {
+  "par": "par134",
+  "brazo": "t",
+  "C_fit": 9.9494,
+  "resid_max": 0.0079,
+  "bq_lider": [
+   61.794356739767636,
+   102.54350429979246
+  ],
+  "bq_receptor_max_Q": 5.858267736454993e-05,
+  "cruce_S1": {
+   "banda_S1": [
+    32.8902,
+    33.6054
+   ],
+   "t_entra": 53.9784,
+   "t_sale": null,
+   "w_L_max": 33.377606618156555,
+   "w_L_ini": 26.65877132120772
+  },
+  "modos": {
+   "Q0": {
+    "w_self": 8.636,
+    "w_llegada": 8.636,
+    "w_final": 32.846,
+    "stft": {
+     "episodios_rho>1": [
+      [
+       35.75,
+       58.75
+      ]
+     ],
+     "consolidado_desde": 35.75,
+     "rho_max": 1.6506901473861493,
+     "rho_fin": 1.581197377918262
+    },
+    "demod": {
+     "episodios_rho>1": [
+      [
+       37.25,
+       58.75
+      ]
+     ],
+     "consolidado_desde": 37.25,
+     "rho_max": 1.8496760936903134,
+     "rho_fin": 1.7217393718122578
+    }
+   },
+   "Q1": {
+    "w_self": 8.645,
+    "w_llegada": 8.645,
+    "w_final": 32.911,
+    "stft": {
+     "episodios_rho>1": [
+      [
+       23.25,
+       58.75
+      ]
+     ],
+     "consolidado_desde": 23.25,
+     "rho_max": 2.914618525265931,
+     "rho_fin": 2.914618525265931
+    },
+    "demod": {
+     "episodios_rho>1": [
+      [
+       26.25,
+       58.75
+      ]
+     ],
+     "consolidado_desde": 26.25,
+     "rho_max": 3.6379489473078226,
+     "rho_fin": 3.0280508126590715
+    }
+   },
+   "Q2": {
+    "w_self": 6.446,
+    "w_llegada": 6.446,
+    "w_final": 32.952,
+    "stft": {
+     "episodios_rho>1": [
+      [
+       28.75,
+       58.75
+      ]
+     ],
+     "consolidado_desde": 28.75,
+     "rho_max": 2.185090254401995,
+     "rho_fin": 2.17230196176824
+    },
+    "demod": {
+     "episodios_rho>1": [
+      [
+       29.25,
+       58.75
+      ]
+     ],
+     "consolidado_desde": 29.25,
+     "rho_max": 2.4665382437796075,
+     "rho_fin": 1.9715568415021474
+    }
+   }
+  },
+  "degenerado_par132": null
+ },
+ "par126_t": {
+  "par": "par126",
+  "brazo": "t",
+  "C_fit": 10.2044,
+  "resid_max": 0.0019,
+  "bq_lider": [
+   33.25142892926376,
+   47.93047657671619
+  ],
+  "bq_receptor_max_Q": 0.0034720684662262404,
+  "cruce_S1": {
+   "banda_S1": [
+    68.206,
+    68.575
+   ],
+   "t_entra": null,
+   "t_sale": null,
+   "w_L_max": 24.56082831264682,
+   "w_L_ini": 21.222165091918956
+  },
+  "modos": {
+   "Q0": {
+    "w_self": 9.155,
+    "w_llegada": 9.155,
+    "w_final": 9.184,
+    "stft": {
+     "episodios_rho>1": [
+      [
+       28.75,
+       39.75
+      ]
+     ],
+     "consolidado_desde": null,
+     "rho_max": 3.403172910338658,
+     "rho_fin": 0.2867925343712673
+    },
+    "demod": {
+     "episodios_rho>1": [
+      [
+       28.75,
+       39.75
+      ]
+     ],
+     "consolidado_desde": null,
+     "rho_max": 5.289759268107234,
+     "rho_fin": 0.3218657291757947
+    }
+   },
+   "Q1": {
+    "w_self": 9.206,
+    "w_llegada": 9.206,
+    "w_final": 9.219,
+    "stft": {
+     "episodios_rho>1": [],
+     "consolidado_desde": null,
+     "rho_max": 0.10338064663876058,
+     "rho_fin": 0.040440087847771165
+    },
+    "demod": {
+     "episodios_rho>1": [],
+     "consolidado_desde": null,
+     "rho_max": 0.21858056204181667,
+     "rho_fin": 0.12460998018291815
+    }
+   },
+   "Q2": {
+    "w_self": 6.355,
+    "w_llegada": 6.355,
+    "w_final": 6.417,
+    "stft": {
+     "episodios_rho>1": [],
+     "consolidado_desde": null,
+     "rho_max": 0.3590688058778385,
+     "rho_fin": 0.21206563208383994
+    },
+    "demod": {
+     "episodios_rho>1": [],
+     "consolidado_desde": null,
+     "rho_max": 0.48447591772607046,
+     "rho_fin": 0.2514850580841188
+    }
+   }
+  },
+  "degenerado_par132": null
+ },
+ "par127_t": {
+  "par": "par127",
+  "brazo": "t",
+  "C_fit": 10.2044,
+  "resid_max": 0.0019,
+  "bq_lider": [
+   33.25142892926376,
+   47.930633016721316
+  ],
+  "bq_receptor_max_Q": 0.0002311023065388563,
+  "cruce_S1": {
+   "banda_S1": [
+    30.8019,
+    31.6466
+   ],
+   "t_entra": null,
+   "t_sale": null,
+   "w_L_max": 24.56085607324783,
+   "w_L_ini": 21.222160423922954
+  },
+  "modos": {
+   "Q0": {
+    "w_self": 6.504,
+    "w_llegada": 6.504,
+    "w_final": 6.568,
+    "stft": {
+     "episodios_rho>1": [],
+     "consolidado_desde": null,
+     "rho_max": 0.9260722255577286,
+     "rho_fin": 0.9123192252323177
+    },
+    "demod": {
+     "episodios_rho>1": [],
+     "consolidado_desde": null,
+     "rho_max": 0.9769193299586001,
+     "rho_fin": 0.9113308264462634
+    }
+   },
+   "Q1": {
+    "w_self": 6.572,
+    "w_llegada": 6.572,
+    "w_final": 6.547,
+    "stft": {
+     "episodios_rho>1": [],
+     "consolidado_desde": null,
+     "rho_max": 0.36262830893967135,
+     "rho_fin": 0.2114694080303748
+    },
+    "demod": {
+     "episodios_rho>1": [],
+     "consolidado_desde": null,
+     "rho_max": 0.48024689931951714,
+     "rho_fin": 0.25153225214263186
+    }
+   },
+   "Q2": {
+    "w_self": 6.506,
+    "w_llegada": 6.506,
+    "w_final": 6.551,
+    "stft": {
+     "episodios_rho>1": [],
+     "consolidado_desde": null,
+     "rho_max": 0.4326726831866609,
+     "rho_fin": 0.4326726831866609
+    },
+    "demod": {
+     "episodios_rho>1": [],
+     "consolidado_desde": null,
+     "rho_max": 0.5344184022530093,
+     "rho_fin": 0.44379622621051346
+    }
+   }
+  },
+  "degenerado_par132": null
+ },
+ "par128_t": {
+  "par": "par128",
+  "brazo": "t",
+  "C_fit": 10.2044,
+  "resid_max": 0.0019,
+  "bq_lider": [
+   33.25142892926376,
+   47.93014469683494
+  ],
+  "bq_receptor_max_Q": 2.4818185913490042e-05,
+  "cruce_S1": {
+   "banda_S1": [
+    62.5142,
+    63.3465
+   ],
+   "t_entra": null,
+   "t_sale": null,
+   "w_L_max": 24.560765713935222,
+   "w_L_ini": 21.222171792828778
+  },
+  "modos": {
+   "Q0": {
+    "w_self": 11.28,
+    "w_llegada": 11.28,
+    "w_final": 11.268,
+    "stft": {
+     "episodios_rho>1": [],
+     "consolidado_desde": null,
+     "rho_max": 0.5775724294788102,
+     "rho_fin": 0.5314914325807271
+    },
+    "demod": {
+     "episodios_rho>1": [],
+     "consolidado_desde": null,
+     "rho_max": 0.7670391601892093,
+     "rho_fin": 0.5308575535144423
+    }
+   },
+   "Q1": {
+    "w_self": 11.081,
+    "w_llegada": 11.081,
+    "w_final": 11.069,
+    "stft": {
+     "episodios_rho>1": [],
+     "consolidado_desde": null,
+     "rho_max": 0.7182409654680971,
+     "rho_fin": 0.7182409654680971
+    },
+    "demod": {
+     "episodios_rho>1": [],
+     "consolidado_desde": null,
+     "rho_max": 0.7872933737146923,
+     "rho_fin": 0.7022292813641512
+    }
+   },
+   "Q2": {
+    "w_self": 6.466,
+    "w_llegada": 6.466,
+    "w_final": 6.448,
+    "stft": {
+     "episodios_rho>1": [],
+     "consolidado_desde": null,
+     "rho_max": 0.34865717912640826,
+     "rho_fin": 0.29994484746118394
+    },
+    "demod": {
+     "episodios_rho>1": [],
+     "consolidado_desde": null,
+     "rho_max": 0.4733095466503203,
+     "rho_fin": 0.3238265271165639
+    }
+   }
+  },
+  "degenerado_par132": null
+ },
+ "par129_t": {
+  "par": "par129",
+  "brazo": "t",
+  "C_fit": 10.2044,
+  "resid_max": 0.0019,
+  "bq_lider": [
+   33.25142892926376,
+   47.93220873715853
+  ],
+  "bq_receptor_max_Q": 1.5425218891410405e-05,
+  "cruce_S1": {
+   "banda_S1": [
+    28.7109,
+    31.6228
+   ],
+   "t_entra": null,
+   "t_sale": null,
+   "w_L_max": 24.561097222810606,
+   "w_L_ini": 21.222080173015907
+  },
+  "modos": {
+   "Q0": {
+    "w_self": 6.486,
+    "w_llegada": 6.486,
+    "w_final": 24.405,
+    "stft": {
+     "episodios_rho>1": [
+      [
+       54.25,
+       58.75
+      ]
+     ],
+     "consolidado_desde": 54.25,
+     "rho_max": 1.158439024451203,
+     "rho_fin": 1.158439024451203
+    },
+    "demod": {
+     "episodios_rho>1": [
+      [
+       55.25,
+       58.75
+      ]
+     ],
+     "consolidado_desde": 55.25,
+     "rho_max": 1.1782477606533774,
+     "rho_fin": 1.1782477606533774
+    }
+   },
+   "Q1": {
+    "w_self": 6.496,
+    "w_llegada": 6.496,
+    "w_final": 6.497,
+    "stft": {
+     "episodios_rho>1": [],
+     "consolidado_desde": null,
+     "rho_max": 0.4902493426417282,
+     "rho_fin": 0.4880905329699002
+    },
+    "demod": {
+     "episodios_rho>1": [],
+     "consolidado_desde": null,
+     "rho_max": 0.5697917239539962,
+     "rho_fin": 0.5086082030209075
+    }
+   },
+   "Q2": {
+    "w_self": 6.566,
+    "w_llegada": 6.566,
+    "w_final": 6.562,
+    "stft": {
+     "episodios_rho>1": [],
+     "consolidado_desde": null,
+     "rho_max": 0.5582909009567201,
+     "rho_fin": 0.5582909009567201
+    },
+    "demod": {
+     "episodios_rho>1": [],
+     "consolidado_desde": null,
+     "rho_max": 0.5560215499507134,
+     "rho_fin": 0.5209545510201011
+    }
+   }
+  },
+  "degenerado_par132": null
+ },
+ "par130_t": {
+  "par": "par130",
+  "brazo": "t",
+  "C_fit": 10.2044,
+  "resid_max": 0.0019,
+  "bq_lider": [
+   33.25142892926376,
+   47.93043303265388
+  ],
+  "bq_receptor_max_Q": 1.989210283182071e-05,
+  "cruce_S1": {
+   "banda_S1": [
+    45.8698,
+    48.8271
+   ],
+   "t_entra": null,
+   "t_sale": null,
+   "w_L_max": 24.56081576401298,
+   "w_L_ini": 21.222162225011132
+  },
+  "modos": {
+   "Q0": {
+    "w_self": 10.341,
+    "w_llegada": 10.341,
+    "w_final": 10.329,
+    "stft": {
+     "episodios_rho>1": [],
+     "consolidado_desde": null,
+     "rho_max": 0.5999770557383172,
+     "rho_fin": 0.30183088262906344
+    },
+    "demod": {
+     "episodios_rho>1": [],
+     "consolidado_desde": null,
+     "rho_max": 0.7257866531885702,
+     "rho_fin": 0.39147340993538615
+    }
+   },
+   "Q1": {
+    "w_self": 10.124,
+    "w_llegada": 10.124,
+    "w_final": 10.104,
+    "stft": {
+     "episodios_rho>1": [],
+     "consolidado_desde": null,
+     "rho_max": 0.424703150983442,
+     "rho_fin": 0.18363836444592044
+    },
+    "demod": {
+     "episodios_rho>1": [],
+     "consolidado_desde": null,
+     "rho_max": 0.5272085261847244,
+     "rho_fin": 0.2984460155212041
+    }
+   },
+   "Q2": {
+    "w_self": 6.106,
+    "w_llegada": 6.106,
+    "w_final": 6.047,
+    "stft": {
+     "episodios_rho>1": [],
+     "consolidado_desde": null,
+     "rho_max": 0.3883140417658969,
+     "rho_fin": 0.38728639873543513
+    },
+    "demod": {
+     "episodios_rho>1": [],
+     "consolidado_desde": null,
+     "rho_max": 0.5021897609451196,
+     "rho_fin": 0.40234943247220073
+    }
+   }
+  },
+  "degenerado_par132": null
+ },
+ "par131_t": {
+  "par": "par131",
+  "brazo": "t",
+  "C_fit": 10.2044,
+  "resid_max": 0.0019,
+  "bq_lider": [
+   33.25142892926376,
+   47.93137281266406
+  ],
+  "bq_receptor_max_Q": 4.504891748400741e-05,
+  "cruce_S1": {
+   "banda_S1": [
+    35.9604,
+    36.7175
+   ],
+   "t_entra": null,
+   "t_sale": null,
+   "w_L_max": 24.560979380540928,
+   "w_L_ini": 21.222131462498094
+  },
+  "modos": {
+   "Q0": {
+    "w_self": 6.905,
+    "w_llegada": 6.905,
+    "w_final": 6.888,
+    "stft": {
+     "episodios_rho>1": [],
+     "consolidado_desde": null,
+     "rho_max": 0.5937793261539102,
+     "rho_fin": 0.5937793261539102
+    },
+    "demod": {
+     "episodios_rho>1": [],
+     "consolidado_desde": null,
+     "rho_max": 0.6433651612293664,
+     "rho_fin": 0.6433651612293664
+    }
+   },
+   "Q1": {
+    "w_self": 6.625,
+    "w_llegada": 6.625,
+    "w_final": 6.613,
+    "stft": {
+     "episodios_rho>1": [],
+     "consolidado_desde": null,
+     "rho_max": 0.6544061940794879,
+     "rho_fin": 0.654201709401068
+    },
+    "demod": {
+     "episodios_rho>1": [],
+     "consolidado_desde": null,
+     "rho_max": 0.7027036485017205,
+     "rho_fin": 0.5922842481538781
+    }
+   },
+   "Q2": {
+    "w_self": 6.588,
+    "w_llegada": 6.588,
+    "w_final": 6.608,
+    "stft": {
+     "episodios_rho>1": [],
+     "consolidado_desde": null,
+     "rho_max": 0.9858748084091247,
+     "rho_fin": 0.8664019521629439
+    },
+    "demod": {
+     "episodios_rho>1": [],
+     "consolidado_desde": null,
+     "rho_max": 1.007117858617057,
+     "rho_fin": 0.8586987996332138
+    }
+   }
+  },
+  "degenerado_par132": null
+ },
+ "par133_f": {
+  "par": "par133",
+  "brazo": "f",
+  "C_fit": 10.3088,
+  "resid_max": 0.0255,
+  "bq_lider": [
+   0.0,
+   3.0608696812670225e-08
+  ],
+  "bq_receptor_max_Q": 7.086199664688939e-08,
+  "cruce_S1": {
+   "banda_S1": [
+    39.5106,
+    43.1056
+   ],
+   "t_entra": null,
+   "t_sale": null,
+   "w_L_max": 10.308830150937082,
+   "w_L_ini": 10.308830135160088
+  },
+  "modos": {
+   "Q0": {
+    "w_self": 7.001,
+    "w_llegada": 7.001,
+    "w_final": 6.995,
+    "stft": {
+     "episodios_rho>1": [],
+     "consolidado_desde": null,
+     "rho_max": 0.719781376859282,
+     "rho_fin": 0.6575835387439735
+    },
+    "demod": {
+     "episodios_rho>1": [],
+     "consolidado_desde": null,
+     "rho_max": 0.6568362493863962,
+     "rho_fin": 0.5994019688889198
+    }
+   },
+   "Q1": {
+    "w_self": 6.682,
+    "w_llegada": 6.682,
+    "w_final": 6.512,
+    "stft": {
+     "episodios_rho>1": [],
+     "consolidado_desde": null,
+     "rho_max": 0.671035844229867,
+     "rho_fin": 0.5223187308234231
+    },
+    "demod": {
+     "episodios_rho>1": [],
+     "consolidado_desde": null,
+     "rho_max": 0.6374976346703102,
+     "rho_fin": 0.3865758302263109
+    }
+   },
+   "Q2": {
+    "w_self": 6.554,
+    "w_llegada": 6.554,
+    "w_final": 6.412,
+    "stft": {
+     "episodios_rho>1": [],
+     "consolidado_desde": null,
+     "rho_max": 0.6398467066320402,
+     "rho_fin": 0.5124946328111711
+    },
+    "demod": {
+     "episodios_rho>1": [],
+     "consolidado_desde": null,
+     "rho_max": 0.6267877402479108,
+     "rho_fin": 0.3760151777945336
+    }
+   }
+  },
+  "degenerado_par132": null
+ },
+ "par134_f": {
+  "par": "par134",
+  "brazo": "f",
+  "C_fit": 10.3059,
+  "resid_max": 0.025,
+  "bq_lider": [
+   0.0,
+   1.1474695352794008e-08
+  ],
+  "bq_receptor_max_Q": 1.1085412104819782e-08,
+  "cruce_S1": {
+   "banda_S1": [
+    32.8902,
+    33.6054
+   ],
+   "t_entra": null,
+   "t_sale": null,
+   "w_L_max": 10.305923823728433,
+   "w_L_ini": 10.305923817815568
+  },
+  "modos": {
+   "Q0": {
+    "w_self": 8.641,
+    "w_llegada": 8.641,
+    "w_final": 8.662,
+    "stft": {
+     "episodios_rho>1": [],
+     "consolidado_desde": null,
+     "rho_max": 0.9695368804182735,
+     "rho_fin": 0.9563349035671945
+    },
+    "demod": {
+     "episodios_rho>1": [],
+     "consolidado_desde": null,
+     "rho_max": 0.979146866759428,
+     "rho_fin": 0.8485362561028053
+    }
+   },
+   "Q1": {
+    "w_self": 8.704,
+    "w_llegada": 8.704,
+    "w_final": 8.614,
+    "stft": {
+     "episodios_rho>1": [
+      [
+       18.75,
+       22.25
+      ]
+     ],
+     "consolidado_desde": null,
+     "rho_max": 1.8782930870176096,
+     "rho_fin": 0.9707364104830544
+    },
+    "demod": {
+     "episodios_rho>1": [
+      [
+       18.25,
+       20.25
+      ]
+     ],
+     "consolidado_desde": null,
+     "rho_max": 2.3152030327575837,
+     "rho_fin": 0.8501192404518623
+    }
+   },
+   "Q2": {
+    "w_self": 6.369,
+    "w_llegada": 6.369,
+    "w_final": 6.511,
+    "stft": {
+     "episodios_rho>1": [],
+     "consolidado_desde": null,
+     "rho_max": 0.6027781362531299,
+     "rho_fin": 0.6027781362531299
+    },
+    "demod": {
+     "episodios_rho>1": [],
+     "consolidado_desde": null,
+     "rho_max": 0.592592734665785,
+     "rho_fin": 0.5798303895867489
+    }
+   }
+  },
+  "degenerado_par132": null
+ }
+}
