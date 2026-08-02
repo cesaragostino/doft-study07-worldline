@@ -102,6 +102,14 @@ def validar_campana(spec: Mapping[str, Any], inventario: Mapping[str, Any] | Non
         faltan_u = [k for k in CLAVES_UNIDAD if k not in u]
         if faltan_u:
             raise RuntimeError(f"unidad {u.get('run_id')!r} sin claves {faltan_u}")
+        if "programa" in u:
+            # cirugía (tap wf_030bb1cc, BAJO): el cfg del programa se valida al VALIDAR
+            # la spec (rechazo-de-spec), no recién en el worker (donde degrada a 'fallida')
+            from .cirugia import ProgramaDrive
+            ProgramaDrive(u["programa"])
+            if len(u["constituyentes"]) != 1 or u["edges"]:
+                raise RuntimeError(f"unidad {u['run_id']!r} con programa: exige 1 "
+                                   "constituyente y 0 aristas (cirugía)")
         if "eventos" in u or "intervenciones" in u:
             raise RuntimeError(f"unidad {u['run_id']!r} con intervenciones: una campaña "
                                "corre evolución libre — las hijas se crean con hija.py, "

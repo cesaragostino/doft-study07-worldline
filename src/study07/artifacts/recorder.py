@@ -187,7 +187,10 @@ class WorldlineRecorder:
                           "numero tick; drive[k] = fuerza KV del sub-paso 0 del step k; "
                           "noise_kick[k] = incremento estocastico aplicado en el step k; "
                           "rng_state = estado del generator al INICIO del chunk; "
-                          "t = tick * dt (derivado, no almacenado)"),
+                          "t = tick * dt (derivado, no almacenado)"
+                          + ("; drive[k] = fuerza TOTAL del sub-paso 0 (KV + programa) — "
+                             "red de cirugia con emisor programado (tap wf_030bb1cc)"
+                             if getattr(net, "programa", None) is not None else "")),
         })
         cuerpo = json.dumps(manifest, indent=1, default=str)
         (self.dir / "manifest.json").write_text(cuerpo)
@@ -249,6 +252,14 @@ class WorldlineRecorder:
         recibo = getattr(self.net, "composicion_recibo", None)
         if recibo is not None:
             extra["composicion"] = recibo
+        prog = getattr(self.net, "programa", None)
+        if prog is not None:
+            # cirugía (tap wf_030bb1cc arreglo 1-A v1): el checkpoint PORTA el programa y
+            # el t_abs ACUMULADO (no tick·dt — difiere ~1e-8 y rompe bit-exactitud);
+            # network_from_checkpoint RECHAZA restaurar hasta que exista la reconstrucción.
+            extra["programa"] = {"modo": prog.modo, "forma": prog.forma, "F0": prog.F0,
+                                 "w0": prog.w0, "rate": prog.rate}
+            extra["t_abs"] = float(self.net.t_abs)
         return save_checkpoint(self.dir / "checkpoints" / f"ck_{self._tick_actual:08d}.npz",
                                self.net, self._tick_actual, extra_meta=extra)
 

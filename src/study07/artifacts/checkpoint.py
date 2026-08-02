@@ -100,6 +100,12 @@ def network_from_checkpoint(specs: Sequence[NodeSpec], ck: Dict) -> Network:
     y se declara hija con su propio linaje)."""
     from ..engine.network import Network   # acá SÍ se construye el motor: import local
     meta = ck["meta"]
+    if (meta.get("extra") or {}).get("programa") is not None:
+        raise ValueError(
+            "checkpoint de una red de CIRUGÍA (emisor programado): la reconstrucción de "
+            "RedConDrivePrograma no está implementada — restaurarlo como Network puro "
+            "continuaría SIN drive en silencio (tap wf_030bb1cc arreglo 1). Una unidad "
+            "de cirugía se re-corre desde tick 0, jamás se reanuda.")
     if len(specs) != int(meta["n_nodes"]):
         raise ValueError(f"specs: {len(specs)} != n_nodes {meta['n_nodes']} del checkpoint")
     for j, sp in enumerate(specs):
