@@ -52,7 +52,8 @@ def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def load_film(run_dir: Path) -> tuple[dict, dict, dict[str, np.ndarray]]:
+def load_film(run_dir: Path, limit_ut: float = HORIZON_UT
+              ) -> tuple[dict, dict, dict[str, np.ndarray]]:
     manifest_path = run_dir / "manifest.json"
     complete_path = run_dir / "COMPLETE"
     manifest = json.loads(manifest_path.read_text())
@@ -76,7 +77,7 @@ def load_film(run_dir: Path) -> tuple[dict, dict, dict[str, np.ndarray]]:
         with np.load(io.BytesIO(raw), allow_pickle=False) as npz:
             ticks_all = np.asarray(npz["ticks"])
             select = ((ticks_all % STRIDE == 0)
-                      & (ticks_all * float(manifest["dt"]) <= HORIZON_UT))
+                      & (ticks_all * float(manifest["dt"]) <= limit_ut))
             if np.any(select):
                 ticks_parts.append(ticks_all[select])
                 drive_parts.append(np.asarray(npz["drive"])[select])
@@ -100,13 +101,13 @@ def load_film(run_dir: Path) -> tuple[dict, dict, dict[str, np.ndarray]]:
                     v_nodes.append(np.stack(v_layer, axis=1))
                 x_parts.append(np.stack(x_nodes, axis=1))
                 v_parts.append(np.stack(v_nodes, axis=1))
-            if ticks_all[-1] * float(manifest["dt"]) >= HORIZON_UT:
+            if ticks_all[-1] * float(manifest["dt"]) >= limit_ut:
                 break
     if not ticks_parts:
         raise RuntimeError(f"film sin muestras: {run_dir.name}")
     ticks = np.concatenate(ticks_parts)
-    if ticks[-1] * float(manifest["dt"]) < HORIZON_UT - 2 * STRIDE * float(manifest["dt"]):
-        raise RuntimeError(f"film no alcanza 60 u.t.: {run_dir.name}")
+    if ticks[-1] * float(manifest["dt"]) < limit_ut - 2 * STRIDE * float(manifest["dt"]):
+        raise RuntimeError(f"film no alcanza {limit_ut} u.t.: {run_dir.name}")
     arrays = {
         "ticks": ticks,
         "drive": np.concatenate(drive_parts),
@@ -117,6 +118,7 @@ def load_film(run_dir: Path) -> tuple[dict, dict, dict[str, np.ndarray]]:
         "run_dir": str(run_dir), "manifest_sha256": manifest_hash,
         "n_chunks_verified": len(verified), "chunks_verified": verified,
         "stride": STRIDE, "dt_effective": float(manifest["dt"]) * STRIDE,
+        "requested_limit_ut": float(limit_ut),
         "last_t_ut": float(ticks[-1] * float(manifest["dt"])),
     }
     return manifest, provenance, arrays
