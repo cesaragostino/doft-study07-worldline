@@ -266,11 +266,19 @@ def _correr_unidad_cruda(args: Dict[str, Any]) -> Dict[str, Any]:
         coupling_gamma_c=float(ep["coupling_gamma_c"]),
         tau_field=float(ep.get("tau_field", 0.0)),
         temperature=float(ep.get("temperature", 0.0)))
+    if u.get("programa"):
+        # CIRUGÍA DE LÍNEA FIJA (M1, prereg 2026-08-02 §12): emisor programado.
+        from .cirugia import RedConDrivePrograma
+        net = RedConDrivePrograma.desde_red(
+            net, u["programa"], k_c=float(ep["kappa_global"]),
+            g_c=float(ep["coupling_gamma_c"]))
     man = {"run_id": u["run_id"], "spec_tipo": args["spec_tipo"],
            "porque": args["porque"], "campana": args["campana"],
            "campana_spec_sha256": args["spec_sha256"],
            "hashes_base_externa": base,
            "composicion": recibo, "perfil": "conformidad"}
+    if u.get("programa"):
+        man["programa"] = u["programa"]        # provenance del emisor sintético
     rec = WorldlineRecorder(run_dir, net, man, chunk_ticks=int(args["chunk_ticks"]))
     run_net(net, int(u["ticks"]), recorder=rec,
             checkpoint_every=args.get("checkpoint_every"), finite_check_every=1024)
