@@ -77,3 +77,15 @@ El canal `drive` del film ES la fuerza KV real: reconstruida desde los estados c
 6. ¿Los picos b_Q de líderes con genoma cruzado (predicción 262.7/127.4 del apagado) reproducen en films nuevos? (mata la tentación de «τ por capa» para siempre).
 
 **Archivos del juez**: `.../scratchpad/tap_chi/juez/{jc0_extraer_verificar.py, jc1_series.py, jc2_chi_r.py, jc3_eventos.py, jc4_c2.py, jc5_energia_spot.py, jc2/jc3/jc4_resultados.json, jz_series_*.npz, jz_r_*_Q*.npz, jz_chiscan_*.npz, jz_drive_*.npz}`.
+---
+## ENMIENDA post-veredicto (COA 2026-08-02, verificada — bitácora §8)
+El r≫1 de par132-Q0 (C1-excepción y prescripción [2]) era FUGA ESPECTRAL de la Hann W=2:
+razón r(W2)/r(W16) = 3.44/8.34/21.3/45.1 en t=400/450/500/580 (desaparece con W;
+control esclavo par129-Q0 plano 0.994-1.004; tono propio 44146× la línea a t=580).
+r≫1 RETIRADO como detector de autonomía (necesita piso de fuga local, convergencia en W
+o regresión coherente). La autonomía de par132-Q0 queda por evidencia independiente
+(σ>0 + tono propio + P<0), sin demostración de contenido autónomo en la línea del líder.
+P<0 = exporta, no necesariamente auto-sostiene (conjunción P + pendiente de energía + σ).
+La identidad r≡1 (C1 núcleo) INTACTA — W-invariante en régimen esclavo.
+Cirugía 2×9: separar barridos/estaciones; clamp externo ≠ link real (dos experimentos);
+nula prospectiva exige A_S de gemelo link-OFF o ventana temprana disyunta.
