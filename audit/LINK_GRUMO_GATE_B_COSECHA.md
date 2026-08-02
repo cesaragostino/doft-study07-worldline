@@ -54,11 +54,17 @@ espectral, no autonomía, atractor ni signo de energía.
 ## B3 — predictor temprano contra futuro disjunto
 
 Se extendió el mismo observable a toda la población no-self resoluble, sin armónicos ni
-mudez: 164 films (71 transported, 93 fresh). Predictor fijo `[0,8]`; endpoint tardío
-`[50,60]`. Ningún film elegible tenía `t_lock<=8`, de modo que el predictor antecede al
-evento del detector en toda esta muestra.
+mudez: 164 films (71 transported, 93 fresh). Predictor fijo `[0,8]`.
 
-### Resultado completo, todavía reutilizando el banco de descubrimiento
+> **ERRATA Gate E:** este análisis llamó `[50,60]` a `estado/dw_tardia` de la tabla, pero
+> esos campos viven al final de cada film: 151 terminan a 60 u.t. y 13 a 120 u.t. Por lo
+> tanto, los AUC contra “salud” y los conteos de endpoints de esta sección mezclan
+> horizontes y quedan **retirados como evidencia**. Gate E recompone el veredicto común a
+> 60 desde `theta` y lo replica con error cero en los 151 controles nativos. Las mediciones
+> tempranas de B3 siguen siendo válidas; sus asociaciones con el endpoint se sustituyen por
+> `LINK_GRUMO_GATE_C_D_E_COSECHA.md`.
+
+### Resultado histórico, no citable tras la errata de horizonte
 
 - Transported, `rho` → firmeza+cierre a 60: AUC 0.956 (6 positivos/65 negativos).
 - Transported, E0: AUC 0.828; amplitud de fuente 0.844; fuerza sobre seguidor 0.846.
@@ -85,9 +91,9 @@ transported:
 La señal sobrevive en dirección, pero la validación transported independiente no tiene aún
 outcome suficiente.
 
-## El hallazgo ontológico: cerrar no es quedar firme
+## El hallazgo ontológico, con conteos de endpoint retirados
 
-En los 164 films:
+Los siguientes conteos mezclaban endpoints 60/120 y no se usan después de Gate E:
 
 - cierre físico tardío: 21;
 - firmeza de fase final: 12;
