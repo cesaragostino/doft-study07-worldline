@@ -1,0 +1,235 @@
+{
+ "veredicto": {
+  "veredicto": "BLOQUEA",
+  "confirmados": [
+   {
+    "titulo": "P1 elegibilidad: `any(e[0] < b)` excluye TODA ventana posterior a la 1ra captura — par134 Q0 (elegible por nombre en §3, número de interés POST-MUERTE +0.0109=5.8σ) produce CERO casos",
+    "severidad": "BLOQUEA",
+    "nota": "RE-EJECUTADO por el juez (kill_v2/juez/jz_v2_1_elegibilidad_mudez.py): episodio v1 de par134 Q0 = [[35.75,62.75]]; con la condición copiada de leer_largo600.py:217+221, ventanas [70,116] y [200,400] EXCLUIDAS, solo [1.25,33] elegible. La regresión de matar() no lo detecta porque no compara casos P1 contra nada."
+   },
+   {
+    "titulo": "P1 hovering: el código chequea ρ<0.95 solo DENTRO de la ventana; el sello exige 'ρ<0.95 sostenido previo' (§3 / presc. 4) y nombra par131 Q2 (hovering 37 u.t. antes de consolidar) como inelegible — par131 corre AHORA",
+    "severidad": "BLOQUEA",
+    "nota": "RE-EJECUTADO (t6_sello_vs_codigo.py T6a, bloque token-exacto verificado contra líneas 221-224): hovering 0.96 sostenido en [10,40], ventana [50,90] con ρ=0.30 → excl_precaptura=False, excl_hover=False, caso ACEPTADO con veredicto sellado. Convergencia matador+auditor sobre el mismo defecto."
+   },
+   {
+    "titulo": "Línea MEDIDA sin guardia: si el líder se apaga el argmax de banda [2,60] salta de línea y TODO v2 (fase/ρ/episodios/C_fit/P1) hereda el salto; resid_max se publica pero no gatea nada",
+    "severidad": "ALTO",
+    "nota": "RE-EJECUTADO por el juez incluyendo s120_par129 (t5_linea_medida.py): sintético salta 10.30→25.72 en t=58.25; seguidor GENUINO pierde su episodio ((1.25,118.25)→(1.25,58.25)) con 947 rad (150.7 vueltas) de error de fase. Los 4 s120 reales LIMPIOS (salto max 0.137 rad/u.t./paso, cero >0.5) pero el RMS del líder débil cae 1.615→0.250 en las últimas 10 u.t. — riesgo latente real a 600. OJO: la banda ±2 propuesta por el matador deja salto residual 2.48 rad/u.t. en su propio sintético — la pieza load-bearing es la bandera de continuidad, no la banda."
+   },
+   {
+    "titulo": "P4: t_pico por argmax inestable ante mesetas — SOSTIENE→OTRO se da vuelta con ruido 1e-12 si la meseta cruza t=340; y sin guardia de largo de film un truncado da MUERE espurio",
+    "severidad": "ALTO",
+    "nota": "RE-EJECUTADO (t4_p4.py, bloque copiado 60/60): T4d meseta [320,370]: sin ruido t_pk=322.5→SOSTIENE; con ruido 1e-12 (dos semillas) t_pk≈350.8/350.3→OTRO. T4f: film 120 u.t. con b monótono → MUERE espurio (t_pk=115>T−10). En film real la meseta a epsilon-de-máquina es improbable (b_S1 = filtro de dos polos), pero un pico ancho cerca de 340 es plausible con τ_b≈330 — el soporte del máximo debe publicarse."
+   },
+   {
+    "titulo": "«AMBAS familias» (presc. 1-2) no se exige en ningún punto: cobertura/relevos/releases mono-familia, P1 enteramente stft-only, cero banderas cruzadas (v1 tenía bandera_cruzada/bandera_ab/bandera_orden_familias — v2 las eliminó); el solape tampoco se cita como rango por umbral",
+    "severidad": "ALTO",
+    "nota": "RE-EJECUTADO: T6b (solape 5.0 en stft con HUECO 2.0 en demod → el JSON publica el relevo igual, en la lista stft); demostración demod-only → capturado_alguna_vez=False (línea 217 usa solo mv['stft']); grep: 'bandera' aparece en leer_suelto120.py:347,351,373 y CERO veces en v2. El número citable que emite la herramienta no es el del sello."
+   },
+   {
+    "titulo": "fraccion_cubierta=1.0 con un episodio de 3.25 u.t. al final (denominador fin−primer_canal); hueco terminal invisible; veredicto_sellado_par132 impreso para los 4 pares (par134 = réplica de FORMA heredaría OTRO/MUERE bajo criterios ajenos); falta el perfil móvil 10 u.t. de dlnρ que presc. 4 exige publicar; sin gate de COMPLETE (prefijo verde no garantiza film entero)",
+    "severidad": "MEDIO",
+    "nota": "Confirmados en las re-ejecuciones (T2a frac=1.0; T4f; lectura de líneas 172-209, 252-260, 396-399) y por lectura del sello. Agrupados: todos citables con arreglo barato antes del commit."
+   },
+   {
+    "titulo": "Bordes numéricos y semántica fina: razón 1.3000000000000011 publica {razon: 1.3, veredicto: zona_gris}; mesetas exactas 0.22/0.37 entran por redondeo no controlado; suavizado baja el pico ~0.9% y corre picos asimétricos ~+2 u.t.; condición tautológica línea 192 (dead code); handoff de contacto-en-un-punto invisible; co-dominancia 40 u.t. cuenta como relevo; veredicto P1 ciego al signo de tasa_corr",
+    "severidad": "BAJO",
+    "nota": "Confirmados en T3d/T4b/T4e'/T1e-g re-ejecutados. Ninguno bloquea; van a recomendados + declaraciones."
+   },
+   {
+    "titulo": "BAJADO CON EVIDENCIA — censura por mudez de par134 Q0 (parte del A3-ALTO del auditor): NO reproduce con números reales",
+    "severidad": "DESCARTADO (parcial de A3; el resto de A3 baja a recomendado)",
+    "nota": "Medido por el juez en el npz real: mediana fase muerta (70,120] de par134 Q0 = 1.546e-3 vs piso 2.833e-7 — margen ~5460×; extrapolado a 600 u.t. (63 vivas + 537 muertas) mudo=False. El «enterrado» sigue 4 órdenes sobre la mudez (consistente con el propio tap). Las faltas reales de presc. 1 (A_L>piso y w-sobre-línea POR EPISODIO, mudez v2 sin la condición temprana de v1, tol 0.5 de sobre_linea no declarada) quedan como banderas recomendadas + declaración, no obligatorias."
+   }
+  ],
+  "arreglos_obligatorios": [
+   "P1 elegibilidad (línea 221): sustituir `any(e[0] < b for e in eps)` por exclusión SOLO de ventanas que SOLAPAN un episodio: `any(e[0] < b and e[1] > a for e in eps)`; etiquetar cada caso 'pre_primera_captura' | 'post_release' (§3 admite ambos); agregar trampa en matar() que exija ≥1 caso P1 para un modo sintético con episodio temprano + ventana estacionaria tardía (hoy nada la detectaría).",
+   "P1 hovering previo (línea 223): además del máximo intra-ventana, excluir si existe corrida ρ≥0.95 de ≥2 u.t. en el tramo previo elegible (desde el fin del último episodio — o inicio del film — hasta b) y publicar rho_max_pre_captura por caso; re-matar con T6a y T3b tras el fix.",
+   "Guardia de línea medida (tras línea 106): computar saltos=|diff(wl_med)|/HOP; si max>1 rad/u.t. (umbral declarado en _meta) o resid_max>umbral declarado ⇒ bandera_linea=True por unidad en el JSON y marcar NO-CITABLES fase/ρ/episodios/P1 posteriores al primer salto. La banda-prior fórmula±2 es complemento (no sustituto: deja salto residual 2.48 en el sintético).",
+   "Familias (presc. 1-2): el CITABLE pasa a ser la intersección — episodios_citables = runs_true((ρ_stft>u) & (ρ_demod>u), ≥2 u.t.) por u∈U_CAP; relevo citable solo con solape>0 en AMBAS familias, solape citado como rango [min,max] sobre u (estilo «9 [4.5,13.5]»); mantener las listas por familia como diagnóstico; restaurar bandera de desacuerdo stft/demod (conjunto/onset ±3 u.t. como v1); en P1 publicar tasas de ambas familias o bandera si discrepan de veredicto.",
+   "Guardias de largo (§3-iii): extraer() asserta n_ticks == total del manifest (7.5M); analizar_v2 asserta T≈600 o publica p4 veredicto='no_aplicable_film_corto' (con t_pico/pico/b_fin observados) + bandera film_corto — prefijo verde NO garantiza COMPLETE (los chunks del prefijo ya existen con los runs a medias).",
+   "P4 robustez del veredicto sellado: (a) publicar el SOPORTE del máximo {t: bs1_s ≥ pico·(1−eps)} con eps declarado (p.ej. 1e-3); si el soporte no cae entero dentro (o fuera) de [230,340] ⇒ OTRO con descripción 'meseta/borde' — nunca decidido por polvo numérico; (b) veredicto_sellado_par132 SOLO para par='par132' (None en el resto); par134 publica veredicto de FORMA propio {tiene_maximo_local, t_pico, pico, decae: b_fin<0.9×pico} comparado contra (~0.007, ~347±2); par129/131 solo serie y descriptivo.",
+   "P1 perfil móvil (presc. 4, textual — «publicar perfil local (ventana móvil 10 u.t.)»): por caso, publicar resumen del perfil móvil de ln(ρ) reusando _perfil_pendiente (min/max/mediana, o pendientes por mitades + bandera si difieren >2×) — sin esto el número citable viola la letra del sello (el tap ya mostró dos regímenes dentro de una ventana: par129 Q0 +0.0232/+0.0050 por mitades)."
+  ],
+  "arreglos_recomendados": [
+   "Cobertura: publicar fraccion_del_film (denominador fin − t_grid[0]) junto a fraccion_desde_primer_canal (nombres explícitos); agregar hueco terminal {de: cob[-1][1], a: fin, admisible: False} cuando exista; anotar que admisible_h8 no verifica consolidación de la re-captura (o chequear largo del episodio siguiente).",
+   "_meta.umbrales completo: bandas P1 (0.7/1.3/1.5), criterios P4 ([230,340], [0.22,0.37], 0.9×pico, T−10, suavizado 5 u.t.), RMS drive 2 u.t., perfil 10 u.t., min_dur episodio 2 u.t., margen release 1.0, tol sobre_linea 0.5 — y declarar el 0.5 en la bitácora ANTES de leer (es elección nueva no sellada).",
+   "P1: publicar razón con 4-5 decimales (o decidir el veredicto sobre round(razon,2) declarándolo) — el borde 1.3000000000000011 publica el par inconsistente {razon: 1.3, zona_gris}; agregar direccion_ok = sign(tasa_corr) junto al veredicto (el tap: «la dirección sobrevive, la magnitud no»).",
+   "Presc. 1 por episodio (bandera, no gate): mediana(A_L) del episodio vs piso y |w_modo − línea medida| < tol DENTRO del episodio (declarando unidades consistentes); restaurar la doble condición de mudez de v1 (mediana global AND temprana) — barato aunque el margen medido sea ~5460×.",
+   "Relevos: eliminar la condición tautológica de las líneas 192-193 (min(ea[1],eb[1]) siempre es uno de los dos — dead code que confunde al próximo auditor); documentar el empate exacto de fines (hoy nunca publica); opcional: categoría 'contactos' (solape==0) para que el handoff de un punto de grilla no sea invisible.",
+   "P4: nota de un renglón en el JSON declarando que pico/b_fin/t_pico son sobre la serie SUAVIZADA 5 u.t. (el suavizado baja el pico ~0.9% — el criterio b_fin<0.9·pico compara contra el pico suavizado).",
+   "Línea medida: banda de búsqueda prior alrededor de la fórmula C√(1+0.1b) ± 2 rad como complemento de la bandera de continuidad (la fórmula está sellada para extremos — usarla como prior de banda no viola presc. 5)."
+  ],
+  "declaraciones": [
+   "Línea medida LIMPIA en los 4 films s120 (salto max 0.137 rad/u.t./paso, cero pasos >0.5; resid_max 0.0030-0.0138) — la guardia obligatoria es para el régimen 600: el RMS del líder débil (par129/131) ya cae 1.615→0.250 en las últimas 10 u.t. a t=120.",
+   "sigma_analitico de j2_resultados.json verificado contra §3 por juez y ambos taps: par132 +0.001522, par134 −0.001877 (débiles −0.014696/−0.016821); claves de 12 hex sin colisión de prefijo.",
+   "Censura por mudez DESCARTADA con número (juez): mediana de la fase muerta de par134 Q0 = 1.5e-3 vs piso 2.8e-7 (margen ~5460×); extrapolado a 600 u.t. mudo=False — el «enterrado» vive 4 órdenes sobre la mudez, consistente con el tap.",
+   "Elegibilidad P1: las ventanas previas a la primera captura SÍ son elegibles (el bug es post-release, no pre-captura); una ventana con episodio que arranca dentro se excluye ENTERA (conservador, no recorta el tramo).",
+   "Semántica de relevos con letra chica: handoff de contacto-en-un-punto es invisible (ni relevo ni hueco: _fusionar une contacto); co-dominancia de 40 u.t. cuenta como relevo (sello: solape>0 — conforme, semántica ancha); empate exacto de fines nunca publica relevo.",
+   "Bordes del suavizado: picos reales en t<5 o t>T−5 son invisibles (excluidos por diseño); el boxcar 5 u.t. corre picos ASIMÉTRICOS ~+2 u.t. — la réplica de forma de par134 debe leerse como ~0.007 @ ~347±2.",
+   "Los criterios exactos P4 en los bordes: 230.0/340.0 entran exactos (inclusivos); mesetas exactas en 0.22/0.37 entran por redondeo no controlado del convolve — no citar igualdades exactas como decisión.",
+   "El p4 que matar() computa sobre los s120 es espurio-inofensivo (no se asserta) — no citarlo de la memoria del output.",
+   "Núcleo verificado sano en lo re-ejecutado: dlnF sin NaNs posibles con HOP=0.5; corrección por drive exacta (recupera dlnρ=0.015000; tasa_corr=0.011 con drive 0.004); relevo limpio/anidados/cadena/mismo-modo/hueco-8.0/release-estricto/sin-episodios todos conformes; regresión de hechos 4/4 contra LECTURA.json ya pasada.",
+   "La banda-prior ±2 sobre la fórmula NO elimina el salto de línea por sí sola (residual 2.48 rad/u.t. en el sintético del matador): la pieza load-bearing del arreglo obligatorio es la bandera de continuidad + no-citabilidad post-salto."
+  ],
+  "raw": "VEREDICTO DEL JUEZ: BLOQUEA. Regla de la casa cumplida: todo BLOQUEA/ALTO re-ejecutado (scripts del matador corridos por mí desde su directorio tras verificar token-exactitud de los bloques copiados contra leer_largo600.py líneas 175-209/214-240/243-260, + script propio kill_v2/juez/jz_v2_1_elegibilidad_mudez.py para el BLOQUEA del auditor y el A3; T5 re-ejecutado yo mismo incluyendo s120_par129 como exigía el mandato). DOS BLOQUEA CONFIRMADOS e independientes entre sí: (1) elegibilidad P1 estructuralmente incapaz de producir el caso post-muerte de par134 Q0 que §3 declara elegible por nombre (episodio [35.75,62.75] → ventanas [70,116]/[200,400] EXCLUIDAS por `any(e[0]<b)`); (2) hovering solo intra-ventana cuando el sello exige «sostenido previo» y nombra par131 Q2 (37 u.t. de hovering previo — una de las 4 unidades corriendo) como el caso inválido. TRES ALTO CONFIRMADOS: línea medida sin guardia (salto 10.30→25.72 en sintético, 947 rad heredados por un seguidor genuino; s120 limpios pero RMS del líder débil cae 6.5×), P4 argmax inestable en mesetas (SOSTIENE→OTRO con ruido 1e-12) + MUERE espurio en film corto, y «ambas familias» ausente de todo el citable (P1 stft-only, relevos mono-familia, banderas de v1 eliminadas). UNO BAJADO CON EVIDENCIA: la censura por mudez de par134 Q0 no reproduce (margen ~5460× medido en el npz real; mudo=False extrapolado a 600) — baja a bandera recomendada. 7 arreglos obligatorios con diff conceptual exacto (todos baratos, re-matar con T6a/T3b/T4d + trampa nueva de elegibilidad antes de commitear), 7 recomendados, 10 declaraciones para la lectura §4. Films en curso jamás tocados; repo intacto; todo lo escrito vive en scratchpad/kill_v2/juez/."
+ },
+ "sintetico": {
+  "hallazgos": [
+   {
+    "titulo": "P1 acepta modos con hovering SOSTENIDO PREVIO: el codigo chequea rho<0.95 solo DENTRO de la ventana; el sello exige 'rho<0.95 sostenido previo' (§3) / 'antes del episodio' (presc. 4)",
+    "severidad": "BLOQUEA",
+    "evidencia": "leer_largo600.py:223-224 ('if float(r[sel].max()) >= HOVER' con sel = SOLO [a,b] de la ventana). Sintetico: modo con rho=0.96 sostenido en [10,40] (30 u.t.) y rho=0.30 en la ventana estacionaria [50,90], jamas capturado -> excl_precaptura=False, excl_hover=False, el caso ENTRA a p1['casos'] con veredicto_sellado. El propio veredicto wf_cfb44e2e cita el caso real: par131 Q2 'rho>0.95 durante 37 u.t. antes de consolidar' NO cumple pre-captura — y par131 es una de las 4 unidades corriendo. Con la logica actual, si a 600 u.t. par131 Q2 tiene una ventana estacionaria post-hovering con rho bajo, publica un numero P1 que el sello prohibe.",
+    "reproducir": "python3 kill_v2/matador-sintetico/t6_sello_vs_codigo.py (caso T6a); bloque copiado verificado token-exacto en t3_p1.py",
+    "arreglo": "Cambiar la exclusion por hovering a historia previa + ventana: excluir si r[t_grid <= b].max() >= HOVER (o, mas fiel al 'sostenido': si existe corrida rho>=0.95 de >=2 u.t. en t<=b). Una linea; re-matar con T6a y T3b."
+   },
+   {
+    "titulo": "P4: t_pico por argmax es inestable ante mesetas — el veredicto sellado SOSTIENE/OTRO se da vuelta con ruido 1e-12",
+    "severidad": "ALTO",
+    "evidencia": "Meseta de b_S1 en [320,370] (valor 0.30, film 600, dt=8e-4): sin ruido t_pico=322.5 -> SOSTIENE; con ruido gaussiano de amplitud 1e-12 (dos semillas) t_pico=350.83 / 350.26 -> OTRO. El suavizado boxcar de 5 u.t. deja la meseta plana al nivel del epsilon de maquina y np.argmax elige un punto arbitrario dentro de ella; si la meseta cruza t=340 (o 230), el criterio t_pico en [230,340] deja de ser una funcion del dato fisico. b_S1 saturando en meseta es plausible (tau_b~330).",
+    "reproducir": "python3 kill_v2/matador-sintetico/t4_p4.py (caso T4d); bloque P4 copiado token-exacto (60/60)",
+    "arreglo": "Publicar ademas del argmax el SOPORTE del maximo: intervalo {t : bs1_s >= pico*(1-eps)} con eps declarado (p.ej. 1e-3); si el soporte no cae entero en/fuera de [230,340], veredicto OTRO con descripcion (meseta), nunca decidido por polvo numerico."
+   },
+   {
+    "titulo": "Linea MEDIDA sin guardia: si el lider se apaga, el argmax de banda [2,60] salta de linea y TODOS los rho/fase/episodios/C_fit de v2 heredan el salto; nada gatea sobre resid_max",
+    "severidad": "ALTO",
+    "evidencia": "Sintetico (dt=8e-4, T=120): lider exp(-t/15)*cos(10.3t) + 0.02*cos(25.7t) -> wl_med salta 10.30->25.72 en t=58.25 (salto 30.8 rad/u.t. por paso). Un seguidor GENUINAMENTE enganchado a la linea verdadera pierde su episodio: con linea v2 eps=(1.25,58.25) vs verdad (1.25,118.25); error de fase acumulado 947 rad (150.7 vueltas). En los 4 npz legales s120 la linea esta LIMPIA (salto max 0.137 rad/u.t./paso, cero pasos >0.5) — pero el RMS del lider debil (par129/131) ya cae 1.615->0.250 en las ultimas 10 u.t. a t=120; a 600 u.t. nadie garantiza que no cruce el piso donde el argmax salta. resid_max se publica pero no frena ni marca nada.",
+    "reproducir": "python3 kill_v2/matador-sintetico/t5_linea_medida.py (T5i sintetico + T5ii los 4 pares reales)",
+    "arreglo": "(1) restringir la banda de busqueda de wl_med alrededor de la formula C*sqrt(1+0.1b) +-2 rad (la formula ya esta sellada para extremos, usarla como prior de banda no viola presc. 5); (2) chequeo de continuidad: si |diff(wl_med)|/HOP > umbral declarado (p.ej. 1 rad/u.t.) o resid_max > umbral, BANDERA por unidad y no citar fase/rho posteriores al salto; el fix +-2 en el sintetico mantiene la linea (no salta a 25.7)."
+   },
+   {
+    "titulo": "Relevos: el sello (presc. 2) exige 'solape>0 EN AMBAS FAMILIAS, citado como RANGO POR UMBRAL'; el codigo los computa por familia independiente y solo con u=1.0",
+    "severidad": "MEDIO",
+    "evidencia": "leer_largo600.py:172-199: eps_por_modo usa solo eps_u1.0 y el loop corre dentro de 'for fam in (stft, demod)' sin cruce. Sintetico: solape 5.0 en stft con HUECO de 2.0 en demod -> el JSON publica relevos=[QA->QB solape 5.0] en la lista stft; segun el sello esa transicion NO esta admitida como relevo (ambas familias) y el solape citable debe ser rango por umbral (estilo '9 [4.5,13.5]'). Ademas leer() imprime solo la familia stft. El AND y el rango quedan a cargo del lector humano — el numero citable que emite la herramienta no es el del sello.",
+    "reproducir": "python3 kill_v2/matador-sintetico/t6_sello_vs_codigo.py (caso T6b)",
+    "arreglo": "Publicar relevos_v2 = interseccion de familias (solape>0 en ambas, solape citado como min/max sobre u en U_CAP y familias), manteniendo las listas por familia como diagnostico."
+   },
+   {
+    "titulo": "fraccion_cubierta con denominador fin-primer_canal: UN episodio corto al final del film da fraccion=1.0",
+    "severidad": "MEDIO",
+    "evidencia": "leer_largo600.py:178. Sintetico: unico episodio (115.0, 118.25) en grilla que termina en 118.25 -> fraccion_cubierta=1.0, huecos=0 (3.25 u.t. cubiertas de un film de 120/600). El numero citable de presc. 2 ('fraccion de cobertura') puede leerse como cobertura total siendo cobertura-desde-la-primera-captura; primer_canal=115.0 se publica al lado pero el resumen impreso ya dice frac=1.0. Casos vacios NO crashean (frac=0.0, primer_canal=None, json.dumps OK). Hueco exacto 8.0 -> admisible_h8=True (conforme al pre-registro h_max=8).",
+    "reproducir": "python3 kill_v2/matador-sintetico/t1_t2_relevos_cobertura.py (T2a, T2b, T2c)",
+    "arreglo": "Publicar DOS fracciones con nombre explicito: fraccion_desde_primer_canal (la actual) y fraccion_del_film (denominador fin - t_grid[0]); citar la segunda o ambas."
+   },
+   {
+    "titulo": "P4 aplica el veredicto sellado sin guardia de largo de film: un film corto/truncado da MUERE espurio",
+    "severidad": "MEDIO",
+    "evidencia": "leer_largo600.py:251-260: monotono = t_pk > T-10 con T = lo que haya en el npz. Sintetico: film de 120 u.t. con b monotono creciente (cuyo pico verdadero estaria en t>120) -> t_pk=115.0 > 110 -> veredicto 'MUERE', cuando el criterio sellado es sobre 600 u.t. (t_pico>590 en el docstring). Si una unidad s600 muere/trunca a mitad de corrida y extraer() empaqueta lo que hay, leer() publica MUERE sellado sin aviso. Ya hoy matar() computa este p4 espurio sobre los s120 (inofensivo porque no se asserta, pero queda en memoria del que mira el output).",
+    "reproducir": "python3 kill_v2/matador-sintetico/t4_p4.py (T4f vs T4f')",
+    "arreglo": "Guardia: if T < 595: veredicto = 'no_aplicable_film_corto' (publicando igual t_pico/pico/b_fin observados)."
+   },
+   {
+    "titulo": "P1 publica pendiente de ventana UNICA por caso sin el perfil movil de 10 u.t. de dlnrho que presc. 4 exige publicar",
+    "severidad": "MEDIO",
+    "evidencia": "Presc. 4: 'PROHIBIDO citar dlnrho/dt de ventana unica... Si se usa: publicar perfil local (ventana movil 10 u.t.), descomposicion dlnA_L/dlnA_S, y correccion por drive'. El codigo publica descomposicion y correccion (verificadas exactas: dlnrho=0.015000 recuperado, tasa_corr=0.011 con drive 0.004) pero el unico uso de _perfil_pendiente es sobre F (linea 119); el perfil movil de rho no existe en p1['casos'] — cada caso es UN polyfit sobre toda la ventana estacionaria (que puede medir >100 u.t.).",
+    "reproducir": "python3 kill_v2/matador-sintetico/t3_p1.py (T3a/T3a') + lectura de leer_largo600.py:225-240",
+    "arreglo": "Agregar al caso el resumen del perfil movil: perfil = _perfil_pendiente(t_grid[sel], r[sel]); publicar min/max/mediana (o la serie decimada) para que la pendiente unica sea auditable contra el perfil."
+   },
+   {
+    "titulo": "Veredicto P1 en el borde: razon publicada (round 2) puede contradecir al veredicto — razon cruda 1.3000000000000011 imprime razon_vs_sigma=1.3 con veredicto zona_gris",
+    "severidad": "BAJO",
+    "evidencia": "Construccion con razon nominal exacta 1.3 via polyfit: cruda=1.30000000000000115 -> 'zona_gris' (el 0.7 nominal cayo adentro: 0.70000000000000073 -> sigma_es_EL_numero). Cualquier razon real en (1.300, 1.305) publicara el par inconsistente {razon_vs_sigma: 1.3, veredicto: zona_gris} en el JSON citable.",
+    "reproducir": "python3 kill_v2/matador-sintetico/t3_p1.py (T3d)",
+    "arreglo": "Decidir el veredicto sobre round(razon, 2) (declarandolo), o publicar razon con 4-5 decimales para que el borde sea visible."
+   },
+   {
+    "titulo": "P4 bordes numericos: criterios exactos en 230/340/0.22/0.37/0.9*pico quedan a merced de ~1e-15 de fp, y el suavizado baja el pico ~0.9% sesgando el criterio b_fin<0.9*pico",
+    "severidad": "BAJO",
+    "evidencia": "Medido: pico gaussiano exacto en 230.0 y 340.0 -> t_pk exacto, SOSTIENE (bordes inclusivos OK); meseta exacta 0.22 -> v_pk=0.22+2.3e-15 (entra por suerte de redondeo del convolve; el lado del error no esta controlado); 0.37 -> 0.37-1.4e-15 (entra). Gaussiana de pico crudo 0.30 -> pico suavizado 0.29725 (-0.9%): un b_fin fisico = 0.9*pico_crudo (0.27) da 0.27 > 0.9*v_pk=0.26752 -> OTRO; el criterio compara contra el pico SUAVIZADO sin declararlo. Pico chico par134-forma 0.007@347: robusto (ruido 0.002 -> corrimiento 0.26 u.t.), pero pico asimetrico corre +1.9 u.t. (tolerancia de la 'replica de forma' deberia contemplar +-2).",
+    "reproducir": "python3 kill_v2/matador-sintetico/t4_p4.py (T4a, T4b, T4c, T4e, T4e')",
+    "arreglo": "Declarar en el JSON que pico/b_fin/t_pico son sobre la serie suavizada 5 u.t. (nota de un renglon); para los bordes, ninguna correccion de codigo — solo no citar igualdades exactas como decision."
+   },
+   {
+    "titulo": "Relevos/huecos, semantica en los bordes (todo conforme al sello pero citable con letra chica): handoff de contacto-en-un-punto es INVISIBLE, co-dominancia larga cuenta como relevo, hueco admisible no exige re-captura consolidada",
+    "severidad": "BAJO",
+    "evidencia": "Todos medidos con verdad exacta y logica copiada token-a-token: (T1e) A=(10,50) B=(50,90): sol=0 -> ni relevo (sello dice solape>0: conforme) ni hueco (_fusionar une contacto) — el traspaso mas apretado posible en la grilla de 0.5 desaparece de ambas listas; (T1g) solape de 40 u.t. cuenta como relevo (sello lo permite, semantica ancha); (T1f) A y B terminando en el mismo t: NUNCA relevo (el filtro anidado sol<min(dur) lo excluye siempre — la condicion 'abs(ea[1]-min(...))' de la linea 192 es tautologica, codigo muerto); (presc. 2) 'hueco <= h_max seguido de re-captura consolidada': el codigo marca admisible_h8 por largo sin chequear consolidacion del episodio siguiente. Los casos filosos centrales PASAN: relevo limpio con solape 5.0 y direccion correcta en ambos ordenes de nombre, anidado estricto/fin-compartido/inicio-compartido excluidos, cadena A->B->C = exactamente 2, mismo modo = hueco no relevo, release estricto en fin-1.",
+    "reproducir": "python3 kill_v2/matador-sintetico/t1_t2_relevos_cobertura.py (T1a-T1g, T2d)",
+    "arreglo": "Si se quiere ver el handoff de contacto: reportar tambien 'contactos' (sol==0) como categoria propia; borrar la condicion tautologica de la linea 192 (no cambia numeros, confunde al proximo auditor); anotar que admisible_h8 no verifica consolidacion."
+   }
+  ],
+  "resumen": "Matanza sintetica de la capa v2 de tools/leer_largo600.py con logica copiada token-a-token verificada (relevos/cobertura 203/203, P4 60/60, P1 identico salvo inyeccion) + los 4 npz legales s120. LO QUE PASA con numeros exactos: relevo limpio (solape 5.0, direccion correcta en ambos ordenes), anidados excluidos (estricto, fin-compartido, inicio-compartido), cadena A->B->C=2, mismo-modo=hueco-no-relevo, hueco exacto 8.0 admisible, sin-episodios no crashea (frac=0.0, primer_canal=None, JSON OK), release estricto en fin-1, P1 recupera dlnrho=0.015000 exacto y tasa_corr=0.011 con drive 0.004, hovering EN ventana excluye 0.96 y 0.95 exacto, ventanas previas a la primera captura SI son elegibles (la sospecha del brief sobre any(e[0]<b) NO es bug), cero NaN posibles en dlnF con HOP=0.5, sigma_analitico de j2 coincide con el §3 (+0.0015/-0.0019), y la linea medida esta LIMPIA en los 4 films s120 (salto max 0.137 rad/u.t./paso). LO QUE MATA: (BLOQUEA) el hovering del codigo es solo intra-ventana mientras el sello exige 'rho<0.95 sostenido PREVIO' — un modo estilo par131 Q2 (hovering 37 u.t. antes, documentado en el propio veredicto) entra a P1 con veredicto sellado; (ALTO) t_pico de P4 por argmax se da vuelta SOSTIENE->OTRO con ruido 1e-12 si b_S1 hace meseta cruzando 340; (ALTO) la linea medida no tiene guardia: con lider que se apaga el argmax salta de linea (demostrado: episodio verdadero (1.25,118.25) medido como (1.25,58.25), 150 vueltas de error de fase) y resid_max no gatea nada — riesgo latente para el lider debil a 600 (su RMS ya cae 6.5x a t=120); (MEDIO) relevos sin el AND de familias ni el rango-por-umbral que exige presc. 2, fraccion_cubierta=1.0 con un episodio de 3.25 u.t. al final (denominador fin-primer_canal), MUERE espurio en films cortos/truncados sin guardia de T, y falta publicar el perfil movil 10 u.t. de dlnrho que presc. 4 exige. Scripts reproducibles en scratchpad/kill_v2/matador-sintetico/{t1_t2_relevos_cobertura,t3_p1,t4_p4,t5_linea_medida,t6_sello_vs_codigo}.py. Nada del repo modificado; data/film_largo_600 jamas tocada."
+ },
+ "auditor": {
+  "hallazgos": [
+   {
+    "titulo": "P1 excluye estructuralmente a par134 Q0, elegible DECLARADO en §3 (post-muerte)",
+    "severidad": "BLOQUEA",
+    "evidencia": "tools/leer_largo600.py:217-222: `capturado_alguna_vez = bool(mv['stft']['eps_u1.0'])` + `if capturado_alguna_vez and any(e[0] < b ...): continue` descarta TODA ventana que termine después del inicio del PRIMER episodio del modo. Verificado contra data/lote_suelto_120/LECTURA.json: par134 Q0 tiene episodio [[35.75, 62.75]] (capturó y murió) → en el film de 600 cualquier ventana estacionaria posterior a t≈36 queda excluida y par134 Q0 produce CERO casos P1. Pero §3-P1 lo declara elegible por nombre: «Elegibles hoy: par132 Q0/Q2 (σ_rec=+0.0015), par134 Q0 (σ=−0.0019)» — y el número del tap que motiva la pregunta es justamente su tasa POST-MUERTE (+0.0109 = 5.8×σ, veredicto P1-iii). La regresión de matar() no lo detecta porque no compara casos P1 contra nada.",
+    "reproducir": "python3 -c \"import json; v1=json.load(open('data/lote_suelto_120/LECTURA.json')); print(v1['par134']['modos']['Q0']['stft']['episodios_rho>1'])\" → [[35.75,62.75]]. Luego trazar analizar_v2 con un modo sintético con episodio en [35,63] y ventana estacionaria [70,116]: e[0]=35 < b=116 ∧ capturado → continue → casos=[].",
+    "arreglo": "Elegibilidad = ventana sin episodio SOLAPADO (sustituir `any(e[0] < b)` por `any(e[0] < b and e[1] > a)`), etiquetando cada caso como 'pre_primera_captura' o 'post_release' (§3 admite ambos: el elegible par134 Q0 es post-muerte). Mantener la exclusión por hovering. Agregar trampa sintética en matar() que exija ≥1 caso para un modo con episodio temprano + ventana tardía."
+   },
+   {
+    "titulo": "A2/presc.1-2: «AMBAS familias» no se exige en ningún lado — cobertura, relevos y P1 son mono-familia sin bandera",
+    "severidad": "ALTO",
+    "evidencia": "Presc. 1: «corrida ρ>u de ≥2 u.t. en AMBAS familias (stft+demod)»; presc. 2: «relevo solapado (solape>0 en ambas familias)». El código (leer_largo600.py:157-158, 169-209) computa episodios, cobertura, huecos, relevos y releases POR FAMILIA por separado y nunca los intersecta; no existe ninguna bandera de desacuerdo stft/demod (v1 tenía bandera_cruzada/bandera_ab/bandera_orden_familias; v2 las eliminó todas). Además P1 usa SOLO stft para captura, hovering y tasas (líneas 217-230: series_rho[mk]['stft']) — un modo capturado solo en demod entraría como 'no-capturado'. El docstring dice «por familia stft/demod», pero eso es una reinterpretación del sello, no lo que el sello dice.",
+    "reproducir": "Leer cobertura['stft'] vs cobertura['demod'] en la salida: un episodio presente en una sola familia entra íntegro a la cobertura de esa familia y a sus relevos, sin AND ni bandera. En P1, sustituir demod-only capture en un modo sintético: capturado_alguna_vez=False.",
+    "arreglo": "Publicar como CITABLE la intersección (AND por punto de grilla de r_stft>u ∧ r_demod>u, luego runs_true ≥2) manteniendo las dos familias como diagnóstico; relevo citable solo si solape>0 en ambas; restaurar bandera de desacuerdo (conjunto/onset ±3 u.t. como v1); en P1 computar tasas en ambas familias (el arbitraje del tap siempre reportó ambas) o al menos bandera si stft/demod discrepan de veredicto."
+   },
+   {
+    "titulo": "A3/presc.1: el episodio NO verifica A_L>piso ni w sobre la línea medida; y la mudez v2 (solo mediana global) puede censurar a par134 Q0 en 600 u.t.",
+    "severidad": "ALTO",
+    "evidencia": "Presc. 1 define canal «con A_L sobre el piso de mudez y w del modo sobre la LÍNEA MEDIDA». Código: episodios = runs_true(r>u) a secas (línea 158) — un episodio con A_L ínfima pero A_S más ínfima (ρ = cociente de dos ruidos) cuenta como canal; A_L jamás se compara contra piso alguno. 'sobre_linea' se evalúa UNA vez al final del film (w_fin en T−3 vs wl_med[-1], líneas 152-155) y solo se publica, no condiciona ningún episodio (un episodio en t∈[200,260] no tiene check de w). Además v2 degrada la mudez: v1 exigía amp_mediana<piso AND amp_temprana<piso (leer_suelto120.py:288); v2 usa solo amp_mediana (línea 167). En un film de 600 u.t., un modo tipo par134-Q0 (activo hasta t≈63, muerto 537 u.t.) tiene mediana dominada por la fase muerta: si cae bajo 1e-4×mediana del Q más activo queda MUDO y sus episodios REALES tempranos desaparecen de cobertura y de P1 — censura silenciosa. El semi-mudo (mediana sobre piso, A_L bajo piso en el episodio) no está contemplado.",
+    "reproducir": "grep de 'piso' en analizar_v2: solo aparece en mv['mudo'] (mediana global); ningún episodio consulta A_L ni piso. Sintético: señal muerta 90% del film con episodio real temprano → amp_mediana ≈ nivel muerto → mudo=True → excluido de eps_por_modo (línea 174).",
+    "arreglo": "Por episodio: exigir (o al menos bandera) mediana de A_L en el episodio > piso y |w_stft del modo − wl_med| < tol DENTRO del episodio, no solo al final. Mudez: restaurar la doble condición de v1 (mediana global AND temprana) o mudez por tramos; declarar qué pasa con el semi-mudo. Nota: piso está en unidades de mediana|x| y A_L en magnitud STFT — definir la comparación en unidades consistentes y declararla."
+   },
+   {
+    "titulo": "A4/presc.4: hovering se chequea solo DENTRO de la ventana; el sello dice «ρ<0.95 sostenido previo» y declara par131 Q2 inelegible como modo",
+    "severidad": "ALTO",
+    "evidencia": "Código línea 223: `if float(r[sel].max()) >= HOVER: continue` — solo mira la ventana. Presc. 4: «'pre-captura' solo está definido sin hovering (ρ>0.95 sostenido antes del episodio); par131 Q2 NO lo cumple (ρ>0.95 durante 37 u.t. antes de consolidar)» — el sello invalida el pre-captura del MODO cuando hay hovering en cualquier punto antes de su captura, no solo dentro de la ventana medida. Con el código actual, una ventana estacionaria [20,55] de par131 Q2 (hovering en [65,102], consolida 110) entra como caso P1 legítimo — exactamente el caso que el sello nombró como mal definido. El docstring de v2 declara «ρ<0.95 en TODA la ventana», pero esa reinterpretación es posterior al sello §3 («sostenido previo»).",
+    "reproducir": "Modo sintético: ρ<0.9 en [20,55], hovering ρ=0.97 en [65,102], episodio desde 110; ventana estacionaria [20,55] → r[sel].max()<0.95 → caso publicado con veredicto sellado.",
+    "arreglo": "Exigir ρ<0.95 en TODO el tramo desde el inicio de elegibilidad (inicio del film o fin del último episodio) hasta la próxima captura del modo (o hasta el fin de la ventana si nunca captura); como mínimo publicar rho_max_pre_captura por caso para que el veredicto sellado no se cite sin ese dato."
+   },
+   {
+    "titulo": "A1/presc.2: el hueco terminal (tras la última cobertura hasta el fin) no se lista ni clasifica; «re-captura consolidada» no se verifica",
+    "severidad": "MEDIO",
+    "evidencia": "Líneas 180-182: huecos = solo entre intervalos CONSECUTIVOS de cobertura. Para los huecos interiores la re-captura existe por construcción (siempre hay intervalo posterior) — eso está bien. Pero: (1) si la cobertura termina en t=400 y el film sigue hasta ~599, ese hueco terminal de ~200 u.t. NO aparece en la lista — un lector que verifique «todos los huecos admisibles ≤8» concluiría link sano continuo; solo la fracción lo delata indirectamente. (2) Presc. 2 exige «hueco ≤ h_max seguido de re-captura CONSOLIDADA»: el código marca admisible_h8 por largo solamente; el episodio que sigue puede ser de 2 u.t. y morir — nunca se chequea consolidación. (3) La fracción usa denominador (fin − t0) (línea 178): el tramo pre-primer-canal queda fuera del denominador — elección no declarada en §3 ni en _meta (mitigada porque primer_canal se publica).",
+    "reproducir": "_fusionar de episodios que terminan en 400 con fin=598.75 → huecos=[] si la cobertura es un solo intervalo; frac<1 pero ningún hueco listado.",
+    "arreglo": "Agregar hueco terminal explícito {de: cob[-1][1], a: fin, admisible: False (sin re-captura)} cuando fin−cob[-1][1]>0 (y análogo inicial si se quiere simetría); anotar en cada hueco el largo del episodio re-capturador y si consolida (llega al fin o dura ≥N declarado); declarar el denominador de la fracción en _meta."
+   },
+   {
+    "titulo": "A5/P4: 'veredicto_sellado_par132' se computa e imprime para los 4 pares; par134 (réplica de FORMA) heredaría OTRO/MUERE bajo criterios ajenos",
+    "severidad": "MEDIO",
+    "evidencia": "Líneas 252-260: sostiene/monotono usan los umbrales de par132 (t_pico∈[230,340], pico∈[0.22,0.37]) para TODOS los pares; leer() imprime el veredicto por unidad (línea 409). Para par134 el sello dice «réplica de FORMA (pica ~0.007 @~347 y decae), no de valor»: con pico≈0.007 ∉ [0.22,0.37] el código publicará 'OTRO' (o 'MUERE' si el pico suavizado cae en los últimos 10 u.t.), un veredicto que §3 NUNCA definió para par134, listo para mal-citarse. par129/131 (b~1e-5/1e-6, sin cruce de banda) también reciben etiqueta sellada sin sello.",
+    "reproducir": "Seguir p4['veredicto_sellado_par132'] en analizar_v2: se asigna incondicionalmente a todo par; con pico=0.007 y t_pico=347 → sostiene=False, monotono=False → 'OTRO'.",
+    "arreglo": "veredicto_sellado SOLO para par='par132' (None en el resto). Para par134 publicar el veredicto de FORMA que §3 sí sella: {tiene_maximo_local: t_pico<T−10, t_pico, pico, decae: b_fin<0.9×pico} + comparación descriptiva contra (~0.007, ~347). par129/131: solo serie y descriptivo."
+   },
+   {
+    "titulo": "A8: _meta omite umbrales sellados (bandas P1, criterios P4) y 'sobre_linea' usa tolerancia 0.5 NUEVA sin declarar en §3",
+    "severidad": "MEDIO",
+    "evidencia": "Líneas 396-399: _meta.umbrales = {u_cap, h_max, drive_estac, largo_estac, hover, piso_mudez_rel}. Faltan declarados en §3/docstring: bandas del veredicto P1 (0.7/1.3/1.5), criterios P4 ([230,340], [0.22,0.37], 0.9×pico, monótono t>T−10, suavizado 5 u.t.), RMS drive 2 u.t., perfil móvil 10 u.t., duración mínima de episodio 2 u.t., margen de release (b < fin−1.0, línea 203). Y hay una elección NUEVA no declarada en ningún lado del sello: sobre_linea = |w_fin − wl_med[-1]| < 0.5 (línea 155) — el 0.5 no aparece en §3 ni en las prescripciones ni en el docstring.",
+    "reproducir": "Comparar el dict de la línea 396 contra la lista de números de §3 puntos 1-2 y contra grep de literales numéricos en analizar_v2.",
+    "arreglo": "Volcar TODOS los umbrales operativos a _meta.umbrales (P1 bands, P4 criterios, suavizado, rms, perfil, min_dur, margen_release, tol_sobre_linea) y declarar la tolerancia 0.5 de sobre_linea en la bitácora ANTES de leer (es una elección nueva: o se sella ahora o se publica como no-sellada)."
+   },
+   {
+    "titulo": "Presc.4: el perfil móvil 10 u.t. de dlnρ/dt no se publica por caso — cada caso P1 es un polyfit de ventana única sin control de log-linealidad",
+    "severidad": "MEDIO",
+    "evidencia": "El docstring promete «dlnρ/dt SOLO como perfil móvil (10 u.t.) + descomposición + corrección» y presc. 4 exige «publicar perfil local (ventana móvil 10 u.t.)». _perfil_pendiente existe (línea 81) pero solo se aplica a F (línea 119); los casos P1 (líneas 225-240) publican UNA pendiente polyfit por ventana estacionaria. §3 sanciona la ventana estacionaria como marco, pero el tap mostró exactamente el riesgo residual: par129 Q0 no era log-lineal DENTRO de una ventana (+0.0232/+0.0050 por mitades) — sin el perfil o un check de mitades, el número sellado puede promediar dos regímenes.",
+    "reproducir": "grep _perfil_pendiente en analizar_v2: una sola llamada (dlnF). Los casos no llevan perfil ni mitades.",
+    "arreglo": "Por caso publicar perfil móvil de ln(ρ) (reusar _perfil_pendiente) o al menos pendientes por mitades de la ventana + bandera si difieren >2× — es barato y ya está la función."
+   },
+   {
+    "titulo": "Sin gate de COMPLETE: extraer/leer aceptan films incompletos; prefijo puede pasar con los runs a medias (§3-iii)",
+    "severidad": "MEDIO",
+    "evidencia": "§3 control (iii): «ningún film se abre hasta COMPLETE de las 4». prefijo() solo verifica los primeros 1.5M ticks (que existen a las ~1.2h de corrida) y escribe CONTROL_PREFIJO bit_exacto=true; leer() solo chequea ese JSON (líneas 387-392). Nada en extraer() ni en analizar_v2 verifica que el film tenga los 7.5M ticks / T≈600: se podría extraer y leer un film al 60% con CONTROL_PREFIJO verde. Además los criterios P4 ([230,340], T−10) asumen T=600 en silencio.",
+    "reproducir": "Correr prefijo ahora mismo (films en curso): pasaría, porque los chunks 0-22 ya existen y son el prefijo determinista. leer() luego abriría films truncados.",
+    "arreglo": "En extraer(): assert len(wl['ticks']) == 7_500_000 (o el manifest ticks_total) por unidad. En analizar_v2: assert abs(T − 600) < 2. Barato y cierra el agujero procedural."
+   },
+   {
+    "titulo": "Relevos: la condición de solape saliente/entrante es tautológica (dead code) y el empate de fines asigna saliente arbitrario",
+    "severidad": "BAJO",
+    "evidencia": "Línea 192-193: `abs(ea[1] - min(ea[1], eb[1])) < 1e-9 or abs(eb[1] - min(ea[1], eb[1])) < 1e-9` — min(ea[1],eb[1]) es SIEMPRE uno de los dos, así que el or es SIEMPRE True; el filtro efectivo es solo sol>0 + no-anidado. El resultado neto es correcto (no-anidado + solape ⇒ cruce genuino: uno empieza dentro del otro y lo sobrevive), pero el código aparenta un chequeo que no hace. Con ea[1]==eb[1] exactos (no anidados) saliente se asigna por el else arbitrariamente. El 'solape' reportado es todo el span co-activo, no un solape de transición — consistente con la cita del tap («solape 9 [4.5,13.5]») pero conviene notarlo.",
+    "reproducir": "Evaluar la expresión con cualquier par (ea,eb): siempre True. Empate: ea=(10,50), eb=(30,50) → anidado, excluido OK; ea=(10,50), eb=(5,50) → sol=40 < min(40,45)=40 falso → excluido (empate exacto nunca publica).",
+    "arreglo": "Eliminar la condición tautológica dejando `sol > 0 and sol < min(largos)` con comentario de por qué eso ya implica cruce; documentar el caso de fines idénticos (hoy queda excluido vía no-anidado cuando además hay inclusión, o publica con saliente arbitrario si no — decidir y comentar)."
+   },
+   {
+    "titulo": "P1: el veredicto sellado ignora el SIGNO de la tasa corregida",
+    "severidad": "BAJO",
+    "evidencia": "Línea 231: razon = abs(lr − lF)/|σ| — una tasa corregida NEGATIVA de magnitud ≈|σ| daría 'sigma_es_EL_numero'. §3 solo sella bandas de magnitud, pero el veredicto del tap dice explícitamente «la dirección sobrevive, la magnitud no» — la dirección es parte de la pregunta. tasa_corr sí se publica con signo, así que el dato está; el riesgo es citar el veredicto solo.",
+    "reproducir": "Caso sintético con lr−lF = −|σ| → razon=1.0 → 'sigma_es_EL_numero'.",
+    "arreglo": "Agregar al caso 'direccion_ok': sign(tasa_corr) == sign esperado (positiva: crossover hacia dominancia) y condicionar el veredicto o publicar la bandera junto al veredicto."
+   }
+  ],
+  "resumen": "Auditoría de fidelidad al sello v2 (§3 bitácora 2026-08-02 + prescripciones 1-8 del tap wf_cfb44e2e) sobre tools/leer_largo600.py. A6 y A7 VERIFICADOS LIMPIOS: los 4 sigma_analitico de j2_resultados.json coinciden con los declarados (34b5ab +0.001522, 61b484 −0.001877, 9c2256bc −0.014696, e58e8892 −0.016821; claves de 12 hex, startswith sin colisión, razón usa |σ|); prefijo() es correcto contra la estructura real (1500000//65536=22 chunks completos por SHA + chunk_00022 de borde con 58209 filas, ticks 1441792→1500000 inclusive la fila de cierre, rng_state_json correctamente excluido) y leer() gatea bit_exacto de las 4. Hay 1 BLOQUEA: la elegibilidad P1 (`capturado_alguna_vez and any(e[0] < b)`) excluye toda ventana posterior a la primera captura del modo, lo que deja a par134 Q0 (episodio [35.75,62.75] en s120, luego muere) con CERO casos P1 pese a que §3 lo declara elegible por nombre — justamente el caso post-muerte (+0.0109 = 5.8σ) que el film de 600 debía decidir; hay que arreglarlo ANTES de commitear porque el lector queda sellado. 3 ALTO: (1) «AMBAS familias» de presc.1/2 no se exige en ningún punto (cobertura/relevos/P1 mono-familia, cero banderas cruzadas — v1 las tenía y v2 las borró); (2) la definición de episodio omite A_L>piso y w-sobre-línea por episodio (sobre_linea solo al final del film, tol 0.5 nueva sin declarar) y la mudez v2 degradada a mediana-global puede censurar silenciosamente los episodios tempranos reales de un modo que muere temprano en 600 u.t.; (3) hovering se chequea solo dentro de la ventana cuando el sello dice «sostenido previo» y declara par131 Q2 inelegible como modo. 5 MEDIO (hueco terminal invisible + re-captura consolidada no verificada; veredicto_sellado_par132 aplicado a los 4 pares — par134 debe publicarse como veredicto de FORMA propio; _meta incompleto + umbral 0.5 no declarado; falta el perfil móvil 10 u.t. por caso P1; sin gate de COMPLETE de los films) y 2 BAJO (condición tautológica en relevos; veredicto P1 ciego al signo). Archivos: /Users/cagostino/code/doft-study07-worldline/tools/leer_largo600.py, /Users/cagostino/code/doft-study07-worldline/docs/bitacora/2026-08-02.md, /Users/cagostino/code/doft-study07-worldline/audit/DOUBLETAP_MARCO_wf_cfb44e2e_VEREDICTO.md."
+ }
+}
