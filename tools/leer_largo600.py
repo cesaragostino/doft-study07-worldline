@@ -208,10 +208,12 @@ def _p4(bs1, t, dt, T, par):
             "soporte_maximo": [round(t_sop[0], 1), round(t_sop[1], 1)],
             "b_fin": round(b_fin, 4),
             "ratio_fin_pico": round(b_fin / max(v_pk, 1e-12), 3),
-            "b_en_grilla": {str(tt): round(float(bs[min(int(tt / dt), len(bs) - 1)]), 4)
-                            for tt in (60, 120, 200, 281, 340, 400, 500, 600) if tt < T},
-            "nota": "números sobre serie SUAVIZADA 5 u.t. (pico −~0.9%, corrimiento "
-                    "asimétrico ~+2 u.t.); picos en t<5 o t>T−5 invisibles por diseño"}
+            "b_en_grilla": {str(tt): round(float(bs1[min(int(tt / dt), len(bs1) - 1)]), 4)
+                            for tt in (60, 120, 200, 281, 340, 400, 500, 600) if tt <= T},
+            "nota": "pico/soporte/b_fin sobre serie SUAVIZADA 5 u.t. (pico −~0.9%, "
+                    "corrimiento asimétrico ~+2 u.t.; picos en t<5 o t>T−5 invisibles); "
+                    "b_en_grilla sobre serie CRUDA (corrección §5: el suavizado 'same' "
+                    "reducía a la mitad el punto de borde t=600 por zero-padding)"}
     if T < T_MIN_P4:
         base["veredicto"] = "no_aplicable_film_corto"
         base["bandera_film_corto"] = True
