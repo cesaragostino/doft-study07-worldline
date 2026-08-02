@@ -104,8 +104,7 @@ def evaluate_one(args: tuple[str, str, dict]) -> dict:
             arrays, manifest = loaded["arrays"], loaded["manifest"]
             view_hash, status = loaded["view_hash"], "reused"
         else:
-            wl = api.load_run(run_dir)
-            view = link_power.run(wl, observation_config)
+            view = link_power.run_path(run_dir, observation_config)
             path = view.write(views_root)
             loaded = api.load_view(path)
             arrays, manifest = loaded["arrays"], loaded["manifest"]

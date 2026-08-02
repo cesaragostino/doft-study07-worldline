@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import json
 import sys
 from pathlib import Path
 
@@ -128,3 +130,44 @@ def test_missing_or_invalid_causal_channels_fail_loud() -> None:
         link_power.run(synthetic_worldline(), config(t0_tick=0))
     with pytest.raises(RuntimeError, match="stride=1"):
         link_power.run(synthetic_worldline(), config(stride=2))
+
+
+def test_streaming_path_matches_in_memory_view_across_chunk_boundary(tmp_path) -> None:
+    wl = synthetic_worldline()
+    run_dir = tmp_path / "run"
+    chunks_dir = run_dir / "worldline"
+    chunks_dir.mkdir(parents=True)
+    chunk_shas = []
+    for index, sl in enumerate((slice(0, 3), slice(3, 6))):
+        path = chunks_dir / f"chunk_{index:05d}.npz"
+        np.savez_compressed(
+            path,
+            ticks=wl["ticks"][sl],
+            drive=wl["drive"][sl],
+            **{f"estados_nodo{j}": state[sl]
+               for j, state in enumerate(wl["estados"])},
+        )
+        chunk_shas.append(hashlib.sha256(path.read_bytes()).hexdigest())
+    man_text = json.dumps(wl["manifest"], indent=1)
+    (run_dir / "manifest.json").write_text(man_text)
+    manifest_sha = hashlib.sha256(man_text.encode("utf-8")).hexdigest()
+    complete = {
+        "chunks": 2,
+        "chunk_shas": chunk_shas,
+        "sha_total": "b" * 64,
+        "manifest_sha": manifest_sha,
+    }
+    (run_dir / "COMPLETE").write_text(json.dumps(complete))
+    wl["worldline_hash"] = hashlib.sha256(
+        (complete["sha_total"] + manifest_sha).encode("utf-8")
+    ).hexdigest()
+
+    in_memory = link_power.run(wl, config())
+    streaming = link_power.run_path(run_dir, config())
+    assert streaming.manifest == in_memory.manifest
+    assert streaming.view_hash() == in_memory.view_hash()
+    for key in in_memory.arrays:
+        np.testing.assert_allclose(
+            streaming.arrays[key], in_memory.arrays[key], equal_nan=True,
+            err_msg=f"streaming difiere en {key}",
+        )
