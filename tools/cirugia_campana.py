@@ -255,7 +255,7 @@ def niveles():
     us_a, us_e = [], []
     niveles_reg = {}
     for pref, cfg in RECEPTORES.items():
-        run = OUT / "fase0/lote/unidades" / f"cir0_off_{pref[:3]}"
+        run = OUT / "fase0/unidades" / f"cir0_off_{pref[:3]}"
         wl = load_run(run)
         man = wl["manifest"]
         nd = man["por_nodo"][0]
