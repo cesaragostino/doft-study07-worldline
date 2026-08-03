@@ -4,7 +4,7 @@ Este documento ordena trabajo ya abierto. No convierte hipótesis en resultados 
 reemplaza los preregistros de cada gate. Prioridad = valor físico por costo, con datos
 existentes antes de pedir nuevas campañas.
 
-## 1. En ejecución: Gate M — `NONLINEAR_FAST / SLOW_FROZEN`
+## 1. Cerrado: Gate M — `NONLINEAR_FAST / SLOW_FROZEN`
 
 Pregunta: ¿el gran residuo temprano del ignitor compartido de `par133_t/par134_t` nace
 porque Gate L linealizó alrededor de amplitud cero una órbita de amplitud finita?
@@ -15,12 +15,18 @@ Gate F, con `par133/134` como casos prioritarios declarados y los fresh como con
 No requiere films nuevos. Contrato separado:
 `LINK_GRUMO_GATE_M_NONLINEAR_FAST_PREREG.md`.
 
-## 2. Condicional inmediato: replay observado de `b/e(t)`
+Resultado: **NO CIERRA** para el ignitor de `par133_t/par134_t`, aunque mejora 13/15
+films resueltos. Lectura: `LINK_GRUMO_GATE_M_NONLINEAR_FAST.md`.
 
-Sólo se abre si Gate M no cierra el residuo del ignitor. Es diagnóstico, no simulación
-causal: el RHS rápido recibe la trayectoria lenta observada del propio film. Su función
-es separar no-linealidad rápida de evolución estructural lenta; usar el futuro observado
-impide llamarlo predictor o fitness.
+## 2. En ejecución: Gate N — replay observado mínimo de `b(t)`
+
+Gate M no cerró y habilitó este corte. Es diagnóstico, no simulación causal: el RHS
+rápido recibe la trayectoria estructural observada del propio film. `e(t)` no entra en
+ninguna ecuación rápida: sólo genera `db/dt`, que queda anulado al prescribir `b(t)`.
+Por eso un replay de `e` con `b` fijo sería algebraicamente idéntico a Gate M y no se
+corre como rama decorativa. El factorial mínimo es `b_Q` del emisor, todo `b` del emisor
+y todo `b` de ambos nodos. Usar el futuro observado impide llamarlo predictor o fitness.
+Contrato: `LINK_GRUMO_GATE_N_SLOW_REPLAY_PREREG.md`.
 
 ## 3. Postproceso barato: coherencia cruzada y residuo sobre la nula
 
