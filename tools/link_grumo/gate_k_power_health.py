@@ -128,6 +128,10 @@ def paired_ranking(records: list[dict], metric: str, outcome: str,
     wins = losses = ties = skipped = 0
     differences = []
     details = []
+    by_healthy_arm = {arm: {"n": 0, "healthy_better": 0,
+                            "unhealthy_better": 0, "ties": 0,
+                            "differences": []}
+                      for arm in ("t", "f")}
     for pair_id, pair in sorted(pairs.items()):
         if set(pair) != {"t", "f"} or pair["t"][outcome] == pair["f"][outcome]:
             continue
@@ -140,23 +144,38 @@ def paired_ranking(records: list[dict], metric: str, outcome: str,
             continue
         difference = float(a - b)
         differences.append(difference)
+        arm_summary = by_healthy_arm[healthy["arm"]]
+        arm_summary["n"] += 1
+        arm_summary["differences"].append(difference)
         if difference > 0:
             wins += 1
+            arm_summary["healthy_better"] += 1
         elif difference < 0:
             losses += 1
+            arm_summary["unhealthy_better"] += 1
         else:
             ties += 1
+            arm_summary["ties"] += 1
         details.append({
             "pair": pair_id, "healthy_run_id": healthy["run_id"],
             "unhealthy_run_id": unhealthy["run_id"],
             "healthy_value": float(a), "unhealthy_value": float(b),
             "difference": difference,
         })
+    by_arm_public = {}
+    for arm, summary in by_healthy_arm.items():
+        arm_differences = summary.pop("differences")
+        by_arm_public[arm] = {
+            **summary,
+            "median_healthy_minus_unhealthy": (
+                float(np.median(arm_differences)) if arm_differences else None),
+        }
     return {
         "n": wins + losses + ties, "healthy_better": wins,
         "unhealthy_better": losses, "ties": ties, "skipped": skipped,
         "median_healthy_minus_unhealthy": (
             float(np.median(differences)) if differences else None),
+        "by_healthy_arm": by_arm_public,
         "details": details,
     }
 

@@ -10,8 +10,8 @@ TOOLS = Path(__file__).resolve().parents[1] / "tools" / "link_grumo"
 if str(TOOLS) not in sys.path:
     sys.path.insert(0, str(TOOLS))
 
-from gate_k_power_health import (average_ranks, fit_logistic_ridge, power_features,
-                                 predict_logistic)
+from gate_k_power_health import (average_ranks, fit_logistic_ridge, paired_ranking,
+                                 power_features, predict_logistic)
 
 
 def _arrays(p: np.ndarray, force: np.ndarray | None = None) -> dict:
@@ -62,3 +62,20 @@ def test_logistic_ridge_learns_declared_direction():
     assert np.all(np.diff(prediction) > 0.0)
     assert prediction[:2].max() < 0.5
     assert prediction[2:].min() > 0.5
+
+
+def test_paired_ranking_exposes_route_inversion():
+    def row(pair, arm, health, value):
+        return {"pair": pair, "arm": arm, "coordinate_health": health,
+                "run_id": f"{pair}_{arm}",
+                "power": {"early_2_20": {"exchange_rate": value}}}
+
+    records = [
+        row("a", "t", True, 3.0), row("a", "f", False, 1.0),
+        row("b", "t", False, 4.0), row("b", "f", True, 2.0),
+    ]
+    result = paired_ranking(records, "exchange_rate", "coordinate_health")
+    assert result["healthy_better"] == 1
+    assert result["unhealthy_better"] == 1
+    assert result["by_healthy_arm"]["t"]["healthy_better"] == 1
+    assert result["by_healthy_arm"]["f"]["unhealthy_better"] == 1
