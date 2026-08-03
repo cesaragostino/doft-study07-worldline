@@ -1,0 +1,162 @@
+{
+  "_meta": {
+    "caracter": "RETROSPECTIVO; hip\u00f3tesis formulada despu\u00e9s de abrir LECTURA_CIRUGIA",
+    "script": "tools/auditar_e2_transitorio.py",
+    "script_sha256": "6b376f732004e2a0dfbd1a0fe3afa78247a79d0e81675a67c414b8ada7fb3b34",
+    "spec": "data/cirugia/SPEC_fase1_fijas.json",
+    "spec_sha256": "70d9d7c3c6059bc200323fad866c3e32fda19dd4e8063dc05d397a15ead8d25e",
+    "lectura_previa": "data/cirugia/LECTURA_CIRUGIA.json",
+    "lectura_previa_sha256": "1abc7d2c25a705e35aae5ba55c3814ec2b9b44ba6d0a199fc241b3c2b35c5b55",
+    "ventana_rms_ut": [
+      20.0,
+      110.0
+    ],
+    "stride_observado": 10,
+    "dt_observado": 0.0008,
+    "integrador_reconstruccion": "LTI continuo por eigendescomposici\u00f3n; control puntual scipy.linalg.expm; NO bit-exacto al RK4 dt=8e-5 de producci\u00f3n",
+    "parametros_ajustados": 0
+  },
+  "pregunta": "\u00bfLa subpredicci\u00f3n atribuida a f\u00edsica faltante en \u00a714-E2 desaparece al comparar el film finito con la nula lineal transitoria, en vez de con t\u2192infinito?",
+  "summary": {
+    "n_unidades": 8,
+    "n_resonancia_profunda_omega_lt_10": 4,
+    "max_error_rel_transitorio_resonancia_profunda": 0.00408049295,
+    "crosscheck_expm_tolerancia": 1e-12,
+    "crosscheck_expm_pasa_todos": true,
+    "residual_34b_notch_30_17": 0.0650294669,
+    "veredicto": "FACTOR_RESONANTE_SOSTENIDO_POR_TRANSITORIO_LINEAL; no evidencia una f\u00edsica faltante. El residual 34b@30.17 NO cierra con esta reconstrucci\u00f3n."
+  },
+  "models": {
+    "34b5ab50": {
+      "condition_eigenvectors": 402.065,
+      "eigendecomposition_relative_residual": 4.53927292e-16,
+      "max_real_eigenvalue_closed": -0.0123040619
+    },
+    "61b48428": {
+      "condition_eigenvectors": 838.503635,
+      "eigendecomposition_relative_residual": 5.61528887e-16,
+      "max_real_eigenvalue_closed": -0.0160637071
+    }
+  },
+  "advertencias": [
+    "Rean\u00e1lisis post hoc: corrige una interpretaci\u00f3n; no es confirmaci\u00f3n prospectiva.",
+    "Usa la misma ley/Jacobiano/IC declarados por la nula sellada, pero otro m\u00e9todo num\u00e9rico.",
+    "El cierre se limita al factor resonante de E2 unidireccional; no prueba el lazo vivo de dos onions.",
+    "34b@30.17 conserva ~6.5% de residual y debe permanecer visible como no explicado.",
+    "La linealizaci\u00f3n sigue la ley v1 direct-only; kernels diferidos del genoma permanecen fuera de alcance."
+  ],
+  "records": [
+    {
+      "run_id": "cir1d_34b_w25.0_F0.01",
+      "receptor": "34b5ab50",
+      "worldline_hash": "e3dfa55b0cb8e9420895062a386ac0f9e219767bccfbee633b42ef76121269ca",
+      "omega": 25.0,
+      "F0": 0.01,
+      "lazo_medido_raw": 0.99979613,
+      "lazo_predicho_estacionario": 0.99980143,
+      "lazo_predicho_transitorio": 0.999796567,
+      "medido_sobre_estacionario": 0.999994699,
+      "medido_sobre_transitorio": 0.999999563,
+      "error_rel_transitorio": 4.37469196e-07,
+      "crosscheck_expm": "<1e-12"
+    },
+    {
+      "run_id": "cir1d_34b_w30.17_F0.3",
+      "receptor": "34b5ab50",
+      "worldline_hash": "4d06bac8380cb79696fc00468f9fee674701f4fd48dbf9c7fb26f845a38e3e54",
+      "omega": 30.17,
+      "F0": 0.3,
+      "lazo_medido_raw": 0.894780667,
+      "lazo_predicho_estacionario": 0.956352409,
+      "lazo_predicho_transitorio": 0.957014831,
+      "medido_sobre_estacionario": 0.935618145,
+      "medido_sobre_transitorio": 0.934970533,
+      "error_rel_transitorio": 0.0650294669,
+      "crosscheck_expm": "<1e-12"
+    },
+    {
+      "run_id": "cir1d_34b_w6.0_F0.003",
+      "receptor": "34b5ab50",
+      "worldline_hash": "6f05c86a60c835b42c51fd8997541b9dded0067967a7f25ec94d27fc040441fe",
+      "omega": 6.0,
+      "F0": 0.003,
+      "lazo_medido_raw": 0.565689505,
+      "lazo_predicho_estacionario": 0.414841914,
+      "lazo_predicho_transitorio": 0.56569001,
+      "medido_sobre_estacionario": 1.36362669,
+      "medido_sobre_transitorio": 0.999999106,
+      "error_rel_transitorio": 8.93738798e-07,
+      "crosscheck_expm": "<1e-12"
+    },
+    {
+      "run_id": "cir1d_34b_w7.07_F0.003",
+      "receptor": "34b5ab50",
+      "worldline_hash": "01b67f4fc313b9f5f1c4c0d4671390c2c1b3a2a9612994c65b81a3b9e1f0e63d",
+      "omega": 7.07,
+      "F0": 0.003,
+      "lazo_medido_raw": 0.430488604,
+      "lazo_predicho_estacionario": 0.286550032,
+      "lazo_predicho_transitorio": 0.430523375,
+      "medido_sobre_estacionario": 1.50231567,
+      "medido_sobre_transitorio": 0.999919234,
+      "error_rel_transitorio": 8.07661127e-05,
+      "crosscheck_expm": "<1e-12"
+    },
+    {
+      "run_id": "cir1d_61b_w25.0_F0.01",
+      "receptor": "61b48428",
+      "worldline_hash": "a85fead9a8d2dadacee6acd2d16b4210399b704dc58f3fe01d7c00b3726a2295",
+      "omega": 25.0,
+      "F0": 0.01,
+      "lazo_medido_raw": 0.999922788,
+      "lazo_predicho_estacionario": 0.999934424,
+      "lazo_predicho_transitorio": 0.999923306,
+      "medido_sobre_estacionario": 0.999988362,
+      "medido_sobre_transitorio": 0.999999482,
+      "error_rel_transitorio": 5.18297888e-07,
+      "crosscheck_expm": "<1e-12"
+    },
+    {
+      "run_id": "cir1d_61b_w33.69_F0.3",
+      "receptor": "61b48428",
+      "worldline_hash": "d211de9a58c9f92d059c23ca070d338a2e3514883e810a2978ac39bc09f96d24",
+      "omega": 33.69,
+      "F0": 0.3,
+      "lazo_medido_raw": 0.963163206,
+      "lazo_predicho_estacionario": 0.963132666,
+      "lazo_predicho_transitorio": 0.963200737,
+      "medido_sobre_estacionario": 1.00003171,
+      "medido_sobre_transitorio": 0.999961035,
+      "error_rel_transitorio": 3.89649925e-05,
+      "crosscheck_expm": "<1e-12"
+    },
+    {
+      "run_id": "cir1d_61b_w8.62_F0.003",
+      "receptor": "61b48428",
+      "worldline_hash": "7fcb50b2bb5bce44682a17e16d9bfecb86e6c4853ad2ff034b10930e7a8097f6",
+      "omega": 8.62,
+      "F0": 0.003,
+      "lazo_medido_raw": 0.242359265,
+      "lazo_predicho_estacionario": 0.102827323,
+      "lazo_predicho_transitorio": 0.242456275,
+      "medido_sobre_estacionario": 2.35695395,
+      "medido_sobre_transitorio": 0.999599886,
+      "error_rel_transitorio": 0.0004001136,
+      "crosscheck_expm": "<1e-12"
+    },
+    {
+      "run_id": "cir1d_61b_w8.62_F0.01",
+      "receptor": "61b48428",
+      "worldline_hash": "32457d0703945b640162394f0328a377f5aefac1851dec0d3b9c4f51588e0910",
+      "omega": 8.62,
+      "F0": 0.01,
+      "lazo_medido_raw": 0.242078958,
+      "lazo_predicho_estacionario": 0.102827323,
+      "lazo_predicho_transitorio": 0.243070807,
+      "medido_sobre_estacionario": 2.35422796,
+      "medido_sobre_transitorio": 0.995919507,
+      "error_rel_transitorio": 0.00408049295,
+      "crosscheck_expm": "<1e-12"
+    }
+  ]
+}
