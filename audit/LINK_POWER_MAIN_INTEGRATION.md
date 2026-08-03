@@ -1,7 +1,7 @@
 # Contrato de integración — `link_power` hacia `main`
 
-Fecha: 2026-08-02. Preparado desde `research/link-grumo-dynamics`; no ejecutado todavía
-sobre `main`.
+Fecha: 2026-08-02. Preparado desde `research/link-grumo-dynamics` e integrado localmente
+sobre `main` después de validar compatibilidad con recorder/checkpoint vigentes.
 
 ## 1. Decisión que debe llegar a los demás
 
@@ -134,8 +134,23 @@ Así los demás se enteran tanto del nuevo dato como de su límite. Evita el fal
 peligroso: que una correlación agregada muy fuerte termine convertida en un criterio de
 selección que mate precisamente las rutas fresh que el census demostró posibles.
 
-## 8. Estado
+## 8. Integración ejecutada
 
-Preparado, no integrado. Este documento no autoriza tocar `main`, publicar un PR ni
-modificar campañas. Es el checklist para hacer esa operación en un worktree separado
-cuando se decida la ventana de merge.
+El merge completo se realizó en el worktree canónico de `main`, sin conflictos:
+
+```text
+merge commit: a4d75fd2e7d2909b6bf1cb3e70f682c20799c8bc
+parent main:  1d836f92c1e1d3d770591bee44e524a10b3aff26
+parent frente: 3c8d7711d13143bcc959797ec70f08caefa2fab0
+```
+
+Validaciones posteriores al merge:
+
+* `33 passed` en `link_power`, Gate K, recorder/checkpoint y campañas F7;
+* `128 passed` en la suite completa (`210 warnings` preexistentes/declarados);
+* worktree limpio al terminar las pruebas;
+* cero diferencias en `docs/bitacora` introducidas por el merge;
+* cero cambios de defaults, fitness, outcomes o máquina de estados canónica.
+
+El merge es local. `main` queda adelantado respecto de `origin/main`; publicar/push sigue
+siendo una acción separada y no ejecutada por esta integración.
