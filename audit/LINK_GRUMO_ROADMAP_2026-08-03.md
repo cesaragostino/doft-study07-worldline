@@ -18,7 +18,7 @@ No requiere films nuevos. Contrato separado:
 Resultado: **NO CIERRA** para el ignitor de `par133_t/par134_t`, aunque mejora 13/15
 films resueltos. Lectura: `LINK_GRUMO_GATE_M_NONLINEAR_FAST.md`.
 
-## 2. En ejecución: Gate N — replay observado mínimo de `b(t)`
+## 2. Cerrado: Gate N — replay observado mínimo de `b(t)`
 
 Gate M no cerró y habilitó este corte. Es diagnóstico, no simulación causal: el RHS
 rápido recibe la trayectoria estructural observada del propio film. `e(t)` no entra en
@@ -27,6 +27,29 @@ Por eso un replay de `e` con `b` fijo sería algebraicamente idéntico a Gate M 
 corre como rama decorativa. El factorial mínimo es `b_Q` del emisor, todo `b` del emisor
 y todo `b` de ambos nodos. Usar el futuro observado impide llamarlo predictor o fitness.
 Contrato: `LINK_GRUMO_GATE_N_SLOW_REPLAY_PREREG.md`.
+
+Resultado: **CIERRE FUERTE** y `SOURCE_Q_B_SUFFICIENT` bajo la ventana primaria. El
+replay de `b_Q` del ignitor compra ~99% del residuo agregado; todo `b` del emisor lleva
+Q/emisión al piso numérico. `b` del receptor no agrega en estos dos films, cuyos
+receptores casi no evolucionan estructuralmente. Lectura:
+`LINK_GRUMO_GATE_N_SLOW_REPLAY.md`.
+
+## 2-bis. Próximo corte físico barato: reloj del emisor × viabilidad del receptor
+
+Gate N reconstruye el **reloj/chirp** del líder, no la salud del link. El mismo líder y
+la misma `b(t)` producen destinos de canal distintos con socios distintos; por tanto no
+se debe convertir `b_Q` en fitness. Antes de campaña nueva, reutilizar films e
+instrumentos ya existentes para alinear por evento:
+
+1. agenda móvil del emisor `omega_i(b_i(t))` y actividad/potencia disponible;
+2. margen de respuesta del receptor `chi_j(omega_i(t);b_j(t))*F_i/A_S,j`;
+3. nacimiento, slip, release y recaptura de la máquina H;
+4. potencia como etiqueta de mecanismo, no como puerta universal (herencia Gate K).
+
+La pregunta barata es si los fuera-de-patrón de Gate I comparten una secuencia de
+**salida del margen móvil antes del release**, separando `SOURCE_DECAY`,
+`SUSCEPTIBILITY_NOTCH` y `COMPETITOR`. Esto continúa la descomposición ya propuesta en
+Gate I; no vuelve a medir el AUC de `rho_pred` ni fabrica otro score de salud.
 
 ## 3. Postproceso barato: coherencia cruzada y residuo sobre la nula
 
