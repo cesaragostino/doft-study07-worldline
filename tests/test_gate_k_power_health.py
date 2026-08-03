@@ -10,8 +10,9 @@ TOOLS = Path(__file__).resolve().parents[1] / "tools" / "link_grumo"
 if str(TOOLS) not in sys.path:
     sys.path.insert(0, str(TOOLS))
 
-from gate_k_power_health import (average_ranks, fit_logistic_ridge, paired_ranking,
-                                 power_features, predict_logistic)
+from gate_k_power_health import (average_ranks, energetic_support_audit,
+                                 fit_logistic_ridge, paired_ranking, power_features,
+                                 predict_logistic)
 
 
 def _arrays(p: np.ndarray, force: np.ndarray | None = None) -> dict:
@@ -20,6 +21,7 @@ def _arrays(p: np.ndarray, force: np.ndarray | None = None) -> dict:
         "t_force_ut": np.arange(n, dtype=float),
         "window_complete": np.ones(n, dtype=bool),
         "p_node_mean": np.asarray(p, dtype=float),
+        "p_node_instant": np.asarray(p, dtype=float),
         "force_rms": np.ones_like(p, dtype=float) if force is None else force,
     }
 
@@ -47,6 +49,14 @@ def test_power_features_require_complete_causal_boxes():
         assert "sin cajas completas" in str(exc)
     else:
         raise AssertionError("debió rechazar una ventana sin soporte completo")
+
+
+def test_support_audit_does_not_confuse_instant_return_with_box_injection():
+    arrays = _arrays(np.array([[3.0, -1.0], [-3.0, 1.0]]))
+    arrays["p_node_mean"] = np.array([[-2.0, -1.0], [-1.0, -1.0]])
+    result = energetic_support_audit(arrays)
+    assert result["n_instant_net_positive"] == 1
+    assert result["n_smoothed_net_positive"] == 0
 
 
 def test_average_ranks_ties_are_deterministic():

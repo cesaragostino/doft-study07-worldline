@@ -75,6 +75,23 @@ def power_features(arrays: dict, lo: float, hi: float) -> dict:
     }
 
 
+def energetic_support_audit(arrays: dict) -> dict:
+    """Separa devolución instantánea de energía y balance de caja suavizado."""
+    instant = np.asarray(arrays["p_node_instant"], dtype=float).sum(axis=1)
+    complete = np.asarray(arrays["window_complete"], dtype=bool)
+    smoothed = np.asarray(arrays["p_node_mean"], dtype=float)[complete].sum(axis=1)
+    return {
+        "n_instant_samples": int(instant.size),
+        "n_instant_net_positive": int(np.sum(instant > 0.0)),
+        "instant_net_min": float(np.min(instant)),
+        "instant_net_max": float(np.max(instant)),
+        "n_complete_boxes": int(smoothed.size),
+        "n_smoothed_net_positive": int(np.sum(smoothed > 0.0)),
+        "smoothed_net_min": float(np.min(smoothed)),
+        "smoothed_net_max": float(np.max(smoothed)),
+    }
+
+
 def index_power_views(root: Path) -> dict[str, Path]:
     result: dict[str, Path] = {}
     for path in root.rglob("manifest.json"):
@@ -370,6 +387,25 @@ def outliers(records: list[dict]) -> dict:
     }
 
 
+def aggregate_support_audit(records: list[dict]) -> dict:
+    audits = [row["energetic_support_audit"] for row in records]
+    return {
+        "n_films": len(audits),
+        "films_with_instant_net_positive": sum(
+            audit["n_instant_net_positive"] > 0 for audit in audits),
+        "instant_samples": sum(audit["n_instant_samples"] for audit in audits),
+        "instant_net_positive_samples": sum(
+            audit["n_instant_net_positive"] for audit in audits),
+        "instant_net_min": min(audit["instant_net_min"] for audit in audits),
+        "instant_net_max": max(audit["instant_net_max"] for audit in audits),
+        "complete_boxes": sum(audit["n_complete_boxes"] for audit in audits),
+        "smoothed_net_positive_boxes": sum(
+            audit["n_smoothed_net_positive"] for audit in audits),
+        "smoothed_net_min": min(audit["smoothed_net_min"] for audit in audits),
+        "smoothed_net_max": max(audit["smoothed_net_max"] for audit in audits),
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--power-ledger", required=True, type=Path)
@@ -418,6 +454,7 @@ def main() -> None:
             "flagged": health["flagged"],
             "worldline_hash": health["worldline_hash"],
             "view_hash_power": source["view_hash_power"], "power": power,
+            "energetic_support_audit": energetic_support_audit(view["arrays"]),
         })
         if index % 50 == 0 or index == len(health_data["records"]):
             print(f"[link-grumo] Gate K {index}/{len(health_data['records'])}", flush=True)
@@ -477,6 +514,7 @@ def main() -> None:
             "interval_pairing_clean_coordinate": interval_pairing,
             "gate_g_incremental": lopo_models(gate_g_records),
             "outliers_clean_coordinate": outliers(clean),
+            "energetic_support_audit": aggregate_support_audit(records),
         },
         "warnings": [
             "Los AUC poblacionales son descriptivos: hay reutilización de nodos.",

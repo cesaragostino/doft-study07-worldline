@@ -48,6 +48,11 @@ masivas al worktree.
 - `audit/LINK_GRUMO_BASELINE.md`: auditoría inicial que abre este frente.
 - `audit/LINK_GRUMO_GATE_A_CINEMATICA.md`: primer gate sobre remotos y fresh apareados.
 - `audit/LINK_GRUMO_GATE_B_COSECHA.md`: llegada, dominancia temprana y endpoints separados.
+- `audit/LINK_GRUMO_GATE_J_POWER.md`: instrumento causal de potencia y cosecha 375/375.
+- `audit/LINK_GRUMO_GATE_K_POWER_HEALTH.md`: contraste early→late; potencia identifica
+  una ruta energética, no una ley universal de salud.
+- `audit/LINK_POWER_MAIN_INTEGRATION.md`: contrato para llevar el instrumento a `main`
+  sin cambiar lock, fitness ni resultados históricos.
 - `tools/link_grumo/`: lectores reproducibles, sin escritura sobre fuentes.
 - `logs/link_grumo/`: derivados locales descartables y reproducibles.
 
