@@ -1,0 +1,608 @@
+{
+ "sintesis": {
+  "mapa": [
+   "BASELINE (exploratorio, re-ejecutado bit-exacto por lector): W8⊂W4 estricto — ambos brazos pierden EXACTAMENTE 18 locks (t 82→64, f 26→8) ⇒ Δ apareado idéntico +0.3294=56/170 por aritmética; zona falso-firme analítica 1.1/W (0.275 en W4, 0.1375 en W8); cov(log dw, lock60)=−0.323 núcleo-dominada (+0.004 desde dw≥0.3); banco remoto estricto 9-0; E0 AUC 0.791; racionales p:q NEGATIVO (p=0.933/0.115); grafo remoto 31 nodos/12 componentes: no-grumo todavía.",
+   "GATE A (exploratorio): la cola remota sobrevive un método INDEPENDIENTE del detector — cierre cinemático de pendiente de fase 9/9 transported vs 0/9 fresh (W4∧W8, |dΔφ/dt|<1.1/W sostenido ≥2 u.t.); TRES topologías de cierre (6 ancla-seguidor / 1 convergencia compartida / 2 línea fuera de intervalo); E0_t/E0_f mediana 0.402 y cierra 9/9 igual ⇒ E0 no explica el apareado.",
+   "GATE B1 (exploratorio): el link NO es fuente neta temprana — P=drive·Σv suma negativo 9/9 transported y 9/9 fresh en [0.5,5]; transferencia direccional 6/9 t vs 0/9 f. Converge con nuestro §7 (receptor sumidero) y §8-3 (P<0 ≠ muerte).",
+   "GATE B2 (exploratorio): la dominancia espectral PRECEDE al cierre de fase — rho>1 sostenido 6/6 transported resolubles vs 0/5 fresh, adelanto mediano 8.41 u.t. [1.95,19.84]. Evidencia poblacional-de-llegada del sello v2 (canal = dominancia, no fase). Caveat que viaja: usa el estimador con techo ~2 (ver contradicción 3).",
+   "GATE B3 (RETIRADO por errata honesta): mezcló horizontes 60/120 — el MISMO confusor de nuestro §10-BLOQUEA-1, hallado independientemente. AUC 0.956/0.866/0.751 y conteos 21/12/10/11/2 NO citables; gate_b_population.py conserva el prereg erróneo '[50,60]' (re-correrlo reproduce el bug).",
+   "GATE C (instrumento + negativo): linear_response.py (χ Jacobiano frío FD = nuestro CHI_NULA_BASE) reproduce los notches arbitrados par134 33.695/34.375 (spot-check bit-idéntico del lector) y la identidad A_L/(|χ|F)=1 en films 600 con error de mediana ≤0.123%; χ-no-plana en W8: 102/164 (estratificar); NEGATIVO: χ_Q sola no separa salud (AUC 0.463) y χ vestida/fría = 1.00000004 ⇒ la ventaja biográfica NO vive en la susceptibilidad rápida del receptor.",
+   "GATE D1 (NEGATIVO fuerte): el link NO nace por inestabilidad lineal Barkhausen/Nyquist — lazo cerrado |L| mediana 0.0071, distancia a +1 ≈ 1 (falta ×140); favorece entrainment forzado = nuestra conclusión §14. Su χ_emitted hereda el ×2 abierto de §14-E2 (sesgo ~×2-×4 cerca de resonancia profunda; no voltea el negativo).",
+   "GATE D2 (exploratorio): nuestra identidad r≡1 EXTENDIDA a la fase compleja — R=(Q̂/F̂)/χ_Q cierra 6/6 transported (error mediano 0.085°, máx 0.944°) vs 1/5 fresh (mediana 55.46°); fresh nace con ~143-146° y madura después. Outlier 81.9° = fuga espectral en acción (mide con UNA Hann, sin la convergencia-W que §8 prescribió).",
+   "GATE D3 (exploratorio): cierre complejo poblacional temprano [0,8] definido (|arg R|≤15°, 0.5≤|R|≤2); sus asociaciones de salud quedaron supersedidas por Gate E (declarado en su propio JSON).",
+   "GATE E (instrumento validado): horizonte común 60 — replica los 151 films nativos con error EXACTO cero (falla si ≥1e-12/1e-10); 4/13 films de 120 CAMBIAN de outcome; rho_pred=|χ|F̂/A_comp AUC 0.944 supera a rho observada 0.883 ⇒ la constitución del receptor agrega predicción — nuestra frontera §14 (χ·F̂ vs A_S) en versión poblacional.",
+   "GATE F (exploratorio): coordenada de salud corregida — 18 flips, TODOS raw-False→corrected-True (53→71 sanos sobre 340; contraste apareado de estado t−f +0.206→+0.276); coordinate_health colapsa a rw_final_W8≥0.95 (el guard de deriva no rechaza a nadie: 71=71); 'R≈1 no es salud' con población (AUC 0.577, invertido); ocupación al endpoint: 10 films → los 9 sanos.",
+   "GATE G (exploratorio): diseño early([0,20])→late([50,60]) = la mitad 'ventana disyunta' de §8-5-iii; ocupación observada AUC 0.929 / predicha fría 0.887; coherencia primaria AUC 0.963 pero es el MISMO funcional que el outcome (autocorrelación del estadístico, no marcador independiente); S1 dentro de fresh AUC 0.475 (pierde la dirección: marca de ruta, no de salud).",
+   "GATE H (PRERREGISTRADO, 4/5 predicciones): la máquina de estados es nuestra agregación v2 EJECUTABLE (consume episodios citables de LECTURA_v2.json; confirmación 2 u.t., gracia 8, relevo por solape, release condicionado); canal ⊥ vitalidad (los 4 s600 terminan SOURCE_FADED; par129 0.906 DOMINANT / par131 0.869 / par132 0.188 RELEASED / par134 0.475 RELEASED — reconcilian aritméticamente con §4); la 5ta predicción FALLA: par129 tiene 0 recapturas de link (la de 487.75 es MODAL bajo cobertura de Q2); confirma censura de 60: par134 el más sano a 60 y termina RELEASED. Instrumento fuzzeado: 11/11 tests + 3000 trazas sin violar invariantes.",
+   "GATE I (exploratorio, negativo valioso + 2 regresiones): los 7 residuos se parten en 5 recorridos reproducibles; NEGATIVO de vecinos cercanos (cada falso temprano tiene un control sano a distancia 0.352-0.449 en las 8 coordenadas a t=20) ⇒ no falta un escalar, falta TRAYECTORIA; reproduce LA GRAN INVERSIÓN desde la máquina (cruce del líder replica a 0-1 u.t. dentro de familia; la historia de releases no); PERO re-importa b_S1 crudo (42×) y el fenotipo MEMORY_PEAK_AFTER_LAST_CHANNEL — ambos matados por sello v2-P4 y §7-C5.",
+   "GATE J (SELLADO como instrumento): link_power hereda NUESTRO estimador del tap wf_f2afea35 — P[k,j]=drive[k,j]·Σv[k−1], semántica jc0 bit-exacta, cierre <1e-5 citado como SU validación; cosecha 375/375 films (0 fallos, 301×60 + 74×120 u.t.), streaming bit-equivalente al camino en memoria; opt-in puro VERIFICADO (merge a4d75fd 100% aditivo, 48 archivos A, 0 M/D; suite completa 128 passed reproducida).",
+   "GATE K (SELLADO, veredicto NEGATIVO para regla universal): la geometría energética temprana separa salud (opposed_fraction AUC 0.825; NO es fuerza: force² 0.578) pero se INVIERTE por ruta — transported 0.826 vs fresh 0.568; apareado por brazo del sobreviviente 50-0-1 (t) vs 1-3-0 (f); AUC residual 0.591 tras brazo+dw+fuerza; 6 films sanos con intercambio EXACTAMENTE 0 falsan necesidad; el tiempo no consolida ([2,10] 50-4-1 → [20,40] 28-27-0). La potencia = firma energética de la ruta transported (mecanismo de nuestro Δ+0.329), NO coordenada de fitness. Hallazgo durable: 0/94.580 cajas de 2 u.t. con potencia neta suavizada positiva — el link es GLOBALMENTE DISIPATIVO (nuestro 15/15 pasa a hecho de census)."
+  ],
+  "correcciones": [
+   "§11 «e IDÉNTICO en W8 (+0.329 [0.211,0.454])» — RETIRAR la lectura de réplica: W8⊂W4 estricto (W8sinW4=0 en ambos brazos) y ambos brazos pierden exactamente 18 locks (82→64, 26→8) ⇒ Δ=56/170 idéntico POR ARITMÉTICA. Reclasificar como robustez de umbral de ventana. EN PIE: el Δ=+0.329 [0.204,0.455] mismo, la lengua W8 más angosta (informativa, pero su angostamiento escala como 1.1/W), y la monotonía W8 T=−0.250 p=0.",
+   "§11 «la rodilla vive en dw≈0.3-0.6» — queda INSTRUMENTO-CONDICIONADA: coincide con la frontera analítica de falso-firme del detector (umbral R_W=0.95 ⇒ deriva <1.1/W indetectable; 1.1/4=0.275 en W4). El núcleo dw<0.275 vive DENTRO de falso-firme y no tiene validación cinemática (Gate A solo auditó los 9 remotos). EN PIE: la existencia de la lengua y su orden. Acción barata (C0-C1): releer el núcleo con el estimador de pendiente de triage_cinematica.",
+   "§11 monotonía «T=−0.323, p=0/2000» — el estadístico es numéricamente la covarianza simple del baseline y está NÚCLEO-DOMINADO: +0.004 desde dw≥0.3 (n=122), +0.050 desde dw≥1 (n=76). La p=0 certifica el contraste global de la lengua, no la forma de la cola; la cola necesita mecanismo propio (que Gate A le dio por otra vía). Citar en adelante: monotonía = propiedad del núcleo.",
+   "§11 lock60 — semántica CONFIRMADA, no corregida: mide la primera coherencia del detector (una deriva constante puede sostener R_W≥0.95); nuestra declaración «dominancia espectral condicionada al drive» (§9/§11) ya lo decía. EN PIE reforzado: el Δ resiste filtros retrospectivos de cierre físico (+0.329→+0.300→+0.276 en W4).",
+   "§11 Δ+0.329 probablemente CONSERVADOR: Gate F muestra que el guard con dw sobre theta CRUDA descartaba preferentemente transported coherentes (18 flips, todos raw-False→corrected-True; contraste de estado +0.206→+0.276 al corregir la coordenada). Acción: revisar si el instrumento par_link mezcla coherencia corregida con dw cruda y si eso deprime lock60 en transported.",
+   "§11 «cola remota real → ola C» y «biografía abre canales remotos ×17 (16-0, p=3e-5)» — REFORZADOS con método independiente: banco estricto 9-0, cierre cinemático 9/9 vs 0/9, y TRES topologías de cierre ⇒ la ola C debe estratificar mecanismos por trayectoria, no tratar la cola como una sola.",
+   "Número derivado que cambia: los «8 sanos remotos a 60» (Gate E) pasan a 9/164 con la coordenada corregida de Gate F (AUC rho_pred 0.944→0.941): citar 9 como vigente.",
+   "§14 — NO recibe correcciones del frente; EXPORTA dos: (i) el instrumental de lazo de D1 (χ_emitted en L y one_pass) hereda el ×2 abierto de §14-E2 en resonancia Q profunda (0.242 medido vs 0.103 predicho) — recalibrar ANTES de la campaña det[I−ΧK]; no voltea el negativo D1 (falta ×140); (ii) la ruta 'passive_linear_response…nonlinear' de Gate F contradice C4 CERRADO (sin no-linealidad hasta F̂=3): es resolución cerca de notch, renombrar y usar el mapa de notches pre-calculado (§7-C6)."
+  ],
+  "unificaciones": [
+   "Máquina de estados (link_state_machine) vs lector v2: NO compiten — la máquina CONSUME los episodios citables de LECTURA_v2.json y agrega eventos tipados + vitalidad. Canónico: lector v2 = medición de episodios (ρ en dos familias); máquina H = agregación por unidad (cobertura, relevos, mode_recapture vs recapture — resuelve la ambigüedad de escala de §17). Regla dura: los tiempos de H llevan desfase estructural (captura = inicio + 2.0 de confirmación: 28.25 vs nuestro 26.2; release = fin + 8.0 de gracia: 312.25 vs 304.25) — publicar t_detección y t_efecto; PROHIBIDO citarlos contra la bitácora sin corregir.",
+   "link_power vs nuestro P del tap wf_f2afea35: UNA fórmula, dos empaques (P[k,j]=drive[k,j]·Σv[k−1], jc0 bit-exacto, cierre <1e-5). Canónico del estimando: el tap; canónico poblacional: link_power VERSION 1.1. Declarar equivalencia en el registro para NO re-validar dos veces. La potencia queda como instrumentación: PROHIBIDO discretizar TRANSFER/JOINT_DISSIPATION/WEAK_SUPPORT como estados o usarla en fitness (veredicto Gate K + contrato).",
+   "linear_response.py vs nuestro χ de CHI_NULA_BASE: duplicación exacta (Jacobiano frío FD h=1e-6, (x,v,z) con b,e congeladas, notches por mínimos, c=1). Canónico: linear_response.py (versionado en repo, reproduce los notches arbitrados 33.695/34.375) CON las lecciones §14 incorporadas: F_th siempre con estimador DE BANDA (mismatch ×19 en 61b) y χ_emitted recalibrada por E2 antes de cualquier lazo.",
+   "ρ tiene TRES denominadores en circulación: ρ v2 (banda propia ω_self±1.5), rho_obs de B2/F/G (competidor a ≥1 Rayleigh de la línea — con TECHO ~2 por fuga del lóbulo Hann: línea pura sin competidor da 2.02-2.26, medido; cerca del lock el tono propio queda EXCLUIDO del competidor), y rho_pred (|χ|F̂/A_comp). Fijar UN solo denominador y un glosario antes de fusionar vocabulario; el caveat del techo alcanza a Gate B2 y a las medianas 2.511/0.690 de Gate G.",
+   "salud60/coordinate_health vs lock60 vs cobertura v2: TRES observables distintos — estado a horizonte fijo / tiempo de primer evento / fracción de vida con canal. coordinate_health colapsa a rw_final_W8≥0.95 (detector de fase que el sello v2 degradó: controles jamás-capturados dan PLV 0.975-0.999) y el horizonte 60 está censurado (Gate H: 2/4 se invierten después). Canónico para «canal»: dominancia v2 + cobertura (máquina H); salud60 solo como endpoint auxiliar con censura declarada; sus AUC = predicción de coherencia a 60, no de supervivencia. Ojo: su guard dw usa 0.1375=1.1/8, nuestro estrato de pulling usa 0.275=1.1/4.",
+   "Etiquetas de mecanismo de Gate I (SOURCE_DECAY / SUSCEPTIBILITY_NOTCH / COMPETITOR / UNKNOWN) = nuestra tripleta obligatoria numerador-F / notch-χ / denominador-A_S (§7-C6). Unificar a la tripleta; para los 4 s600 los mecanismos YA están arbitrados (release par129-Q0 @102.8 = numerador-F con contrafáctico; muerte par134-Q2 = carrera de tasas 304.3 vs 303.75).",
+   "Renombres/regresiones a corregir en el frente: MEMORY_PEAK_AFTER_LAST_CHANNEL → AFTERIMAGE_OF_ENTRY_BURST (contrafáctico §7-C5: cortando la energía en t=80 el pico se mueve 0.2/1.8 u.t.) con predicado sobre la ventana de entrada t≈30-80; ranking por b_S1 crudo (42×) → moneda invariante ∫(e−e_ref)dt o descomposición ganancia×física (sello v2-P4); consolidación por S1/S2 en fase pura → medirlas por dominancia como el canal principal (S1 AUC 0.475 dentro de fresh lo demuestra).",
+   "Custodia: los derivados del frente viven SOLO en el worktree research (/Users/cagostino/code/doft-study07-link-grumo-dynamics/logs/link_grumo/, gitignored; verificado: no existen bajo main). Unificar al patrón §13-bis: papeles fuera de git pinneados por sha256 en registro committeado, o commitear los JSON chicos de evaluate. Pendientes operativos: main 17 commits sin pushear (decisión de COA); deprecar por comentario el bloque prereg erróneo de gate_b_population.py."
+  ],
+  "herencia": [
+   "2×9 REAL con det[I−ΧK] — entra directo: linear_response.py (χ + χ_emitted, validado por Gate C0 contra notches arbitrados) y la formulación de lazo de D1 (dos lados; one_pass = H_{j←i} de §8-4). OBLIGATORIO antes: recalibrar χ_emitted con el insumo §14-E2 (sub-predicción ×2 en resonancia profunda). Expectativa fijada por D1: en el PAR no hay polo (|L|~0.0071, falta ×140) — el test del grumo es si det[I−ΧK]→0 aparece con grado>1. FALTA de diseño: identificabilidad por arista — la worldline solo registra suma nodal de fuerzas (hallazgo J/K); el recorder necesita contribuciones por arista o intervención separadora. Prereg: PREREGISTRO_DINAMICA.md (docs/research/link_grumo/) es v0 VIVO de hipótesis H0-H5, no de estimandos — falta prereg tipo §10/§13 con nula committeada por hash.",
+   "CENSUS DE EMERGENCIA con k_eff — entra directo: rho_pred=|χ(ω_línea)|·F̂/A_comp como predictor de elegibilidad (AUC 0.944/0.979/0.918; = nuestra frontera sin parámetro libre); Gate E como plantilla anti-confound de horizonte (replicación con error 0 antes de citar); máquina de estados H para eventos/cobertura; link_power como eje energético descriptivo. El diseño early→late de Gate G ([0,20]→[50,60]) es la mitad 'ventana disyunta' de §8-5-iii; falta la mitad gemelo link-OFF (nuestra cirugía la tiene). FALTA: endpoint no censurado (Gate H: 2/4 flips post-60; preferir cobertura/eventos sobre estado a 60) y la serie de potencia conectada a vitalidad — el medidor P por ventanas del tap (§7, 15/15) cierra el eje UNKNOWN de la máquina SIN films nuevos. La 'próxima cosecha' propuesta por C/D/E (R_Q(t), rho_pred(t), orden t_S2→t_RQ→t_dominancia→t_lock en ventanas disjuntas) ES el census de emergencia: unificar bajo un prereg común antes de que salga un Gate L duplicando lo que §7/§14 ya cerraron. k_eff se calibra sobre la lengua POOLED con la zona falso-firme (dw<1.1/W) descontada.",
+   "OLA C — entra directo: banco remoto estricto 9-0 + triage_cinematica como validador por pendiente (no por endpoint); las TRES topologías de Gate A (6 ancla-seguidor / 1 convergencia / 2 fuera de intervalo) obligan a estratificar mecanismos por trayectoria; el negativo de Gate I (falta trayectoria, no escalar; vecinos a 0.352-0.449) fija el diseño: registrar trayectorias, no snapshots a t=20; la ruta fresh-sano (2-4 positivos, inversión energética 1-3-0) queda sin poder — oversamplear fresh y horizontes largos; el negativo p:q del baseline es de razones de ω tempranas, la H4 real (cierre de combinación de fases p:q) sigue SIN medir. Barato primero (C0-C1): releer el núcleo dw<0.275 con el estimador de pendiente (cierra la corrección de la rodilla). Prereg: NO existe para ola C — heredar la jerarquía §10 (PRIMARIO/ROBUSTEZ/DESCRIPTIVO, clustering por nodo, horizonte único, corrida única citable)."
+  ],
+  "contradicciones": [
+   "Estatus heterogéneo entre lectores: el lector C/D/E marca 'C0-restricción SELLADO' pero su propio resumen declara todo C-D-E exploratorio/no canónico. Normalización para el registro: SOLO Gate H (prereg previo, 4/5) y Gates J/K (preregs congelados) tienen prerregistro; todo lo demás es exploratorio; nada del frente tiene el nivel del POOLED §10-§11 salvo esos tres, y aun J/K con la salvedad de que el split by_healthy_arm (f847a2c) es lectura post-primera-mirada.",
+   "Custodia contada distinto: F/G/H/I dice 'no verificable desde el repo' y J/K dice 'SHA verificados contra el ledger real'. AMBOS ciertos, reconciliado por verificación directa: logs/link_grumo NO existe en el checkout main pero SÍ en el worktree research (…/doft-study07-link-grumo-dynamics/logs/link_grumo/, vivo en 3c8d771). Acción: respaldo SHA-pinneado antes de borrar worktrees.",
+   "El techo de rho_obs (línea pura sin competidor da 2.02-2.26, medido por F/G/H/I sobre spectrum() de gate_b_dominance) NO fue aplicado por el lector BASE/A/B a Gate B2, que usa el MISMO estimador: el 'rho>1 sostenido 6/6 vs 0/5' y el adelanto 8.41 u.t. quedan válidos como orden y contraste, pero el umbral 1 es débil y el rango dinámico útil es <1 octava — el caveat viaja a B2 y debe declararse al citar el adelanto.",
+   "'8 sanos a 60' (C/D/E, Gate E) vs '9 positivos sobre 164' (F/G/H/I, coordenada corregida): no es contradicción sino evolución E→F del mismo número; citar 9/164 (AUC rho_pred 0.941) como vigente.",
+   "Δ=+0.276 aparece con DOS definiciones distintas: filtro retrospectivo 'firme final+cierre' en W4 (baseline, lector BASE) y contraste apareado del estado corregido (Gate F, lector F/G/H/I). Probablemente el mismo objeto por dos rutas — NO contarlo como dos confirmaciones independientes sin verificar la identidad de los predicados.",
+   "Conteos de tests (15 vs 11 vs 7 vs 128 passed): subconjuntos distintos de la suite, sin conflicto real."
+  ],
+  "borrador_bitacora": "## §15 — ASIMILADO el frente link-grumo de COA (merge a4d75fd, +9464 líneas): baseline + gates A-K, 4 lectores + síntesis. Tres correcciones a §11, cero a §14, tres instrumentos convergentes y dos negativos grandes\n\nEstatus: solo Gate H (prereg previo, 4/5 predicciones) y J/K (preregs congelados) están\nprerregistrados; el resto exploratorio declarado. Suite post-merge 128 passed. Derivados\nSOLO en el worktree research (logs/link_grumo, gitignored): respaldar estilo §13-bis\nantes de borrar nada; main 17 commits sin pushear (decisión de COA).\n\nCORRECCIONES A §11 (todo lo demás EN PIE): (1) la «réplica W8» del Δ SE RETIRA — W8⊂W4\nestricto, ambos brazos pierden EXACTAMENTE 18 locks (82→64, 26→8) ⇒ Δ=+0.3294=56/170\nidéntico POR ARITMÉTICA; es robustez de umbral, no muestra independiente. El Δ sostiene\ny resiste filtros de cierre físico (+0.329→+0.300→+0.276). (2) La rodilla dw≈0.3-0.6\nqueda instrumento-condicionada: coincide con la frontera de falso-firme 1.1/W=0.275\n(W4), y T=−0.323 es covarianza núcleo-dominada (+0.004 desde dw≥0.3): p=0/2000\ncertifica el contraste global, no la forma de la cola; el núcleo dw<0.275 no tiene aún\nvalidación cinemática (releerlo con triage_cinematica, C0-C1). (3) Δ probablemente\nCONSERVADOR: el guard con dw cruda descartaba transported coherentes (Gate F: 18 flips,\ntodos en una dirección; estado +0.206→+0.276) — revisar coordenadas en par_link.\n\nREFUERZOS: la cola remota sobrevive un método independiente del detector (Gate A: 9/9 t\nvs 0/9 f por pendiente de fase; banco estricto 9-0; TRES topologías → estratificar la\nola C); la dominancia precede al cierre de fase (B2: 6/6 vs 0/5, adelanto mediano 8.41\nu.t. — sello v2 poblacional); R=(Q̂/F̂)/χ_Q cierra fase 6/6 transported (0.085°) vs 1/5\nfresh (55.46°) y χ vestida/fría=1.00000004: la biografía llega con el canal complejo ya\ncerrado, no vive en la susceptibilidad; rho_pred=|χ|F̂/A_comp (nuestra frontera §14) da\nAUC 0.944. NEGATIVOS: D1 — el link NO nace por inestabilidad lineal (|L| mediana 0.0071,\ndistancia a +1 ≈1; entrainment forzado, = §14); K — la potencia temprana es firma de\nRUTA transported (AUC 0.826 vs 0.568 fresh; apareado 50-0-1 vs 1-3-0; 6 sanos con\nintercambio 0), no ley universal; y 0/94.580 cajas con potencia neta positiva: el link\nes globalmente disipativo (nuestro 15/15 pasa a hecho de census). B3 RETIRADO por la\nmisma errata 60/120 de §10-BLOQUEA-1 (AUC 0.956/0.866/0.751 NO citables).\n\nINSTRUMENTAL (un estimando por objeto): link_power ≡ P del tap (jc0 bit-exacto, cierre\n<1e-5) — no re-validar; linear_response.py ≡ nuestro χ (notches 33.695/34.375) — con\nχ_emitted a recalibrar por §14-E2 (×2) ANTES de det[I−ΧK]; máquina H = agregación v2\nejecutable sobre LECTURA_v2.json (tiempos con desfase +2/+8: no citar sin corregir);\nρ con TRES denominadores y rho_obs con TECHO ~2 por fuga de Hann (línea pura da\n2.02-2.26): glosario y denominador único antes de fusionar. coordinate_health colapsa a\nrw_final≥0.95 (fase, degradada por el sello v2) y 60 u.t. está censurado (Gate H:\npar134 el más sano a 60 termina RELEASED): sus AUC predicen coherencia a 60, no\nsupervivencia. Gate I re-importa b_S1 crudo (42×) y MEMORY_PEAK_AFTER_LAST_CHANNEL:\nrenombrar a AFTERIMAGE_OF_ENTRY_BURST (§7-C5) y pasar a la moneda ∫(e−e_ref)dt."
+ },
+ "lectores": {
+  "ab": {
+   "resumen": "Porción leída: LINK_GRUMO_BASELINE + Gates A/B + docs (README, ORDEN_COSTO_VALOR, PREREGISTRO_DINAMICA v0) + código (baseline_census, triage_cinematica, gate_b_{dominance,population,evaluate}, linear_response). TODO el baseline reproduce BIT-EXACTO contra tabla_tanda{1,2}.json (mismos SHA; re-ejecuté las funciones en memoria, sin escribir al repo): W8⊂W4 estricto (W8sinW4=0 en ambos brazos; t 82→64, f 26→8, ambos pierden EXACTAMENTE 18 ⇒ Δ apareado idéntico +0.3294=56/170 en W4 y W8), banco remoto estricto 9-0, E0 AUC 0.791, p:q p=0.933/0.115, grafo 31 nodos/12 componentes/max 5. Nada de esto CONTRADICE los primarios de §11 (la lengua p=0/2000 y Δ+0.329 quedan en pie); lo que hace es CORREGIR dos lecturas auxiliares: (1) la \"réplica W8\" de §11 NO es réplica independiente sino robustez de umbral (anidamiento + pérdida 18/18); (2) la rodilla dw≈0.3-0.6 coincide con la zona analítica de falso-firme del instrumento (1.1/W=0.275 en W4) y la monotonía T=−0.323 es exactamente la covarianza simple dominada por el núcleo (cov≈0 desde dw≥0.3): la cola necesita mecanismo propio. A cambio, Gate A REFUERZA la cola remota con método independiente del detector: 9/9 transported cierran la pendiente de fase (W4∧W8) vs 0/9 fresh, en tres topologías. Gate B converge con nuestro §7-§8: el link no es fuente neta temprana (trabajo negativo 9+9), la secuencia es dominancia espectral→cierre de fase (6/6, adelanto mediano 8.41 u.t.), y sus propias advertencias (rho≠autonomía) son la lección que nosotros cerramos con r≡1 y la fuga espectral. Gate B3 cayó en LA MISMA trampa de horizontes 60/120 que nuestro tap §10 (BLOQUEA-1) y se retiró por errata honesta — confirmación independiente del confusor. linear_response.py DUPLICA nuestro instrumento χ (Jacobiano frío, notches, c=1). Tests del frente (15) pasan post-merge. Todo lo de mi porción es EXPLORATORIO declarado, no sellado; el PREREGISTRO es v0 vivo de hipótesis, no estimandos.",
+   "claims": [
+    {
+     "claim": "W8 está anidado en W4 (nesting estricto) y ambos brazos pierden exactamente 18 locks al pasar W4→W8, por lo que el Δ apareado es idéntico en ambas ventanas",
+     "numeros": "transported 82→64, fresh 26→8, W8sinW4=0 en ambos brazos (170 no-self/brazo); Δ=+0.3294=56/170 en W4 y en W8 — re-ejecutado por mí, exacto",
+     "estado": "INSTRUMENTO_VALIDADO",
+     "metodo": "baseline_census.py sobre tabla_tanda{1,2}.json (SHA 0b4b4ff2…/d5e65e28…), celda k03_tau02, lock60=P(primer t_lock≤60); verifiqué re-corriendo las funciones en memoria"
+    },
+    {
+     "claim": "La rodilla W4 de la lengua coincide con la zona analítica de falso-firme del instrumento: umbral R_W=0.95 ⇒ deriva |dΔφ/dt|<1.1/W indetectable",
+     "numeros": "1.1/W: 0.275 (W4), 0.1375 (W8); rodilla de §11 en dw≈0.3-0.6 pegada a 0.275; el angostamiento W8 escala como 1.1/W",
+     "estado": "INSTRUMENTO_VALIDADO",
+     "metodo": "argumento analítico (FALSE_ZONE en baseline_census.py) + consistencia con la forma de la lengua W8 de §11 (0.83/0.68/0.32/0.15)"
+    },
+    {
+     "claim": "La tendencia global log(dw)→lock60 NO describe la cola: el estadístico es núcleo-dominado y queda ≈0 desde dw≥0.3",
+     "numeros": "cov(log dw, lock60 W4, transported): −0.323 en dw≥0.02 (n=164) / +0.004 en dw≥0.3 (n=122) / +0.050 en dw≥1 (n=76) — re-ejecutado, exacto; nótese que −0.323 == el T de monotonía del POOLED §11",
+     "estado": "INSTRUMENTO_VALIDADO",
+     "metodo": "covarianza simple sin clustering (baseline); la p=0/2000 de §11 viene de la nula por-nodo pero el estadístico es el mismo número"
+    },
+    {
+     "claim": "lock60 mide la primera coherencia del detector, no necesariamente la primera captura física; una deriva constante puede sostener R_W≥0.95 indefinidamente (bloqueo conceptual del endpoint)",
+     "numeros": "sin número propio; es la crítica que motiva Gates A-B",
+     "estado": "EXPLORATORIO",
+     "metodo": "análisis del manifiesto de par_link (firmeza sin cruzar con cierre de frecuencia); coincide con la semántica que §5/§9/§11 ya declararon"
+    },
+    {
+     "claim": "La ventaja biográfica sobrevive filtros diagnósticos de cierre físico tardío (control retrospectivo, no estimando sellado)",
+     "numeros": "Δ apareado W4: +0.329 (first) → +0.300 (first+dw_tardia<0.275) → +0.276 (firme final+cierre); W8: +0.329 → +0.241 → +0.194 — re-ejecutado, exacto",
+     "estado": "EXPLORATORIO",
+     "metodo": "delta_apareado con predicados endurecidos sobre las mismas tablas"
+    },
+    {
+     "claim": "Existe un banco remoto estricto 9-0: transported con lock60_W8, detuning temprano medido fuera de falso-firme y tardío dentro; cero fresh equivalentes",
+     "numeros": "19 locks W8 en dw aislado≥1 → 9 estrictos (7 en dw 1-10, 2 en 10-50); fresh estrictos = 0 — re-ejecutado, exacto",
+     "estado": "INSTRUMENTO_VALIDADO",
+     "metodo": "enriquecer_remotos: omega_nodo temprana/tardía de views W8 (375 indexadas) + criterio early_dw>0.1375>late_dw"
+    },
+    {
+     "claim": "E0 es predictor poblacional importante en la cola 1-10 (presupuesto de drive como primer mecanismo a medir)",
+     "numeros": "mediana E0: 0.2726 en locks vs 1.832e-4 en fallos; AUC=0.791 (15 vs 46) — re-ejecutado, exacto",
+     "estado": "EXPLORATORIO",
+     "metodo": "E0=E0_nodo0+E0_nodo1 de REPORTE.json; descriptivo, sin clustering"
+    },
+    {
+     "claim": "NO hay enriquecimiento poblacional de racionales pequeños en los éxitos remotos (y el instrumento Q ni siquiera mide fase p:q, solo razones de ω tempranas)",
+     "numeros": "Q≤6: éxitos MÁS lejos en mediana (0.0453 vs 0.0232), p_perm=0.933; Q≤8: ventaja chica no concluyente (0.00709 vs 0.01236), p=0.115 (una cola, 20k perms, 9 vs 54) — re-ejecutado, exacto",
+     "estado": "NEGATIVO",
+     "metodo": "nearest_rational sobre ratio de omegas tempranas + permutación de medianas con semilla fija"
+    },
+    {
+     "claim": "El grafo remoto NO es todavía un grumo: es mapa de candidatos para motivos, no evidencia de modo colectivo",
+     "numeros": "19 aristas (locks W8 dw≥1), 31 nodos, 12 componentes, mayor=5 — re-ejecutado, exacto (sizes [5,4,3,3,2×8])",
+     "estado": "NEGATIVO",
+     "metodo": "componentes conexas sobre block_i/block_j; ORDEN_COSTO_VALOR le asigna valor 2.5/5 explícitamente"
+    },
+    {
+     "claim": "Gate A: el banco remoto NO se reduce a falso-firme por deriva constante — cierre cinemático robusto 9/9 transported vs 0/9 fresh, sin banderas de mudez/armónico en 18 films",
+     "numeros": "9/9 vs 0/9 pasando W4 Y W8 (pendiente LS |dΔφ/dt|<1.1/W sostenida ≥2 u.t., hop 0.5); un intento previo (bins 0.5 u.t.) daba 5/9 y fue DESCARTADO honestamente (confundía bamboleo intra-ciclo con releases)",
+     "estado": "EXPLORATORIO",
+     "metodo": "triage_cinematica.py: fase elípticamente corregida como par_link pero pendiente por regresión local en ventanas móviles; timestamp = fin de ventana, no causal"
+    },
+    {
+     "claim": "Gate A: hay al menos TRES topologías de cierre, no una cola remota única — obliga a mecanismos por trayectoria",
+     "numeros": "ancla-seguidor 6/9; convergencia compartida 1 (olaB_par085); línea final fuera del intervalo de llegada 2 (par129, par134)",
+     "estado": "EXPLORATORIO",
+     "metodo": "ruta_frecuencias sobre omega temprana/tardía; categorías declaradas descriptivas, no nombres físicos"
+    },
+    {
+     "claim": "Gate A: E0 total NO explica la ventaja apareada; la biografía cambia el ESTADO DE LLEGADA; el timestamp del cierre no es robusto",
+     "numeros": "transported con más E0 que su fresh solo 4/9; mediana E0_t/E0_f=0.402 (¡y cierra 9/9 vs 0/9!); distancia media de ω tempranas t-vs-f = 1.51 rad/u.t.; W4/W8 discrepan varios u.t. ⇒ prohibido usar t_lock para precedencias finas",
+     "estado": "EXPLORATORIO",
+     "metodo": "contraste apareado por genoma+semilla dentro del mismo par"
+    },
+    {
+     "claim": "Gate B1: el link NO funciona como fuente neta temprana — 'link sano' no puede significar más combustible; puede seleccionar/alinear mientras extrae energía",
+     "numeros": "P_i=drive_i·Σv suma NEGATIVO en 9/9 transported y 9/9 fresh en [0.5,5.0]; transferencia direccional (un nodo recibe neto) 6/9 t vs 0/9 f; b≠0 en 9/9 t y b=0 en 9/9 f POR CONSTRUCCIÓN (huella, no mecanismo); par085/par101 cierran con menos E0, menos fuerza y menos amplitud Q que su fresh",
+     "estado": "EXPLORATORIO",
+     "metodo": "gate_b_arrival sobre chunk_00000 de 18 films, chunks verificados contra COMPLETE (sha por chunk)"
+    },
+    {
+     "claim": "Gate B2: la secuencia observada es línea recibida → dominancia espectral → cierre de fase; la dominancia PRECEDE al cierre en todos los resolubles",
+     "numeros": "rho>1 sostenido: 6/6 transported resolubles vs 0/5 fresh; adelanto mediano 8.41 u.t. (rango 1.95-19.84); 0 saltos de línea >2 Rayleigh; solo 6 de los 9 'remotos' son resolubles espectralmente (Rayleigh 2π/8≈0.785)",
+     "estado": "EXPLORATORIO",
+     "metodo": "gate_b_dominance: rho=A_línea/A_competidor del seguidor, W8 hop 1, competidor fuera de ±1 Rayleigh; advertencia explícita: rho mide selección espectral, NO autonomía ni energía"
+    },
+    {
+     "claim": "Gate B3: las asociaciones temprano→endpoint fueron RETIRADAS por errata de horizonte — 'estado/dw_tardia' vive al FINAL de cada film y 151 terminan a 60 pero 13 a 120: los AUC contra salud mezclaban horizontes",
+     "numeros": "retirados: AUC rho 0.956 transported, conteos de endpoint (21/12/10/11/2), AUC firmeza 0.866 vs cierre 0.751, permutación 0/100k (además sin clustering y con 5 positivos del banco de descubrimiento); tras retirar el banco: 158 films, 5 positivos, AUC conjunta 0.782, UN solo positivo transported independiente — sin cierre inferencial; fresh: umbral rho>1 da 0/7 (no es ley universal; AUC continua 0.739)",
+     "estado": "NEGATIVO",
+     "metodo": "errata declarada en el propio Gate B; sustituido por Gate E (otra porción) que recompone el veredicto a 60 desde theta con error cero en 151 controles; las mediciones tempranas [0,8] siguen válidas; OJO: gate_b_population.py aún dice '[50,60]' en su bloque prereg — re-correrlo reproduce el bug"
+    },
+    {
+     "claim": "linear_response.py: χ_m(ω) del Jacobiano frío por diferencias finitas (variables lentas congeladas), vector de drive, suma por capa, χ_emitida y mínimos locales (notches) — el instrumento de la prioridad #4 sin parámetro libre",
+     "numeros": "h=1e-6 central; emission_scale=0.1 por defecto; resuelve (iωI−M)^{-1}·drive; tests del frente 15/15 passed post-merge (test_link_power, test_link_state_machine)",
+     "estado": "INSTRUMENTO_VALIDADO",
+     "metodo": "misma familia exacta que nuestro χ de §7 (r≡1 al 0.04%) y CHI_NULA_BASE de §13; corrí pytest con PYTHONPATH=src"
+    },
+    {
+     "claim": "Marco del frente: PREREGISTRO_DINAMICA v0 (H0 instrumento / H1 forzado pasivo / H2 biografía en 4 candidatos / H3 remoto genuino 5 capas / H4 p:q / H5 grumo) + ORDEN_COSTO_VALOR (10 pruebas por CPU) + custodia read-only por diseño (rechazo de salida a ExternalDisk verificado con control negativo)",
+     "numeros": "criterio de novedad con 4 firmas; grafo degradado a 2.5/5; escala C0-C5; safe_output() rechaza ExternalDisk y fuerza logs/link_grumo",
+     "estado": "EXPLORATORIO",
+     "metodo": "prerregistro VIVO de hipótesis y discriminantes — NO estimandos sellados; nada de mi porción está prerregistrado en el sentido de §10"
+    }
+   ],
+   "conexiones": [
+    {
+     "con": "§11 — 'IDÉNTICO en W8 (+0.329 [0.211,0.454])' citado como réplica",
+     "tipo": "CORRIGE",
+     "detalle": "El baseline lo explica y yo lo verifiqué: W8⊂W4 estricto y ambos brazos pierden EXACTAMENTE 18 locks ⇒ el Δ apareado es idéntico POR ARITMÉTICA (56/170 en ambas ventanas). Es robustez de umbral, no muestra independiente. Citar W8 como 'réplica' de Δ debe retirarse; la lengua W8 más angosta sí es informativa pero su escala la fija 1.1/W."
+    },
+    {
+     "con": "§11 — 'La rodilla vive en dw≈0.3-0.6' + monotonía T=−0.323, p=0/2000",
+     "tipo": "CORRIGE",
+     "detalle": "Matiza, no invalida: (a) la rodilla coincide con la zona analítica de falso-firme W4 (1.1/4=0.275) — su POSICIÓN puede ser geometría del detector, no frontera física de la lengua; (b) T=−0.323 es exactamente la covarianza simple y está dominada por el núcleo: cov=+0.004 desde dw≥0.3 y +0.050 desde dw≥1 — la monotonía p=0 NO certifica la forma de la cola. El núcleo dw<0.275 vive DENTRO de falso-firme y no tiene validación por pendiente (Gate A solo cubrió los 9 remotos)."
+    },
+    {
+     "con": "§11 — 'la cola remota es real → ola C' y 'biografía abre canales remotos ×17 (16-0, p=3e-5)'",
+     "tipo": "REFUERZA",
+     "detalle": "Gate A la defiende con método INDEPENDIENTE del detector: 9/9 transported estrictos cierran la deriva de fase (regresión local W4∧W8) vs 0/9 fresh, sin mudez/armónico. El banco estricto 9-0 (7 en 1-10, 2 en 10-50) es la versión endurecida de nuestro 16-0. Bonus para ola C: NO es una cola única — 3 topologías (6 ancla-seguidor, 1 convergencia compartida, 2 línea fuera de intervalo) ⇒ los mecanismos van por trayectoria."
+    },
+    {
+     "con": "§11 — Δ biografía +0.329 [0.204,0.455]",
+     "tipo": "REFUERZA",
+     "detalle": "Número confirmado exacto (+0.3294=56/170) y sobrevive filtros retrospectivos de cierre físico (W4: +0.300/+0.276; W8: +0.241/+0.194) — la ventaja no es puro artefacto del endpoint. La relectura del baseline ('curva de coherencia condicionada por historia, no frontera física de Arnold todavía') es compatible con la semántica que §5/§9/§11 ya declararon (lock60 = dominancia espectral condicionada al drive)."
+    },
+    {
+     "con": "§10 — BLOQUEA-1 (horizontes 60/120 correlacionados con dw por diseño)",
+     "tipo": "DUPLICA",
+     "detalle": "Gate B3 cayó EXACTAMENTE en la misma trampa por su cuenta (leyó estado/dw_tardia como [50,60] cuando 13 films terminan a 120) y la retiró por errata, recomponiendo el veredicto a 60 vía Gate E. Confirmación independiente de que el confusor de horizontes era real y letal. Riesgo residual: el código gate_b_population.py conserva el prereg erróneo."
+    },
+    {
+     "con": "§7 — C1 sostiene (receptor sumidero puro 15/15; r≡1) y pregunta evolutiva ('el link copia una señal moribunda')",
+     "tipo": "REFUERZA",
+     "detalle": "Gate B1 llega a lo mismo desde el census: trabajo del drive suma negativo 9/9+9/9 en llegada; 'un link puede seleccionar/alinear mientras extrae energía total'. Y el criterio de decisión de H1 del prerregistro (cierre subporcentual medido-vs-predicho + potencia positiva + sin persistencia en OFF) es exactamente lo que nuestro §7 entregó con r≡1 (0.04-0.7%): el frente de COA planteó la pregunta, nuestra línea la cerró para el régimen esclavo."
+    },
+    {
+     "con": "§8 — fuga espectral / r≫1 retirado como detector de autonomía",
+     "tipo": "REFUERZA",
+     "detalle": "Gate B2/B3 ya llevaban las advertencias correctas ('rho mide selección espectral, no autonomía ni signo energético'; 'solo si rho excede drive×susceptibilidad o persiste sin drive se habla de autonomía') — misma disciplina que la enmienda §8. Además B2 usa Rayleigh explícito como guardia de resolubilidad, el pariente de nuestra convergencia-en-W anti-fuga."
+    },
+    {
+     "con": "§1 — sello v2 del canal (canal = episodio de DOMINANCIA, no de fase)",
+     "tipo": "REFUERZA",
+     "detalle": "Gate B2 midió la secuencia en el census: la línea recibida vence al competidor ANTES del cierre de fase en 6/6 resolubles (adelanto mediano 8.41 u.t., rango 1.95-19.84) y 0/5 fresh. Es la evidencia poblacional-de-llegada de que la dominancia es el observable primario del canal."
+    },
+    {
+     "con": "§12-§14 — cirugía de línea fija (nula sin parámetro libre, gemelo OFF, notches)",
+     "tipo": "HEREDA",
+     "detalle": "La prioridad #8 de ORDEN_COSTO_VALOR ('cirugía ON/OFF, drive congelado: causalidad, histéresis, persistencia') es exactamente lo que ejecutamos en §13-§14; la exigencia H0 del prerregistro ('separación respecto de nula link-OFF apareada') es nuestro gemelo OFF §8-iii/§13; y linear_response.py DUPLICA el instrumento χ de CHI_NULA_BASE (Jacobiano frío + notches por mínimos locales). Dos frentes convergieron en el mismo instrumental; §14 ya respondió lo que este frente dejó abierto (C3 sin histéresis, C4 lineal completo, σ es EL número)."
+    },
+    {
+     "con": "§7-C4/§14 — selección modal por notches (geometría de χ separa destino por modo)",
+     "tipo": "REFUERZA",
+     "detalle": "El pedido #4 del frente ('transferencia/notches del genoma para separar respuesta forzada de residuo real') y el criterio B ('sólo el residuo no explicado justifica cirugía') anticipan el resultado nuestro: el ±25% del notch era método, no física (§14), y el mapa de notches quedó pre-calculable por genoma. La lectura E0-AUC-0.79 del baseline queda además MATIZADA por Gate A mismo (apareado: E0_t/E0_f mediana 0.402, más E0 solo 4/9): predictor poblacional real, no regla suficiente — consistente con nuestra carrera de tasas F_L/A_S (§7-C2)."
+    }
+   ],
+   "riesgos_o_pendientes": [
+    "El núcleo de la lengua (dw<0.275) vive DENTRO de la zona falso-firme W4 y NO tiene validación cinemática por pendiente (Gate A solo auditó los 9 remotos estrictos): la posición de la rodilla de §11 queda instrumento-condicionada hasta releer el núcleo con endpoint físico (o con el estimador de pendiente de triage_cinematica, barato: C0-C1).",
+    "gate_b_population.py conserva en su bloque 'prereg' el outcome erróneo 'frecuencia tardía [50,60]' que la errata retiró: re-correrlo reproduce el bug de horizontes mixtos; la lectura corregida vive en Gate E (otra porción). Nadie debe citar los AUC 0.956/0.866/0.751 ni los conteos 21/12/10/11/2.",
+    "rho es ciego al núcleo por construcción (resolubilidad Rayleigh 2π/8≈0.785 > toda la lengua central): el candidato de salud del frente solo existe para dw_temprana≥0.785.",
+    "Tras retirar el banco de descubrimiento, transported queda con UN solo positivo independiente para rho: sin cierre inferencial — el holdout con más outcomes está pendiente (el frente lo sabe y lo declara).",
+    "Nada de mi porción está sellado: baseline y Gates A-B son exploratorios declarados; PREREGISTRO_DINAMICA es un 'prerregistro vivo v0' de hipótesis y discriminantes, no de estimandos — no confundir su estatus con el POOLED sellado de §10.",
+    "El instrumento Q de racionales del baseline mide razones de ω tempranas, NO fase p:q: el negativo p=0.933/0.115 descarta enriquecimiento de razones, no la hipótesis H4 completa (que exige cierre de combinación de fases p:q — sin medir aún).",
+    "Coincidencia a declarar en registro: el T=−0.323 de la monotonía POOLED (§11) es numéricamente la covarianza simple del baseline; la p=0/2000 viene de la nula por-nodo, pero conviene citar la monotonía como propiedad del NÚCLEO (cov≈0 desde dw≥0.3), no de la lengua entera.",
+    "Los derivados del frente (logs/link_grumo/*.json) están gitignorados y no viajaron con el merge: verifiqué el baseline re-corriéndolo (reproduce exacto), pero Gates A/B dependen de views W8 y del archivo externo /Volumes/ExternalDisk/study07_census_arnold para reproducirse — sus números aquí citados vienen de los .md de audit, no los re-ejecuté (Gate A/B leen worldlines externas; el baseline sí lo re-ejecuté completo)."
+   ]
+  },
+  "cde": {
+   "resumen": "Los gates C-D-E de COA (audit/LINK_GRUMO_GATE_C_D_E_COSECHA.md, exploratorio/no canónico por declaración propia) construyen sobre NUESTRO instrumento: χ del Jacobiano FD en (x,v,z) con b,e congeladas (tools/link_grumo/linear_response.py), NO estimadores espectrales — solo el H medido = Q̂/F̂ es espectral (coeficiente complejo Hann). Gate C valida el instrumento (notches par134 33.695/34.375 vs 33.69/34.37 arbitrados; identidad A_L/(|χ|F)=1 en films 600 con error de mediana ≤0.123%; hereda la exclusión par132-Q0 por fuga espectral de nuestro §8) y muestra que χ_Q sola NO separa salud (AUC 0.463) y que vestir χ con b inicial no cambia nada (1.00000004) — la ventaja biográfica de nuestro census (Δ+0.329) NO vive en la susceptibilidad rápida del receptor. Gate D1 es un NEGATIVO fuerte: el lazo cerrado frío de dos nodos L=χ_iDχ_jD·e^(−2iωτ)/[(1+χ_iD)(1+χ_jD)] queda a distancia ≈1 de +1 (|L| mediana 0.0071) — el link NO nace por inestabilidad lineal Barkhausen/Nyquist; favorece entrainment forzado, coherente con nuestro §14 (todo lineal, única excepción σ>0). Gate D2/D3 extienden nuestra identidad r=A/(χF)≡1 a la FASE: R=(Q̂/F̂)/χ_Q≈1 complejo separa transported (6/6 cierran fase, mediana 0.085°) de fresh (1/5, mediana 55.46°) en los 9 remotos exitosos. Gate E NO re-deriva ni corrige nuestro lock60: corrige el endpoint del PROPIO Gate B (mezcla 60/120, 4/13 flips, AUCs retirados) hacia salud_60 = estado a horizonte fijo (rw≥0.95 AND dw<0.1375) — es el MISMO confound 60/120 que nuestro §10 BLOQUEA-1 halló independientemente, sobre un observable distinto (estado vs tiempo-de-evento). Su mejor predictor temprano rho_pred=|χ|F/A_comp (AUC 0.944 vs 0.883 de rho observada) es exactamente nuestra frontera de cirugía χ·F̂ vs A_S en versión poblacional — refuerza §14 «la lengua de captura es geometría lineal». Verifiqué por spot-check reproduciendo C0 desde data/lote_suelto_120: Q0=33.695, Q1=34.375, Q2 sin notch, σ=−0.00188 — bit-idéntico a lo declarado.",
+   "claims": [
+    {
+     "claim": "C0 — el instrumento χ (Jacobiano FD en (x,v,z), b=e=0, drive externo unitario; tools/link_grumo/linear_response.py) recupera los notches arbitrados y la identidad de amplitud en films largos",
+     "numeros": "par134: Q0=33.695 y Q1=34.375 vs 33.69/34.37 arbitrados (error 0.005 rad/u.t.); par129 control: 0 mínimos espurios Q0/Q1/Q2 en 20.4-28; films 600 u.t.: 11 modos elegibles cumplen A_L/(|χ|F)=1 con máximo error de mediana 0.123%; par132-Q0 publicado pero EXCLUIDO de calibración (fuga espectral ya arbitrada, nuestro §8). Spot-check mío: re-corrido sobre data/lote_suelto_120 reproduce Q0=33.695, Q1=34.375, Q2 sin notch, σ=−0.001877",
+     "estado": "INSTRUMENTO_VALIDADO",
+     "metodo": "gate_c_validate_transfer.py (barrido ω paso 0.005, mínimos locales de |χ_modo|) + gate_c_validate_long.py (razón A_L/(|χ|F̂) sobre series npz cacheadas, máscara A_L>1e-6·max, percentiles 2/50/98)"
+    },
+    {
+     "claim": "C0-restricción — χ evaluada en el centro de W8 no representa la convolución de ventana donde χ varía dentro de una Rayleigh; el estrato plano se analiza aparte",
+     "numeros": "102 de 164 casos con max(χ)/min(χ)>2 en ω±Rayleigh/2 (Rayleigh W8 = 2π/8); en banda plana la identidad de amplitud cae dentro de factor 2 en 60/62 films",
+     "estado": "SELLADO",
+     "metodo": "gate_c_population.py: muestreo de |χ| en 3 puntos {ω−R/2, ω, ω+R/2}, flag chi_no_plana_W8 = max/min>2; estratificación publicada en todos los summaries"
+    },
+    {
+     "claim": "C1 — χ_Q fría sola NO separa salud poblacional; vestir al receptor con su b inicial NO explica la ventaja biográfica",
+     "numeros": "164 films tempranos; AUC(χ_Q)=0.463 con el endpoint inicial (luego retirado por Gate E); banco B1: mediana χ_vestida/χ_fría = 1.00000004 en transported, error de transferencia sin cambio material; fresh tiene b=0 por construcción",
+     "estado": "NEGATIVO",
+     "metodo": "gate_c_population.py: Jacobiano vestido jacobian_fd(spec, b_fixed=b_inicio, e_fixed=e_inicio) vs frío; advertencia declarada: e no entra directamente al Jacobiano rápido"
+    },
+    {
+     "claim": "D1 — NEGATIVO importante: el link NO es un polo frío del grumo (no nace por auto-oscilación lineal tipo Barkhausen/Nyquist)",
+     "numeros": "|L| mediana en sanos = 0.0071; distancia a +1 ≈ 1; ni distancia ni fase de Nyquist separan sanos; retirar el banco de descubrimiento no rescata el criterio; fracción línea-más-cerca-de-Nyquist-que-competidor tampoco separa",
+     "estado": "NEGATIVO",
+     "metodo": "gate_d_nyquist.py: L = χ_i·D·χ_j·D·e^(−2iωτ)/[(1+χ_iD)(1+χ_jD)] con D=k+iγω, χ_emitted (emission_scale·Σmodos) del Jacobiano frío, k=k_global·w_k[0], γ=gamma_c·w_gamma[0], τ del manifest; comparador = misma geometría en la línea competidora; fingerprints de constitución verificados fail-loud"
+    },
+    {
+     "claim": "D2 — firma de captura forzada compleja: en los 9 transported remotos exitosos con fresh apareado, el seguidor transported satisface Q=χF en fase, el fresh no",
+     "numeros": "ventana [0.5,5] u.t.; transported resolubles 6/6 cierran fase de R, error mediano 0.085° y máximo 0.944°; fresh resolubles 1/5 dentro de 15°, mediana 55.46°; mitades de ventana: transported 4/4 cierran ambas (mediana peor error 0.335°), fresh 0/4 (mediana 128.95°); apareado 9/9 transported con menor error de fase Y menor error complejo; outlier 81.9° (olaB_par085) explicado por línea a 0.265 rad/u.t. de la propia con Rayleigh 1.396 (mezcla en Q̂/F̂)",
+     "estado": "EXPLORATORIO",
+     "metodo": "gate_d_phase_transfer.py: R=(Q̂/F̂)/χ_Q con Q̂,F̂ = coeficientes complejos Hann sobre Q_sum del seguidor y canal drive; χ fría Y vestida calculadas (la fría es la citada); 18 chunk_00000 verificados por hash; banco seleccionado por éxito transported — contrasta mecanismo, no prevalencia (advertencia declarada)"
+    },
+    {
+     "claim": "D3 — cierre complejo temprano poblacional definido y medido en [0,8]; sus asociaciones de salud quedan SUPERSEDIDAS por Gate E (declarado en el propio JSON)",
+     "numeros": "cierre_complejo = |arg R|≤15° AND 0.5≤|R|≤2; dominancia = rho_predicha_fria>1; ventana predictor [0,8] u.t.",
+     "estado": "EXPLORATORIO",
+     "metodo": "gate_d_population_phase.py sobre los 164 records de Gate C, misma R compleja de D2 pero ventana W8 inicial; advertencia: la línea se seleccionó en la misma W8 (predictor y outcome separados solo en tiempo)"
+    },
+    {
+     "claim": "E-corrección — Gate B3 mezclaba endpoints de films 60 y 120 u.t.; el veredicto se rehizo a horizonte común 60 y la implementación replica los films nativos EXACTO",
+     "numeros": "151 films de 60 + 13 de 120; replicación de los 151 nativos con error exacto cero (gate falla si rw_abs_error≥1e-12 o dw_abs_error≥1e-10 o estado no coincide); 4 de los 13 films largos CAMBIAN de outcome; los AUC de salud de Gate B quedan RETIRADOS",
+     "estado": "INSTRUMENTO_VALIDADO",
+     "metodo": "gate_e_fixed_horizon.py: salud_60 = rw_final≥0.95 AND dw_[50,60]<0.1375 (=1.1/8), mismo algoritmo par_link v1.1 (_rw_movil de study07.instruments.par) sobre theta truncada a 60 con fase corregida recalculada tras truncar"
+    },
+    {
+     "claim": "E-resultado — la constitución del receptor agrega información predictiva: rho_pred supera a rho observada; el cierre complejo temprano es condición NECESARIA pero NO suficiente en transported; fresh nace después",
+     "numeros": "8 sanos a 60 (6 transported, 2 fresh); AUC predictor temprano [0,8]: rho observada 0.883/0.956/0.698 (total/t/f) vs rho_pred=|χ|F/A_comp 0.944/0.979/0.918 vs error complejo 0.800/0.862/0.560; transported: 6/6 sanos con cierre complejo temprano y 0/34 sin cierre es sano (pero 31 no-sanos también cierran); conjunción rho_pred>1 AND cierre = 3/4 sanos pero omite 3 sanos con rho_pred<1 (alta pureza, mala cobertura); fresh: sus 2 sanos SIN cierre temprano, errores de fase iniciales ~143-146°",
+     "estado": "EXPLORATORIO",
+     "metodo": "AUC descriptivos (fresh con solo 2 positivos, no citable); advertencia propia: holdout transported conserva UN solo positivo — no alcanza cierre inferencial; salud_60 = estado a horizonte común, no supervivencia asintótica"
+    },
+    {
+     "claim": "Marco resultante — «link sano» ya no es un escalar: (1) elegibilidad rho_pred, (2) captura actual R≈1, (3) maduración (fresh llega tarde), (4) supervivencia NO resuelta por el endpoint de 60; el criterio frío de Nyquist FALLÓ, la identidad de transferencia forzada PASÓ",
+     "numeros": "cuatro componentes declarados; próxima cosecha propuesta: trayectorias móviles R_Q(t) y rho_pred(t) en los 8 sanos, orden de eventos t_S2→t_RQ→t_dominancia→t_lock medido en ventanas disjuntas, no asumido",
+     "estado": "EXPLORATORIO",
+     "metodo": "síntesis del documento de cosecha; el propio doc declara: exploratorio, branch paralelo, no canónico, sin films nuevos, disco externo solo lectura, chunks verificados contra COMPLETE"
+    }
+   ],
+   "conexiones": [
+    {
+     "con": "§7 C1 — identidad r=A/(χF)≡1",
+     "tipo": "HEREDA",
+     "detalle": "Los gates usan LITERALMENTE nuestro instrumento: χ del Jacobiano FD en (x,v,z) con b,e congeladas y c=1 sin parámetro libre (linear_response.py), NO estimadores espectrales de χ — solo H medido es espectral (Hann). gate_c_validate_long reproduce nuestra C1 en los mismos films 600 (error mediana ≤0.123% vs nuestras medianas 0.9999-1.0001), y D2/D3 la EXTIENDEN a la fase compleja: R=(Q̂/F̂)/χ_Q. Verifiqué por spot-check que sus notches par134 (33.695/34.375, Q2 sin notch) son los nuestros de §7-C4d y §13 CHI_NULA_BASE."
+    },
+    {
+     "con": "§8 — enmienda fuga espectral par132-Q0",
+     "tipo": "HEREDA",
+     "detalle": "gate_c_validate_long excluye explícitamente par132-Q0 de calibración con razón 'fuga espectral autónoma ya arbitrada' — la enmienda de COA circuló a su propio branch. PERO: D2/D3 usan UNA sola ventana Hann sin la convergencia-en-W anti-fuga que §8 prescribió antes de citar desviaciones de r; el outlier de 81.9° (mezcla de líneas a 0.265 rad/u.t. con Rayleigh 1.396) es exactamente esa fuga en acción. Sus umbrales (15°, factor 2) son conservadores, pero la defensa formal está pendiente."
+    },
+    {
+     "con": "§8 — teoría de lazo H=χK/(1+χK) adoptada",
+     "tipo": "REFUERZA",
+     "detalle": "Gate D1 es el test del lazo CERRADO de dos lados (nuestro §8 formuló el de UN lado H_{j←i}=χ_j·K_c·e^(−iωτ)/(1+χ_j·K_c); su 'one_pass' en gate_d_nyquist.py es esa misma fórmula). El negativo D1 (|L|~0.007, distancia a +1 ≈1) responde la pregunta de tres niveles de §8: el modo colectivo NO se forma por inestabilidad lineal fría — es entrainment forzado, exactamente lo que nuestra §14 concluyó ('el link copia una señal moribunda'). Ambos frentes convergen en la misma física por rutas independientes."
+    },
+    {
+     "con": "§14-E2 — lazo un-lado exacto salvo resonancia profunda (×2 abierto)",
+     "tipo": "CORRIGE",
+     "detalle": "Nuestro E2 midió que 1/(1+χ_em·K) SUB-predice la transmisión ×2 en resonancia Q profunda (0.242 medido vs 0.103; idéntico en ambos F0). D1 usa esas mismas fórmulas con χ_emitted en las frecuencias de línea: sus valores de |L| y one_pass pueden estar sesgados ~×2-×4 cerca de resonancia profunda. Esto NO voltea el negativo D1 (haría falta ×140 para llegar a +1), pero el instrumental de lazo debe recalibrarse con el insumo de E2 ANTES de la campaña det[I−ΧK] de la 2×9 — dirección de la corrección: de lo nuestro hacia lo de ellos."
+    },
+    {
+     "con": "§13-§14 — frontera de cirugía captura ⇔ F̂>A_S/|χ| (c=1)",
+     "tipo": "REFUERZA",
+     "detalle": "Su rho_pred = |χ(ω_línea)|·A_force/A_competidor es NUESTRA frontera de nula sin parámetro libre convertida en predictor poblacional, y la mejora AUC rho_observada→rho_pred (0.883→0.944; fresh 0.698→0.918) es confirmación poblacional de que la geometría χ·F̂ vs A_S decide — el mismo veredicto de §14 ('la lengua de captura es geometría lineal') por vía estadística en vez de quirúrgica. Además su caveat de χ-no-plana (102/164) es la misma lección de instrumento que nuestro §14 (F_th SIEMPRE con estimador DE BANDA; mismatch factor ~19 en 61b)."
+    },
+    {
+     "con": "§10 BLOQUEA-1 — horizontes 60/120 correlacionados con dw por diseño",
+     "tipo": "DUPLICA",
+     "detalle": "Gate E encontró INDEPENDIENTEMENTE la misma clase de bug que nuestro tap POOLED: Gate B3 mezclaba endpoints de films 60 y 120 (151+13, 4/13 flips, AUCs retirados) tal como nuestra tasa mixta fabricaba escalón +0.144 en dw=0.30. Convergencia metodológica que blinda la regla 'tasa mixta de horizontes PROHIBIDA como citable'. PERO Gate E NO re-deriva ni corrige nuestro lock60: son observables DISTINTOS — lock60 = P(primer t_lock≤60) (tiempo de evento, primario del POOLED) vs salud_60 = ESTADO a horizonte fijo (rw_final≥0.95 AND dw_[50,60]<0.1375). No hay conflicto de números; hay riesgo de colisión terminológica 'salud/lock/firme' entre frentes — conviene glosario común. Nota: su umbral rw 0.95 sigue POR HIPÓTESIS, igual que declaró nuestro §11."
+    },
+    {
+     "con": "§11 — Δ biografía +0.329 (lock60 t−f) y ×5.8 reponderado",
+     "tipo": "REFUERZA",
+     "detalle": "Su C1 (χ_vestida/χ_fría = 1.00000004, ventaja biográfica NO explicada por vestir el receptor) responde el ¿POR QUÉ MECÁNICO? de nuestro Δ+0.329: la biografía NO actúa desplazando la susceptibilidad rápida del receptor — actúa en la fuerza emitida, la coherencia de trayectoria y la ocupación espectral que el par trae. Complementa también P4 (§4: biografía = memoria transitoria) y su D2 le pone firma medible: el transported llega con el canal complejo YA cerrado (0.085°) mientras el fresh lo construye después (~143-146° iniciales, sanos tardíos) — cronología consistente con nuestra lengua donde la biografía HABILITA canales remotos ×17."
+    },
+    {
+     "con": "§7-C4d — geometría de notches decide destino por modo",
+     "tipo": "REFUERZA",
+     "detalle": "Su C0 reproduce nuestros notches con el mismo método y los usa como validación del instrumento (par134 Q0/Q1 con notch, Q2 sin notch = nuestro control interno que sostuvo 277 u.t.). Su C1-negativo (χ_Q sola AUC 0.463 para salud POBLACIONAL) no contradice §7-C4d: son preguntas distintas — χ decide QUÉ MODO sobrevive dentro de un onion (nuestro claim), no QUÉ PAR forma link sano (su endpoint); su propio marco de tres niveles (§8, adoptado en la cosecha) ya separa ambas."
+    }
+   ],
+   "riesgos_o_pendientes": [
+    "D2/D3 miden R con UNA sola ventana Hann sin la convergencia-en-W anti-fuga que §8 prescribió como obligatoria antes de citar desviaciones de r — el outlier 81.9° muestra que la fuga opera en su banco; los cierres citados (15°, factor 2) son robustos pero la defensa formal falta.",
+    "El instrumental de lazo de D1 (χ_emitted en L y one_pass) hereda el ×2 abierto de §14-E2 en resonancia Q profunda — no voltea el negativo D1, pero DEBE recalibrarse antes de la campaña det[I−ΧK] de la 2×9 real.",
+    "Poder estadístico mínimo: fresh tiene solo 2 positivos a 60 (AUC 0.918 no citable), holdout transported conserva UN positivo ('no alcanza cierre inferencial', declarado). Todo el frente C-D-E es exploratorio/no canónico por declaración propia; nada tiene el nivel de sellado de nuestra nula committeada por hash de §13.",
+    "La línea y el follower de la población vienen de Gate B seleccionados EN la misma W8 del predictor (advertencia declarada en D3): separación predictor/outcome es solo temporal, no de selección.",
+    "Colisión terminológica entre frentes: su 'salud_60' (estado: rw≥0.95 AND dw<0.1375) vs nuestro 'lock60' (evento: P(primer t_lock≤60)) — sin glosario común los claims se van a mezclar; además su dw 0.1375=1.1/8 (W8) no coincide con nuestro estrato 0.275 del pulling.",
+    "Su propuesta de próxima cosecha (R_Q(t), rho_pred(t) móviles, orden t_S2→t_RQ→t_dominancia→t_lock medido en ventanas disjuntas) es compatible con nuestro census de emergencia del NORTE y solo lee films existentes — candidata natural a unificar frentes con el estimando limpio de §10-§11.",
+    "Umbral rw 0.95 sigue POR HIPÓTESIS en ambos frentes (nuestro §11 lo re-midió sin encontrar valle bimodal; Gate E lo hereda sin re-medir)."
+   ]
+  },
+  "fghi": {
+   "resumen": "Gates F-G-H-I son un frente coherente y honesto que llega, POR OTRO CAMINO Y CON POBLACIÓN (16 films en Gate F, 60 en Gate G, 340 en la auditoría de coordenada), a la misma ontología que nuestro sello v2 del canal: responder linealmente (R=(Q/F)/chi ≈ 1) NO es salud; lo que separa es que una línea GANE la competencia espectral (ocupación/dominancia) y la MANTENGA. Gate H es la única pieza PRERREGISTRADA (prereg escrito antes de correr; 4/5 predicciones sostienen y la 5ta falla honestamente y se re-lee como escala modal): implementa literalmente nuestra regla de agregación v2 (cobertura con relevos solapados, huecos <=8 u.t., AND-3Q prohibido) consumiendo los episodios citables u=0.8/1.0 de nuestro LECTURA_v2.json, y le agrega un eje ORTOGONAL que no teníamos formalizado: DOMINANT x SOURCE_FADED. Sus coberturas reconcilian ARITMÉTICAMENTE con nuestro §4 (par129 0.906 vs (600-55.2)/600=0.908; par134 0.475 vs (312.25-28.25)/600=0.473; par132 0.188 = 14% citable + 4 gracias de 8 u.t.). PERO hay tres problemas de fondo que el frente no declara: (1) el outcome salud60/coordinate_health colapsa a UNA sola coordenada — el propio doc dice que los 71 films con rw>=0.95 pasan TODOS el guard de deriva corregida, luego coordinate_health ≡ firme, es decir salud = COHERENCIA DE FASE al endpoint, exactamente el detector que nuestro tap §1-P3 degradó (controles jamás-capturados dan PLV 0.975-0.999); (2) el mejor predictor temprano de Gate G (coherencia primaria Q W8 a t=20, AUC 0.963) es EL MISMO FUNCIONAL que el outcome medido 40 u.t. después — autocorrelación del estadístico, no marcador independiente; la ocupación (AUC 0.929) sí es un observable distinto; (3) todo el eje F/G vive a horizonte 60 u.t., que nuestro §17 (capturas hasta t=110) y nuestro §4 (LA GRAN INVERSIÓN a 600) demostraron CENSURADO — y el propio Gate H lo confirma en 2/4 films (par134 es el más sano a 60 y termina RELEASED; par131 está en APPROACH a 60 y termina con cobertura 0.869). Gate I es el mejor documento del lote como fenomenología (los 7 residuos se parten en 5 recorridos reproducibles, y el resultado NEGATIVO de vecinos cercanos —cada falso temprano tiene un control sano a distancia 0.352-0.449— es un hallazgo real: no falta un escalar, falta trayectoria), pero re-importa dos cosas que nuestros taps ya mataron: rankea receptores por b_S1 crudo (42x par132/par134) contra la prescripción explícita del sello v2, y bautiza un fenotipo MEMORY_PEAK_AFTER_LAST_CHANNEL cuya relación temporal §7-C5 probó vacía por contrafáctico. Riesgo de custodia: los JSON citados (incluidos los SHA-256 de gate_h y gate_i) viven en logs/link_grumo, gitignored y ausente de este checkout: los números de los docs no son verificables desde el repo.",
+   "claims": [
+    {
+     "claim": "El outcome de salud del frente F/G es fase, no dominancia, y colapsa a una sola coordenada: coordinate_health ≡ firme en esta población",
+     "numeros": "Gate E: salud_60 = (rw_final_W8 en fase corregida >= 0.95) AND (dw en theta CRUDA [50,60] < 1.1/8 = 0.1375). Gate F3 reemplaza el guard por |pendiente OLS de dphi corregida en [50,60]| < 0.1375 => coordinate_health. Sobre 340 films no-self: salud cruda 53 (44 t / 9 f) -> salud corregida 71 (59 t / 12 f); 18 flips, TODOS raw=False->corrected=True, cero en sentido contrario. El propio doc: «Los 71 films con rw>=0.95 pasan también el guard de deriva» => n_firme = 71 = n_coordinate_health. Contraste apareado t-f en 170 pares exactos: +0.206 (crudo) -> +0.276 (corregido). Estrato remoto robusto: 8->9 positivos sobre 164 elegibles, AUC de rho_pred 0.944 -> 0.941. Caso testigo olaB_par013_t: rw=0.9956, dw_cruda=0.1515, pendiente corregida 0.0359.",
+     "metodo": "gate_f_health_coordinates.py sobre views locales W8 ya construidas (no relee worldlines); replicación bit-exacta contra las views nativas de 60 u.t. verificada en el código (rw_error<1e-12, dw_error<1e-10, RuntimeError si no).",
+     "estado": "EXPLORATORIO"
+    },
+    {
+     "claim": "R≈1 NO es salud (resultado negativo, ahora con población)",
+     "numeros": "Banco Gate F (16 films, 9 sanos): «R≈1 con chi plana» aparece en 10 films de los cuales sólo 6 sanos, y hay 3 sanos SIN esa señal. Ruta passive_linear_response_below_selection: n=4, sanos 0/4. Gate G (60 films): el error complejo |R-1| es el PEOR de los 8 rankings, AUC 0.577, mediana sano 1.205 vs no sano 1.096 (invertido), gana sólo 9/16 pares discordantes. Con umbral: «R≈1 + chi plana» activo en 10 films => 3 sanos; «ocupación + R≈1 + chi plana» activo en 3 => 3 sanos pero deja 25 sanos afuera.",
+     "metodo": "R = (Q_hat/F_hat)/chi_Q con chi del Jacobiano frío (linear_response.chi_layer_sum, capa Q) y coeficiente complejo con ventana Hann de 8 u.t. (gate_d_phase_transfer.complex_coefficient); captura compleja = |arg R|<=15 grados y 0.5<=|R|<=2.",
+     "estado": "NEGATIVO"
+    },
+    {
+     "claim": "La ocupación (una línea compartida desplaza al competidor interno) es la separación más simple del banco y la única señal temprana con contenido propio",
+     "numeros": "Gate F endpoint: ocupación Q predicha persistente en 10 films => los 9 sanos entre ellos, 0/6 sanos sin ella; ocupación observada 11 => 9 sanos, 0/5. Gate G temprano (última ventana antes de t=20 -> salud [50,60]): ocupación observada AUC 0.929 (mediana sano 2.511 vs 0.690); ocupación predicha por chi fría AUC 0.887 (2.058 vs 0.206); en los 16 pares discordantes el brazo sobreviviente tuvo mayor ocupación observada 16/16 y mayor ocupación fría 14/16. Umbrales a t=20: rho_pred>1 -> 28 activos, 25 sanos, 3/32 sanos entre inactivos; rho_obs>1 -> 37 activos, 27 sanos, 1/23.",
+     "metodo": "gate_f_timeline.py: STFT Hann W=8 u.t., hop 1 u.t.; línea = pico Q del emisor en [2,50] rad/u.t.; competidor = máximo del seguidor a >=1 Rayleigh (0.785 rad/u.t.) de la línea; rho_obs = A_linea_seguidor/A_competidor; rho_pred = |chi_Q(w_linea)|*F_hat/A_competidor; sostén 2 u.t.; episodios cortados por saltos de línea > 2 Rayleigh.",
+     "estado": "EXPLORATORIO"
+    },
+    {
+     "claim": "El mejor predictor temprano de Gate G es el MISMO funcional que el outcome: no es un marcador independiente",
+     "numeros": "Ranking Gate G: coherencia primaria Q W8 a t=20 AUC 0.963 (mediana sano 0.975 vs 0.322), y el outcome es rw_final_W8 de la MISMA fase corregida en [50,60] >= 0.95. Dentro de brazos: transported 0.968, fresh 0.985. La segunda señal, ocupación observada (0.929 global; 0.880 transported; 0.955 fresh), sí es un observable distinto. dw primaria AUC 0.869 (0.040 vs 1.149); S2 0.821; S1 0.717 y DENTRO de fresh S1 colapsa a 0.475 (pierde dirección).",
+     "metodo": "Lectura mía del código: gate_g_evaluate.metric_summary usa primary_rw_end20 (rw_Q_local_W8 de la última ventana <=20, gate_f_timeline.local_phase_metrics) contra coordinate_health (rw_final_W8 en [50,60], gate_f_health_coordinates). Misma corrección de fase, misma ventana W8, mismo umbral de familia.",
+     "estado": "NEGATIVO"
+    },
+    {
+     "claim": "Orden temporal: la competencia/ocupación de línea precede a la forma primaria visible, pero la resolución de ventana casi nunca lo prueba inequívocamente",
+     "numeros": "Gate F (6 targets transported): canal conjunto Q inequívocamente antes de S2 en 3/6, solapado 3/6, NINGÚN caso con S2 antes; mediana t_S2 - t_Qjoint = +8.5 u.t. S2 antes del cierre primario inequívoco en 2/6, solapado 4/6; mediana t_S2 - t_primary = -5.5 u.t. Gate G (18 sanos con ambos eventos antes de t=20): ocupación se confirma primero en 15/18, mediana t_occupation - t_primary = -3.5 u.t., pero sólo 2 casos inequívocos y 0 en sentido inverso; S1 precede a la primaria en 15/15 medibles y S2 en 13/14.",
+     "metodo": "gate_f_evaluate.order_relation: «A definitivamente antes de B» sólo si confirmation_end(A) < support_start(B). Se publican inicio de soporte y fin de confirmación, nunca instantes.",
+     "estado": "EXPLORATORIO"
+    },
+    {
+     "claim": "Ni Q+S1+S2 trabados a t=20 garantizan supervivencia, ni su ausencia la impide: 7 contraejemplos que matan cualquier score de nacimiento",
+     "numeros": "3 falsos tempranos (captura Q W4 a 20, no sanos a 60): par003_t_k03_tau02, olaB_par036_t, olaB_par029_t — los 3 en régimen NO plano, S2 capturado 3/3, primaria estricta no capturada 3/3, y sus gemelos fresh tampoco llegan sanos (categoría NN). 4 capturas tardías reales (sin captura Q W4 a 20 y sanas a 60) con t_lock W8 histórico: par069_t 20.376, olaB_par070_t 28.336, olaB_par007_f 40.832, olaB_par010_f 47.240.",
+     "metodo": "gate_g_evaluate + gate_i_residual_phenotypes; residuo = early_Q_active XOR coordinate_health.",
+     "estado": "EXPLORATORIO"
+    },
+    {
+     "claim": "Gate H (PRERREGISTRADO): la máquina escalar era físicamente incorrecta — canal y vitalidad son ejes ortogonales; DOMINANT no autoriza a decir superviviente",
+     "numeros": "4 films s600. Finales: par129 cobertura 0.906 DOMINANT x SOURCE_FADED (Q0/Q1/Q2); par131 0.869 DOMINANT x SOURCE_FADED; par132 0.188 RELEASED; par134 0.475 RELEASED — los cuatro SOURCE_FADED. par129/131 conservan cable espectral con la fuente en 4.1e-7/4.4e-7 de su máximo causal y la línea recibida en 3.3e-7/3.5e-7. Trayectorias: par134 captura 28.25, único release de unidad 312.25 (8 u.t. tras terminar Q2); par129 captura 57.25, 0 releases de unidad, Q0 recaptura MODAL en 487.75 bajo cobertura continua de Q2; par131 captura 68.75, 2 releases breves + 2 recapturas antes de 113; par132 4 releases / 3 recapturas, release final 213.25. Estados cerca de 60 vs destino: par129 DOMINANT(Q0)/DECAYING -> conectado; par131 APPROACH/DECAYING -> conectado; par132 APPROACH/DECAYING -> liberado; par134 DOMINANT(Q0/Q1/Q2)/SUSTAINED -> LIBERADO. Sensibilidades: identidad final robusta a h=4/8/12 (sólo cambia el conteo de releases: con h=12 los dos huecos tempranos de par131 se absorben); fuente apagada para los 4 con pisos 1e-3/1e-4/1e-5, sólo se corre el cruce (líder débil 269-270 / 354-355 / 443-445; fuerte 248 / 304 / 368).",
+     "metodo": "link_state_machine.py: observador causal online (en t sólo usa datos <=t). Canal = dominancia concordante en las DOS familias (consume episodios citables eps_u1.0 de LECTURA_v2.json), confirmación 2 u.t., gracia 8 u.t., relevo por solape, release sólo tras captura, RELEASED->DOMINANT = recaptura. Vitalidad = amplitudes relativas al máximo CAUSAL acumulado (piso 1e-4) + pendiente log trailing de 30 u.t. (banda +-0.005). Potencia UNKNOWN declarado (el tap sólo tiene spot-checks, no serie).",
+     "estado": "SELLADO"
+    },
+    {
+     "claim": "La única predicción prerregistrada que FALLA: «par129 debe registrar al menos una recaptura real» — 0 recapturas de link",
+     "numeros": "4/5 checks prerregistrados sostienen (par132 y par134 RELEASED; par129 y par131 DOMINANT x SOURCE_FADED; la cicatriz modal de par134 no mata la unidad porque Q2 cubre). par129_has_link_recapture = False: 0 releases de unidad, 1 hueco corto recuperado, y la recaptura de Q0 en 487.75 es MODAL bajo cobertura continua de Q2. El código distingue explícitamente mode_recapture (vuelve un camino dentro de un link vivo) de recapture (vuelve el link tras un release real).",
+     "metodo": "gate_h_state_machine.py, dict preregistered_checks + scale_arbitration; el fallo se reporta sin re-escribir el prereg.",
+     "estado": "NEGATIVO"
+    },
+    {
+     "claim": "La máquina de estados es correcta como instrumento: 11/11 tests pasan y 3000 trazas aleatorias no violan un solo invariante",
+     "numeros": "pytest tests/test_gate_i_residual_phenotypes.py tests/test_link_state_machine.py => 11 passed in 0.08s. Fuzz propio (3000 trazas x 120 pasos, hops 0.25-9 u.t., 3 modos, 5% de muestras no observables): 0 violaciones de (a) release sin captura previa, (b) RELEASED sin captura, (c) recapture sin release previo, (d) DOMINANT con confirmed_modes vacío, (e) más de un evento capture por vida.",
+     "metodo": "Spot-check mío en scratchpad (fuzz_sm.py) importando tools/link_grumo/link_state_machine.py; no se tocó el repo.",
+     "estado": "INSTRUMENTO_VALIDADO"
+    },
+    {
+     "claim": "Los tiempos de Gate H NO son citables contra la bitácora sin corregir el desfase de confirmación/gracia",
+     "numeros": "Captura Gate H = inicio de episodio + 2.0 u.t. de confirmación causal: par134 28.25 vs nuestro inicio de cobertura 26.2 (+2.05); par129 57.25 vs nuestro 55.2 (+2.05). Release Gate H = fin de episodio + 8.0 u.t. de gracia: par134 312.25 vs nuestro Q2 suelta 303.8/304.25; par132 213.25 vs nuestro «muerto a t=205». Recaptura modal Q0 par129: 487.75 (Gate H) vs 485.8 (nuestro §4).",
+     "metodo": "Comparación mía entre gate_h_state_machine.py (MachineConfig.capture_confirm_ut=2.0, grace_ut=8.0) y los números sellados de docs/bitacora/2026-08-02.md §4.",
+     "estado": "INSTRUMENTO_VALIDADO"
+    },
+    {
+     "claim": "Gate I: los 7 residuos no son una sola bolsa — se parten en 5 recorridos reproducibles",
+     "numeros": "coherencia de ventana deslizante n=2 (par003-t, olaB-par029-t: W4 activo 100% hasta 60, Q W8 final 0.928/0.804, deriva corregida 50-60 = 0.169/0.287, lock W8 histórico NINGUNO); captura intermitente n=1 (olaB-par036-t, 3 episodios Q); canal plano seleccionado antes de fase n=2 (par069-t, olaB-par070-t, locks 20.38/28.34); canal provisional no plano n=1 (olaB-par010-f, lock 47.24); nucleación tardía n=1 (olaB-par007-f, lock 40.83). Escalera de precursores a t=20: sin línea observada 23 films -> 1 sano; línea observada con canal no plano 8 -> 1 sano; canal conjunto plano ya seleccionado 2 -> 2 sanos. Los 2 deslizantes son la única firma booleana 2/2 del banco (Q+S1+S2+ocupación observada, primaria NO capturada, ocupación PREDICHA ausente) y los dos fallan.",
+     "metodo": "gate_i_residual_phenotypes.residual_kind: si activo y no sano -> intermitente (>1 episodio Q hasta 60) / deslizante (pendiente corregida >= 0.1375) / otro; si inactivo y sano -> joint_flat / ocupación observada / nucleación tardía. Verifiqué la aritmética de todas las tablas: 28 sanos, 60 films, 27 activos / 33 inactivos, 25+3 = 24+4 = 28; rutas Gate F 6+4+4+1+1=16 con 6+3=9 sanos. Todo cuadra.",
+     "estado": "EXPLORATORIO"
+    },
+    {
+     "claim": "Resultado NEGATIVO fuerte de Gate I: no falta un escalar temprano, falta trayectoria",
+     "numeros": "8 coordenadas disponibles sólo hasta t=20 (ocupación predicha/observada, Q/S1/S2 rw, primaria, dw, error complejo), escaladas por mediana/IQR: cada falso temprano tiene un control SANO extremadamente cerca — olaB-par029-t está más cerca de un sano (0.352) que del otro caso deslizante par003-t (0.449); olaB-par036-t tiene un sano a 0.376; y olaB-par036-t comparte firma booleana exacta (Q+S2, sin S1 ni primaria, no plano) con un control sano casi perfecto, olaB-par069-f. Uno fragmenta su captura, el otro entra una vez y permanece.",
+     "metodo": "gate_i_residual_phenotypes.nearest / robust_scaled, distancia euclídea sobre información disponible a t=20. Post hoc y declarado como descriptivo.",
+     "estado": "NEGATIVO"
+    },
+    {
+     "claim": "Gate I §5 reproduce, desde la máquina de estados, LA GRAN INVERSIÓN fuerte/débil y la factoriza en reloj-del-líder vs topología-del-receptor",
+     "numeros": "Familia C≈10.18 (líder débil, par129/131): cruce SOURCE_FADED 353.75 / 354.75, cobertura 0.906 / 0.869, releases 0 / 2, final dominante / dominante. Familia C≈9.88 (líder fuerte, par132/134): cruce 304.25 / 304.25 (réplica exacta), cobertura 0.188 / 0.475, releases 4 / 1, final liberado / liberado. El apagado del líder se replica a 0-1 u.t. dentro de familia; la historia de releases NO. Memoria: con el MISMO líder C≈9.88, b_S1 = 0.268 (par132) vs 0.0064 (par134), factor ~42x; pico a +35.45 u.t. del último hueco en par132 y +7.25 en par134.",
+     "metodo": "gate_i_residual_phenotypes.s600_catalog cruzando gate_h_state_machine.json con LECTURA_v2.json (C_fit y p4_biografia). n=2 por familia, declarado como pista y no inferencia.",
+     "estado": "EXPLORATORIO"
+    },
+    {
+     "claim": "El estimador de ocupación observada tiene un TECHO por fuga de ventana: rho_obs de una línea PURA sin competidor ya vale ~2",
+     "numeros": "Medido por mí con la propia función spectrum() de gate_b_dominance (Hann, W=8 u.t., dt efectivo 0.05, padding 4x) sobre un coseno puro sin ningún competidor: w0=10.00 -> rho_obs=2.027; w0=10.30 -> 2.256; w0=23.50 -> 2.023; w0=33.70 -> 2.078. Causa: el competidor se busca a >=1 Rayleigh (0.785 rad/u.t.) de la línea, pero el lóbulo principal de Hann vale ~0.5 del pico justo a 1 Rayleigh — el «competidor» es la falda de la propia línea. Consecuencia: el rango dinámico útil de rho_obs por encima de 1 es menos de una octava, y las medianas citadas (2.511 sano vs 0.690 no sano) viven pegadas al techo del estimador.",
+     "metodo": "Spot-check mío (leak.py en scratchpad) importando gate_b_dominance.spectrum del repo sin escribirlo.",
+     "estado": "INSTRUMENTO_VALIDADO"
+    },
+    {
+     "claim": "Regla de salud propuesta por el frente, endurecida por Gate I",
+     "numeros": "Gate F proponía: «link dinámicamente vivo a 60 = ocupación Q persistente + ALGÚN soporte secundario persistente» (S1 acompaña exactamente a los mismos 10 links dinámicos; S2 no: olaB_par008_f llega sano SIN episodio S2 sostenido y olaB_par013_f pierde S2 antes del final y llega sano). Gate I lo endurece a TRES comprobaciones: selección de línea + persistencia MULTIESCALA (W4 y W8 de acuerdo) + vitalidad. Justificación: S2 está alto en los 3 falsos tempranos; Q no basta si W4 persigue una fase deslizante; dominancia no basta sobre fuente apagada.",
+     "metodo": "Síntesis declarada post hoc en los docs; ninguna de las dos versiones fue prerregistrada ni corrida como outcome.",
+     "estado": "EXPLORATORIO"
+    }
+   ],
+   "conexiones": [
+    {
+     "con": "Sello v2 del canal (§1 de 2026-08-02, prescripción 1: canal = episodio de DOMINANCIA con rho>u en ambas familias, NO de fase) + §18-P3 de COA",
+     "tipo": "REFUERZA",
+     "detalle": "Gate F/G llegan por población a la misma conclusión con la que cerramos el tap: la fase y la respuesta lineal no discriminan; la dominancia sí. Nuestro argumento fue un control (controles jamás-capturados dan PLV 0.975-0.999; en el hueco de par132-Q1 lo que discrimina es rho_max=1.005 vs 0.42-0.81 de controles); el suyo es una población (R con AUC 0.577 y más frecuente entre negativos; ocupación gana 16/16 pares discordantes). Dos pruebas independientes del mismo enunciado. Además su rho_pred = |chi|*F_hat/A_competidor ES nuestra nula sin parámetro libre del §7-C6 (captura si F_hat > A_S/|chi|, c=1): la cirugía §14 la validó por INTERVENCIÓN (34b straddle: m=0.5 -> 0 capturas, m=1.0-1.4 -> parpadeo de 6-7 eventos, m=2.0 -> captura estable) y Gate G la valida por OBSERVACIÓN early->late (AUC 0.887). Es la convergencia más valiosa del merge."
+    },
+    {
+     "con": "Sello v2, agregación por unidad (cobertura continua con relevos solapados o huecos <=8 u.t. + recaptura; AND-3Q PROHIBIDO) — §18(3) de COA y §4 de 2026-08-02",
+     "tipo": "HEREDA",
+     "detalle": "link_state_machine.py es la IMPLEMENTACIÓN EJECUTABLE de nuestra regla v2, con los mismos parámetros (confirmación 2 u.t., gracia 8 u.t., relevo por solape, release condicionado a captura previa, RELEASED->DOMINANT como recaptura). No duplica ni reemplaza al lector v2: lo CONSUME (lee los episodios citables eps_u1.0/u0.8 de LECTURA_v2.json y no re-mide rho) y agrega tres cosas que nos faltaban: (a) causalidad online explícita con un estado UNOBSERVABLE que no se convierte en ausencia física; (b) tipado de eventos con la distinción mode_recapture vs recapture, que resuelve la ambigüedad de escala que arrastrábamos desde §17; (c) el eje de VITALIDAD, que es nuevo. Sus coberturas reconcilian aritméticamente con nuestro §4. Además responde parcialmente nuestro pendiente declarado sobre h_max=8: la identidad final es robusta a h=4/8/12 y sólo cambia el conteo de releases."
+    },
+    {
+     "con": "§4 de 2026-08-02 (LA GRAN INVERSIÓN: par134 vive 277 u.t. y muere; par131 captura a 110 y termina pleno) y §17 de 2026-08-01 (capturas hasta t=110: el horizonte de 60 CENSURABA TODO)",
+     "tipo": "CONTRADICE",
+     "detalle": "El outcome de Gate F/G (salud a 60 u.t.) está demostrado censurado por nuestros films largos, y Gate H lo confirma sobre sus propios datos: cerca de t=60 par134 es el más sano (DOMINANT Q0/Q1/Q2, SUSTAINED) y termina RELEASED, mientras par131 está en APPROACH y termina con cobertura 0.869. No es contradicción de números sino de ESTIMANDO: el AUC 0.963 de Gate G predice bien un endpoint que, donde tenemos horizonte largo, se invierte en 2 de 4 casos. Consecuencia operativa: sus AUC no deben citarse como predicción de supervivencia, sólo como predicción de coherencia a 60. Ambos documentos lo declaran en sus límites, pero el título «salud» invita al error."
+    },
+    {
+     "con": "§11 de 2026-08-02 (POOLED: lock60 = P(primer t_lock<=60), Delta biografía apareado +0.329 [0.204,0.455], idéntico en W8)",
+     "tipo": "REFUERZA",
+     "detalle": "Estimandos distintos sobre la misma población y resultados consistentes: nosotros medimos PRIMER lock en [0,60] (W4), ellos el ESTADO en [50,60] (W8). Su contraste apareado transported-fresh en 170 pares exactos da +0.276 con la coordenada corregida (+0.206 con la cruda) contra nuestro +0.329; signo, orden de magnitud y robustez a W coinciden. Su hallazgo de que el guard crudo descartaba preferentemente links TRANSPORTED coherentes (18 flips, todos en la misma dirección) nos sirve directamente: sugiere que nuestro lock60 con guard cruzado de coordenadas puede estar SUBestimando la biografía, o sea que +0.329 es conservador. Vale re-mirar si el instrumento de par usa la misma mezcla de coordenadas (coherencia corregida + dw cruda)."
+    },
+    {
+     "con": "§7-C1 y §8 de 2026-08-02 (identidad r = A_L/(|chi|*F_hat) ≡ 1, mediana 1.0001, p2-p98 en [0.995,1.007]; r>>1 RETIRADO por fuga espectral)",
+     "tipo": "REFUERZA",
+     "detalle": "El «R≈1 no es salud» de Gate F/G es la lectura poblacional de nuestra identidad: si r≡1 vale SIEMPRE en régimen esclavo, por construcción no puede discriminar nada, y su AUC 0.577 es exactamente eso. Advertencia heredada: su estimador usa Hann W=8 u.t. sin el piso de fuga local que exige la enmienda §8; según nuestra propia tabla W=8 ya da 1.0-1.6 en el caso patológico (vs 45.1 con W=2), así que están mayormente protegidos, pero el guard prescripto no está implementado y sus |R| se acotan a mano en [0.5,2]."
+    },
+    {
+     "con": "§14 de 2026-08-02 (C4 CERRADO: el modelo lineal es COMPLETO; razón vs nula 1.007-1.16 sin escalar con F0 en rango x1000; el ±25% del notch era MÉTODO, no física)",
+     "tipo": "CORRIGE",
+     "detalle": "Gate F §3 lee su ruta selected_nonflat_or_nonlinear (n=4, 3 sanos) como «captura cerca de una resonancia móvil/NO LINEAL donde un único valor frío de chi(omega) no representa el estado vestido». La cirugía ya cerró eso: no hay no-linealidad medible hasta F_hat=3 en 120 u.t. Lo que su guard chi_flat (variación de |chi| sobre ±medio Rayleigh <= 2) detecta es RESOLUCIÓN: la chi evaluada en un punto es inadecuada cuando varía dentro del ancho de banda de la ventana, es decir cerca de un notch. Recomendación concreta: renombrar la ruta a «no plana / cerca de notch», borrar «nonlinear», y sustituir el guard ad hoc por el MAPA DE NOTCHES pre-calculado por genoma que exige la prescripción v3 (§7-C6), que además ya explica el destino por modo (par134: Q0 notch en 33.69, Q1 en 34.37, Q2 SIN notch — por eso Q2 sostuvo 277 u.t.)."
+    },
+    {
+     "con": "§1-P4 del sello v2 (b_S1 crudo NO rankeable entre genomas; el 58x = 9.3x de GANANCIA alpha_b/tau_b x 6.2x de física; moneda invariante integral de (e - e_ref) dt) y §7-C5 (b_S1 es eco del burst de ENTRADA, CIEGO a la muerte del canal: cortando la energía en t=80 el pico se mueve 0.2/1.8 u.t.)",
+     "tipo": "CONTRADICE",
+     "detalle": "Gate I §5 hace las dos cosas prohibidas: (1) rankea receptores por b_S1 CRUDO («una diferencia de aproximadamente 42 veces» entre par132 y par134) sin descomponer ganancia vs física; (2) define el fenotipo MEMORY_PEAK_AFTER_LAST_CHANNEL por la relación temporal pico-de-b_S1 vs último hueco del canal (+35.45 y +7.25 u.t.), que es exactamente la pareja muerte->pico que nuestro contrafáctico declaró coincidencia de escalas y no causalidad. El texto sí aclara «posimagen, no evidencia de canal vivo», pero el NOMBRE del fenotipo y su predicado en el código (p4['t_pico'] > max(gap_starts)) codifican la relación muerta, y la clase sale 2/2 por construcción sobre los dos únicos pars RELEASED. Es la corrección más urgente de mi porción: renombrar a AFTERIMAGE_OF_ENTRY_BURST y cambiar el predicado a la ventana de entrada en banda (t≈30-80)."
+    },
+    {
+     "con": "§17 de 2026-08-01 (el cruce es un FILTRO SELECTIVO POR MODO: uno muere adentro, uno sobrevive con cicatriz y recaptura, uno ni se inmuta) y §7-C4d (la variable que separa destino por modo es LA GEOMETRÍA DE chi_m(omega): el filtro por modo ES un mapa de notches)",
+     "tipo": "REFUERZA",
+     "detalle": "Gate H materializa el filtro por modo con la ontología correcta: par134 muestra cicatriz y recaptura MODAL en Q1 mientras Q2 cubre el canal, y el único release de UNIDAD llega en 312.25 — «confirma que AND-3Q era incorrecto y que la cobertura por al menos un modo es la agregación adecuada». Gate I propone además etiquetas de causa de transición (SOURCE_DECAY / SUSCEPTIBILITY_NOTCH / COMPETITOR / UNKNOWN) que son EXACTAMENTE nuestra tripleta obligatoria de mecanismo por evento (numerador-F / notch-chi / denominador-A_S) con otros nombres. Conviene unificar vocabulario antes de que se bifurque, y avisar que para los 4 films largos esos mecanismos YA están arbitrados: el release de par129-Q0 en 102.8 es numerador-F (F cayó -0.0335, A_L la copió -0.0356; contrafáctico con F congelada: rho_min=1.316, no suelta jamás) y la muerte de par134-Q2 es carrera de tasas (predicho 304.3, medido 303.75)."
+    },
+    {
+     "con": "§8 punto 5-(iii) de 2026-08-02 (la nula NO es prospectiva si usa A_S(t) del mismo film: debe venir de un GEMELO link-OFF apareado o de una ventana temprana disyunta)",
+     "tipo": "REFUERZA",
+     "detalle": "Gate G es precisamente la versión «ventana temprana disyunta» de esa exigencia: predictor en [0,20], outcome en [50,60], sin reutilizar el endpoint. Le falta la otra mitad (el gemelo link-OFF), que nuestra cirugía sí tiene. Las dos mitades juntas cierran la objeción por caminos independientes. Nota menor: dentro de cada ventana su rho_pred sigue usando el competidor CONTEMPORÁNEO del mismo film, así que la nula no es prospectiva dentro de la ventana; sólo el diseño early->late lo es."
+    },
+    {
+     "con": "§1-P3 del sello v2 (PLV/coherencia como detector de canal DEGENERADO; PLV entre modos PROHIBIDO sin 3 controles)",
+     "tipo": "CONTRADICE",
+     "detalle": "La «consolidación por soporte secundario» de Gate F (captura S1/S2 = rw_local_W4 >= 0.90 sostenido 4 u.t.) está construida sobre el detector que degradamos. El propio Gate G lo muestra desde adentro: la AUC de S1 cae a 0.475 dentro del brazo fresh, o sea pierde por completo la dirección: es marca de biografía/ruta, no orden de salud. Recomendación: NO promover «al menos un canal secundario consolida la línea» al sello v2 mientras el detector de esas capas sea fase pura; si se quiere el enunciado, hay que medir las capas por dominancia (rho en ambas familias) igual que el canal principal."
+    },
+    {
+     "con": "Protocolo DOFT de custodia (JSON sellado con git-hash; el número citable vive en un artefacto verificable)",
+     "tipo": "CONTRADICE",
+     "detalle": "Los cuatro docs citan resultados de logs/link_grumo/{gate_f_bank,gate_f_timeline,gate_f_evaluate,gate_f_health_coordinates,gate_g_bank,gate_g_early_timeline,gate_g_evaluate,gate_h_state_machine,gate_i_residual_phenotypes}.json e incluso publican SHA-256 (gate_h 66578d75..., gate_i a59d1a0c...), pero logs/* está gitignored y el directorio logs/link_grumo NO EXISTE en este checkout. Ningún número de mi porción es verificable desde el repo sin re-correr contra /Volumes/ExternalDisk. Los scripts sí están versionados y son reproducibles (verifican SHA de manifiestos y de cada chunk y abortan si no replican las views nativas), así que es recuperable, pero hoy la cadena de custodia está cortada — a diferencia de nuestros audit/*_RAW.json."
+    }
+   ],
+   "riesgos_o_pendientes": [
+    "El outcome del frente F/G (coordinate_health) es en los hechos un solo número: rw_final_W8 >= 0.95, porque el guard de deriva corregida no rechaza a nadie (los 71 firmes pasan). Cualquier cita del tipo «salud = coherencia + deriva» es engañosa; y como el mejor predictor temprano (AUC 0.963) es el mismo funcional a t=20, ese AUC mide persistencia del estadístico y no capacidad predictiva independiente. Pedir a Gate G que re-publique sus AUC EXCLUYENDO el predictor de coherencia, dejando ocupación/dw/S como únicos candidatos.",
+    "rho_obs satura por fuga de ventana: medido por mí, una línea pura sin competidor alguno ya da rho_obs entre 2.02 y 2.26 con el estimador de gate_b_dominance (Hann W=8, competidor buscado a >=1 Rayleigh, que cae dentro del lóbulo principal). El rango útil por encima del umbral 1 es menos de una octava y las medianas citadas (2.511 sano / 0.690 no sano) están al borde del techo. Además NO es el mismo objeto que nuestro rho v2 (denominador = banda propia omega_self±1.5): cerca del lock, el tono propio del receptor queda EXCLUIDO del competidor de Gate F/G por estar a menos de 1 Rayleigh de la línea. Antes de fusionar vocabulario hay que fijar un solo denominador.",
+    "Gate F/G miden dominancia con UNA sola familia (STFT Hann). El sello v2 exige concordancia STFT AND demod, y sin ella no hay banderas de familia. Sólo Gate H cumple, porque hereda los episodios ya concordados del lector v2. Si los conteos de Gate F/G se van a citar, declarar que son v2-noncompliant en ese punto.",
+    "Gate F/G no tienen gracia ni relevo: un episodio muere con una sola ventana por debajo del umbral o con un salto de línea > 2 Rayleigh. Nuestra §4 mostró que sin gracia y sin cobertura por relevo, par134 se leería como muerto a los ~75 u.t. en vez de vivo 277. Sus conteos de releases y de persistencia al endpoint están sesgados hacia la fragmentación respecto de la métrica v2.",
+    "Gate I re-importa dos inferencias que nuestros taps mataron: el ranking por b_S1 crudo (42x) y el fenotipo MEMORY_PEAK_AFTER_LAST_CHANNEL. Corrección mínima: renombrar a AFTERIMAGE_OF_ENTRY_BURST (lo que §7-C5 probó con contrafáctico) y sustituir el ranking crudo por la moneda invariante integral de (e - e_ref) dt, o por la descomposición ganancia x física.",
+    "Gate I §8 propone como «próxima medición barata» extraer d ln(ocupación)/dt, deriva acumulada de fase y descomposición del cambio en la línea recibida entre drive/susceptibilidad/competidor. Eso es EXACTAMENTE lo que el tap de transferencia §7 ya hizo y cerró para los 4 films largos, y lo que la cirugía §14 cerró por intervención. Riesgo de trabajo duplicado: el frente de COA no parece tener incorporado el cierre de §14 (C4 cerrado, C3 sin histéresis genuina, sigma ES el número, la frontera predicha por la nula). Sincronizar antes de que salga un Gate L/M repitiendo la medición.",
+    "Las conclusiones de destino de Gate H descansan en n=2 por familia de líder y en un eje de potencia declarado UNKNOWN (no hay serie temporal de P). El propio doc dice que antes de promover vitalidad a fitness hace falta una serie barata de potencia o una tendencia de actividad sellada en ventanas disjuntas. Nuestro §7 ya tiene el medidor de P por ventanas (receptor sumidero 15/15, exportación de par132-Q0 desde t≈252): conectar ese medidor a la máquina cierra el hueco sin correr films nuevos.",
+    "Custodia: logs/link_grumo no existe en el checkout y está gitignored; los SHA-256 publicados en los docs no son verificables hoy. Sugerido: commitear los JSON pequeños (gate_f_evaluate, gate_g_evaluate, gate_h_state_machine, gate_i_residual_phenotypes) o al menos un extracto sellado con los conteos citados, como hacemos con audit/*_RAW.json.",
+    "Detalle de convención en la máquina (no es bug): cuando la gracia vence estando la unidad no observable o con soporte que no llega a confirmar, el evento release se fecha RETROACTIVAMENTE en gap_since + grace, es decir en un instante anterior al de su detección (el código lo marca con release_time_censored=True sólo en la rama de no-observable). La detección es causal, la etiqueta temporal no. Si esos tiempos se van a citar como eventos físicos, publicar ambos: t_detección y t_efecto.",
+    "Banco Gate F elegido por los positivos (los targets fueron descubiertos por el mismo outcome que se estudia) y clases nombradas después de ver los datos; Gate G está balanceado por outcome conocido (aunque la selección de los 30 pares se congeló por ranking SHA-256 con semilla gate-g-20260802 ANTES de abrir las capas Q/S1/S2). Ningún AUC ni proporción de F/G/I es prevalencia poblacional ni tiene p inferencial: sólo Gate H tiene preregistro real, y su alcance es consistencia mecánica sobre 4 casos."
+   ]
+  },
+  "jk": {
+   "resumen": "Porción potencia del frente link-grumo de COA (gates J y K + instrumento link_power + contrato de integración). GATE J [SELLADO como instrumento]: prerregistró y congeló la potencia causal de puerto P[k,j]=drive[k,j]·Σ_m v_j,m[k−1] (alineación drive[k]×v[k−1], PROHIBIDO v[k]) — es EXACTAMENTE nuestro estimador del tap wf_f2afea35: la semántica del canal drive la verificó nuestro jc0 bit-exacto (error 0.0) y el cierre energético full-rate <1e-5 (jc5, films s600) es la cita explícita de validez que usa el prereg de COA; el instrumento NO re-deriva la fórmula, la hereda. Cosecha 375/375 films del census sin fallos, streaming por chunks bit-equivalente al camino en memoria (view_hash idéntico a través de bordes de chunk). GATE K [SELLADO, veredicto NEGATIVO para regla universal]: potencia temprana [2,20] vs salud sellada [50,60] (Gate F), sin soporte compartido. La señal agregada es fuerte (AUC opposed_fraction 0.825) y NO es mera fuerza (force² AUC 0.578), pero se rompe por ruta: transported AUC 0.826 vs fresh 0.568; apareado por brazo del sobreviviente 50-0-1 (t) vs 1-3-0 (f) — INVERSIÓN; AUC residual tras brazo+log1p(dw)+rank(force²) = 0.591; en el banco Gate G, M2 apenas mejora M1 (+0.0067 AUC) y empeora log-loss vs M0; 6 films sanos con intercambio EXACTAMENTE 0 en [2,20] falsan la necesidad. Conclusión de COA: la potencia es la FIRMA ENERGÉTICA DE LA RUTA TRANSPORTED (herencia de relación fase/energía → transferencia dirigida desde el comienzo), no coordenada universal de supervivencia; queda como instrumentación, NO entra en fitness/lock/máquina de estados. Hallazgo físico durable: en 94.580 cajas de 2 u.t., CERO con potencia neta suavizada positiva (link globalmente disipativo; el 'intercambio' es redistribución entre extremos). El commit f847a2c ('inversión energética por ruta') es el cambio de código que estratifica el ranking apareado por brazo del sobreviviente (by_healthy_arm) y expone la inversión + test unitario. CONTRATO: opt-in puro VERIFICADO por mí (merge 100% aditivo, link_power no está importado en ningún otro archivo de src, __init__ vacío, cero hooks de runtime); main coherente (a4d75fd solo agrega 48 archivos, 190287c solo actualiza el doc de integración; suite completa 128 passed reproducida por mí; worktree limpio; main 17 commits adelante de origin — push pendiente). Todos los números citados los re-derivé del ledger real (SHA verificados). Cero contradicciones con §7-§14 nuestro; convergencia fuerte con §11 (biografía como mecanismo) y §8 (teoría de lazo, semántica P<0).",
+   "claims": [
+    {
+     "claim": "La reconstrucción causal de potencia de link_power coincide con nuestro P=⟨drive·Σv⟩ del tap wf_f2afea35: misma fórmula P[k,j]=drive[k,j]·Σ_m v_j,m[k−1], misma alineación drive[k]×v[k−1] (estados[k−1]), y el prereg de Gate J cita como validación EL cierre de nuestro tap (residuo relativo <1e-5 full-rate en films s600; semántica drive verificada por jc0 con error 0.0 bit-exacto)",
+     "numeros": "cierre <1e-5; jc0 error 0.0; test de anclaje por valor: usar v[k] da otra serie (p_instant nodo0 = [6,20,42,72,110] solo con v[k−1])",
+     "estado": "INSTRUMENTO_VALIDADO",
+     "metodo": "Fórmula congelada en prereg antes de la cosecha; herencia declarada del tap; test_power_uses_drive_k_with_velocity_k_minus_one ancla la alineación por valor; verifiqué corriendo pytest tests/test_link_power.py: 7 passed"
+    },
+    {
+     "claim": "Cosecha Gate J: 375/375 films del census con vista válida, 0 fallos, 375 view-hashes únicos, 375 pares single-edge identificables; 301 films de 60 u.t. (233 cajas causales completas c/u) + 74 de 120 u.t. (473 cajas); 15 MB de vistas; 1.556 s con 2 workers (335 computados + 40 reusados); re-verificación/reuso 1.8 s",
+     "numeros": "375/375, failed=0, 301+74, 233/473 cajas, 15 MB, 1556.05 s, ledger sha256 6bbb9eee5f26e90c...8106934 VERIFICADO por mí contra el archivo real",
+     "estado": "SELLADO",
+     "metodo": "Runner gate_j_power_population.py sobre ExternalDisk read-only, vistas bajo logs/link_grumo; defaults congelados box=2 u.t., hop=0.25 u.t., t0_tick=1, stride=1 forzado; caja calculada a tasa completa ANTES de submuestrear (hop no redefine el estimando, test de invariancia)"
+    },
+    {
+     "claim": "El streaming run_path es bit-equivalente a run en memoria: verifica manifest_sha vs COMPLETE, SHA de cada chunk, ticks consecutivos, y transporta v[k−1] a través del borde de chunk; produce view_hash idéntico",
+     "numeros": "test_streaming_path_matches_in_memory_view_across_chunk_boundary: igualdad de manifest, view_hash y todos los arrays (equal_nan); media trailing reducida LOCALMENTE por caja (no resta de cumsums globales) para no cancelar catastróficamente cuando P cae ~12 décadas",
+     "estado": "INSTRUMENTO_VALIDADO",
+     "metodo": "Test con worldline sintética partida en 2 chunks; fail-loud en drive ausente/no-finito, t0_tick=0, stride≠1, SHA corrupto; multiarista declarada NO identificable por edge (solo potencia neta de puerto nodal, se niega a repartir por locks/amplitudes)"
+    },
+    {
+     "claim": "Gate K señal agregada (337 films limpios, 71 sanos / 266 no sanos): la geometría energética separa salud60 y NO es mera fuerza — pero la fuerza sola casi no separa",
+     "numeros": "AUC salud60: opposed_fraction 0.825 (medianas 0.575 vs 0.192), exchange_efficiency 0.741 (0.322 vs 0.0152), exchange_rate 0.738 (2.88e-7 vs 6.69e-9, ~43×), force² 0.578 (2.34e-6 vs 1.24e-6). Apareado 55 pares discordantes: signos 51-3-1, eficiencia 50-4-1, intercambio 46-8-1, force² 31-24-0. TODOS re-derivados por mí del ledger (sha 71647321...231f030 verificado): clean_coordinate AUC 0.8252/0.7413/0.7383/0.5778 — coinciden",
+     "estado": "SELLADO",
+     "metodo": "Prereg congelado ANTES de cruzar (LINK_GRUMO_GATE_K_POWER_HEALTH_PREREG.md): predictor [2,20] u.t. vs outcome coordinate_health [50,60] de Gate F, sin soporte compartido; coordenadas invariantes al orden sin elegir roles por outcome (intercambio=min(entrada,salida)); joins por igualdad exacta run_id+worldline_hash, 340/340 hashes verificados; descriptivo declarado (nodos reutilizados, sin p iid)"
+    },
+    {
+     "claim": "REGLA DE SALUD POR POTENCIA NO APROBADA — el porqué en 5 números: (1) inversión por ruta: estrato transported AUC 0.826/0.697 (signos/intercambio) vs fresh 0.568/0.537; apareado por brazo del sobreviviente: transported 50-0-1, fresh 1-3-0 (signos; eficiencia 49-1-1 vs 1-3-0); (2) AUC residual 0.591 tras quitar brazo+log1p(dw)+rank(force²) — la mayor parte del 0.825 era biografía/estructura de encuentro; (3) Gate G LOPO ridge λ=1: M0 0.939/0.310, M1 0.935/0.319, M2 0.942/0.315 — M2 vs M1 solo +0.0067 AUC / −0.0040 log-loss, y log-loss PEOR que M0; (4) necesidad falsada: 85 films con intercambio exactamente 0 en [2,20], SEIS llegan sanos a 60 (par130_f con ocupación 1.94 y Q W4 0.966; olaB_par008_f/010_f/012_t/013_f/024_f); contraejemplo inverso par130_t: intercambio 0.0204, 82% cajas opuestas, force²=8.43 y NO llega sano; (5) el tiempo no consolida: eficiencia apareada [2,10] 50-4-1 → [20,40] 28-27-0 (pierde casi toda dirección)",
+     "numeros": "0.826 vs 0.568; 50-0-1 vs 1-3-0; residual 0.591 (ledger: 0.5910); ΔAUC M2−M1 +0.0067, Δlog-loss −0.0040 (ledger: +0.006696/0.003962); 85 films cero-intercambio, 6 sanos; [20,40]: 28/27/0",
+     "estado": "NEGATIVO",
+     "metodo": "Contraste prerregistrado con lecturas posibles congeladas (§5 del prereg); el resultado cae en la lectura 2/4 combinada: describe la ruta transported, no ley universal. Consecuencia operacional: SÍ instrumentación poblacional, NO fitness/lock/máquina de estados; segundo eje semántico propuesto (TRANSFER/JOINT_DISSIPATION/WEAK_SUPPORT) SIN thresholds aprobados, prohibido codificarlo como estados discretos"
+    },
+    {
+     "claim": "Contabilidad física durable: en las 94.580 cajas causales completas de 2 u.t. de toda la población, NINGUNA tuvo potencia neta suavizada positiva (P0_mean+P1_mean ≤ 0 siempre; máx −3.6e-13); a tasa instantánea 336/340 films tienen alguna muestra positiva (11.516/97.300 muestras, rango [−2877.77, +17.84]) — la caja promedia la devolución reversible del resorte y deja el balance disipativo; 'intercambio' = redistribución neta entre extremos de un link globalmente disipativo, NO energía creada",
+     "numeros": "94.580 cajas, 0 positivas suavizadas, smoothed_net_max=−3.57e-13, 336/340, 11.516/97.300, [−2877.77, 17.84] — re-derivados por mí del ledger (energetic_support_audit), coinciden exactos",
+     "estado": "SELLADO",
+     "metodo": "Auditoría energética sobre las vistas de Gate J; permite separar tres casos antes indistinguibles bajo el mismo lock espectral: transferencia dirigida / captura con ambos extremos entregando / fuerza+intercambio grandes sin consolidación"
+    },
+    {
+     "claim": "La 'inversión energética por ruta' (commit f847a2c) es exactamente esto: un cambio de código+test (+38/−2 líneas) en gate_k_power_health.py que agrega la estratificación by_healthy_arm al ranking apareado — divide los 55 pares discordantes según el BRAZO del miembro sano (t/f) y publica wins/losses/ties + mediana por brazo. Es el mecanismo que expone el 50-0-1 (transported) vs 1-3-0 (fresh); incluye test unitario sintético de 2 pares (test_paired_ranking_exposes_route_inversion) que exige que la inversión sea visible",
+     "numeros": "f847a2c: tests/test_gate_k_power_health.py +21/−2, tools/link_grumo/gate_k_power_health.py +19; orden de commits: 9df3313 prereg → 4adb99b contraste → f847a2c inversión → 3c8d771 cierre",
+     "estado": "EXPLORATORIO",
+     "metodo": "El prereg §3.1 sí congeló 'AUC y medianas por brazo', pero el split apareado-por-brazo-del-sobreviviente se implementó DESPUÉS de la primera corrida del contraste (4adb99b) — es lectura estratificada post-primera-mirada de un contraste prerregistrado; el hallazgo direccional es robusto (50-0-1 vs 1-3-0) pero fresh-sano tiene n=4 pares"
+    },
+    {
+     "claim": "El instrumento es OPT-IN PURO con cero efecto en runtime, como declara el contrato — VERIFICADO por mí, no solo declarado: el merge a4d75fd es 100% aditivo (los 48 archivos con status A, cero modificaciones a archivos existentes — ni recorder, ni checkpoint, ni campana, ni bitácora, ni fitness); link_power NO está importado en ningún otro archivo de src/ (grep exhaustivo), instruments/__init__.py está vacío; una campaña que no lo solicita no puede ser afectada por construcción",
+     "numeros": "git diff 1d836f9..a4d75fd --name-status: 48 A, 0 M/D; grep link_power en src/: solo el propio módulo; suite completa reproducida por mí: 128 passed, 210 warnings en 130.6 s — IDÉNTICO a lo declarado en el contrato ('128 passed, 210 warnings')",
+     "estado": "INSTRUMENTO_VALIDADO",
+     "metodo": "Verificación directa de git + grep + pytest completo. Reglas del contrato: ausencia de vista = UNKNOWN (nunca 0 ni link muerto); VERSION=1.1 congelada mientras fórmula/alineación no cambien; vistas direccionadas por worldline_hash/instrument_id/config_hash sin sobrescribir; multiarista solo potencia neta nodal; ninguna coordenada de potencia en fitness/salud en este PR; materialización automática en campaña = otro commit/PR con feature flag"
+    },
+    {
+     "claim": "main quedó coherente tras el merge: a4d75fd (parents 1d836f9 nuestro + 3c8d771 de COA) +9.449 líneas todas nuevas; 190287c después solo actualiza el doc de integración (+21/−6, agrega la sección 8 'Integración ejecutada'); worktree limpio; NUESTRO trabajo (§10-§14, commits 3992af9/167947a/1d836f9) intacto y ya pusheado; el frente link-grumo completo (17 commits incl. merge) está SIN pushear a origin/main",
+     "numeros": "origin/main..main = 17 commits (todos link-grumo + merge + doc); git status limpio; 128 passed post-merge",
+     "estado": "SELLADO",
+     "metodo": "git log/diff/status directo. El contrato declara explícitamente que push es acción separada no ejecutada"
+    }
+   ],
+   "conexiones": [
+    {
+     "con": "§7-§8 tap de transferencia wf_f2afea35 (identidad r≡1, apagado diferencial, semántica P<0, teoría de lazo)",
+     "tipo": "HEREDA",
+     "detalle": "Gate J hereda formalmente NUESTRO estimador verificado: la fórmula P[k,j]=drive[k,j]·Σv[k−1] con la semántica jc0 (drive = fuerza KV del sub-paso 0, bit-exacta) y cita nuestro cierre <1e-5 como SU validación física — el instrumento no re-deriva nada, congela lo que nosotros sellamos. Además adopta nuestra enmienda §8-3 sobre P<0: 'P<0 significa extracción, no muerte automática' y 'P≈0 solo se interpreta junto a force_rms/vitalidad' están literalmente en el contrato del instrumento; no promueve P<0 a autonomía (nuestra conjunción P<0 sostenido + pendiente de energía + σ>0 queda respetada)"
+    },
+    {
+     "con": "§7 C1/C2 (receptor sumidero puro 15/15; el líder jamás recibe energía neta)",
+     "tipo": "REFUERZA",
+     "detalle": "La auditoría energética de Gate K lo confirma a escala POBLACIONAL: 0/94.580 cajas con potencia neta suavizada positiva — el link es globalmente disipativo en la escala de 2 u.t. en TODA la población, no solo en nuestros 4 films s600. Nuestra observación puntual pasa a hecho de census"
+    },
+    {
+     "con": "§10-§11 POOLED census (Δ biografía +0.329; 'la biografía abre canales remotos ×17'; fresh self 3/5)",
+     "tipo": "REFUERZA",
+     "detalle": "Gate K aporta el MECANISMO de nuestro número: transported hereda una relación fase/energía que permite transferencia dirigida desde el comienzo (50-0-1 en pares con sobreviviente transported), mientras fresh consolida por otras rutas sin donante/receptor netos tempranos (1-3-0). Es la contraparte mecánica de nuestra Δ=+0.329 y del ×17 en dw∈[1,10]: la biografía NO es confusor estadístico sino el habilitador de canales — exactamente lo que COA escribe en Gate K §4. Y nuestra observación fresh self 3/5 (ni dw=0 lockea siempre sin biografía) es coherente con que fresh pueda lockear SIN intercambio temprano (6 sanos con intercambio=0). Cuidado simétrico: Gate K muestra que un criterio de selección por potencia mataría precisamente las rutas fresh que NUESTRO census demostró posibles — cita explícita del contrato"
+    },
+    {
+     "con": "§8-4 teoría de lazo adoptada (χ/notches dicen QUIÉN PUEDE RECIBIR; lazo dice SI SE FORMA MODO; P y polos dicen si SE ALIMENTA, COPIA O SE EXTINGUE)",
+     "tipo": "REFUERZA",
+     "detalle": "El cierre de Gate K aterriza el tercer nivel de la regla de tres niveles de COA con datos: P no decide existencia del edge (eso sigue en ocupación/coherencia/persistencia) sino la FUNCIÓN energética del edge — regla final de Gate K §8 para grumos ('quién alimenta a quién y dónde se disipa'). Total consistencia con la división de trabajo que adoptamos en §8"
+    },
+    {
+     "con": "§12-§14 cirugía de línea fija (P de serie en el lector v3-lite; C1 r≡1 = seguimiento forzado pasivo)",
+     "tipo": "REFUERZA",
+     "detalle": "Sin contradicción: nuestro C1 (el link copia una señal moribunda, r≡1) explica el contraejemplo par130_t de Gate K — mucha transferencia (0.0204, 82% cajas opuestas, force²=8.43) SIN supervivencia es exactamente 'pulling/tránsito/disipación durante intento fallido': transferir ≠ sostener, igual que copiar ≠ vivir. Ambos frentes concluyen que la apariencia energética/espectral del lock no es la salud; la salud está en el cierre del lazo y en quién financia el modo (frase compartida §8 y Gate K)"
+    },
+    {
+     "con": "§10-§11 estimando lock60 (dominancia espectral condicionada al drive)",
+     "tipo": "REFUERZA",
+     "detalle": "Gate K deliberadamente NO redefine lock, no toca Gate F/H ni fitness: nuestro estimando limpio del POOLED queda intacto y el contrato lo garantiza por regla ('ningún cambio silencioso de estados, outcomes históricos o fitness'). Verificado en el diff: cero modificaciones a archivos existentes"
+    },
+    {
+     "con": "Nuestro tap §7-C6 prescripción de tres canales por episodio (ρ dominancia / g transmisión / P transporte)",
+     "tipo": "DUPLICA",
+     "detalle": "Duplicación BENIGNA y deliberada: el 'P transporte con auto-test de cierre' que prescribimos para el lector v3 es el mismo objeto que link_power industrializa para población (375 films) con streaming verificado. No hay dos fórmulas rivales — es una sola fórmula, dos empaques (lector por-film nuestro vs instrumento poblacional de COA). Conviene declarar en el registro que el medidor P de la cirugía y link_power comparten estimando para no re-validar dos veces"
+    }
+   ],
+   "riesgos_o_pendientes": [
+    "Los ledgers y vistas de J/K viven SOLO en el worktree de investigación (/Users/cagostino/code/doft-study07-link-grumo-dynamics/logs/link_grumo/, git-ignored) — verifiqué que los SHA coinciden con los docs, pero si ese worktree se borra sin archivar, desde main los comandos de reproducción de los audits fallan (logs/link_grumo no existe bajo main) y habría que re-cosechar (~26 min) o copiar los papeles. Recomiendo respaldo SHA-pinneado estilo §13-bis",
+    "main está 17 commits adelante de origin/main (todo el frente link-grumo + merge sin pushear); nuestro trabajo §10-§14 sí está pusheado. Push pendiente de decisión explícita (el contrato lo declara acción separada)",
+    "El estrato fresh-sano es diminuto (12 films, 4 pares discordantes): la INVERSIÓN direccional está establecida (basta para refutar necesidad universal), pero la física de la ruta fresh (captura disipativa vs consolidación tardía vs pérdida conjunta) queda sin poder estadístico — COA lo declara; es candidato natural para la ola C / horizontes largos",
+    "El banco Gate G es case-control seleccionado por outcome: los M0/M1/M2 (0.939/0.935/0.942) comparan mecanismos DENTRO de ese banco, no son validación prospectiva — no citarlos como prevalencia",
+    "La estratificación by_healthy_arm (f847a2c) se implementó después de la primera corrida del contraste (4adb99b): el prereg cubría 'por brazo' en AUC/medianas pero el split apareado-por-sobreviviente es lectura post-primera-mirada — tratar la inversión como hallazgo robusto pero con esa procedencia declarada",
+    "Los 85 films con intercambio EXACTAMENTE 0 en [2,20] merecen un chequeo de resolución: intercambio=min(entrada,salida)=0 en cuanto ninguna caja tiene ambos signos a la vez — verificé en el ledger que los 6 sanos-cero son reales (registros individuales), pero la sensibilidad del cero exacto a box_ut/hop no fue explorada",
+    "Los nombres del eje energético (TRANSFER/JOINT_DISSIPATION/WEAK_SUPPORT) son semántica SIN thresholds aprobados: prohibido codificarlos como estados discretos o usarlos para eliminar links — riesgo de que alguien los promueva por accidente; el contrato lo dice pero conviene repetirlo en la bitácora de main",
+    "Identificabilidad: los 375 films son 2 nodos/1 arista; en grumos (grado>1) la worldline actual solo registra suma nodal de fuerzas — para potencia por edge el recorder deberá guardar contribuciones por arista o correr intervención separadora (insumo de diseño para la ola de grumos)",
+    "Discrepancia cosmética, no de fondo: el doc de Gate J dice '375 vistas' sin desglosar que fueron 335 computadas + 40 reusadas de una corrida previa (está en el ledger); no afecta hashes ni resultados"
+   ]
+  }
+ }
+}
