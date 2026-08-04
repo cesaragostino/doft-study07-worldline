@@ -19,6 +19,24 @@ regla evolutiva. El orden de preguntas es:
 
 No se buscará una fórmula compacta antes de distinguir esos mecanismos.
 
+## Comentario de cierre — retardo/espacio y puertos
+
+El frente experimental `research/k150-emergent-links` se cerró el 2026-08-04
+**inconcluso como modelo evolutivo del link**. No produjo una ley causal para
+`tau(t)`, una atenuación asociada al retardo ni un mecanismo físico por el cual una
+arista nazca o sobreviva. La propuesta posterior de puertos finitos tampoco se
+trasladó: hacía depender la existencia de la arista de un árbitro externo de locks,
+repitiendo con otro nombre el problema del clasificador de salud.
+
+Sí quedaron dos límites medidos y reproducibles: el `tau` fijo del motor es el
+retardo causal exacto de la arista, y todas las capas internas empiezan a responder
+dentro del primer tick observable. Además, acortar `tau` adelanta el primer episodio
+en muchos pares, pero no ordena la persistencia; existe al menos un contraejemplo
+directo donde el retardo largo conserva mejor la organización ciclo a ciclo. El
+tiempo de vuelta del lazo no quedó identificado con los films periódicos disponibles.
+Estos resultados restringen futuros modelos, pero no son una regla de supervivencia
+ni modifican el motor vigente.
+
 ## Custodia de datos
 
 Fuentes externas declaradas **sólo lectura por política de este frente**:
@@ -51,6 +69,10 @@ masivas al worktree.
 - `audit/LINK_GRUMO_GATE_J_POWER.md`: instrumento causal de potencia y cosecha 375/375.
 - `audit/LINK_GRUMO_GATE_K_POWER_HEALTH.md`: contraste early→late; potencia identifica
   una ruta energética, no una ley universal de salud.
+- `audit/LINK_GRUMO_TIEMPOS_TICKS_S120.md`: reconstrucción bit-exacta del retardo de
+  arista y límites de los cruces Q/S1/S2 como medida temporal.
+- `audit/LINK_GRUMO_TAU_Y_ONSET_EXISTENTES.md`: contraste apareado de `tau`, conteo
+  directo de ciclos y onset interno ON/OFF.
 - `audit/LINK_POWER_MAIN_INTEGRATION.md`: contrato para llevar el instrumento a `main`
   sin cambiar lock, fitness ni resultados históricos.
 - `tools/link_grumo/`: lectores reproducibles, sin escritura sobre fuentes.
