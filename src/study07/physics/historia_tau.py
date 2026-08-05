@@ -68,6 +68,12 @@ class HistoriaCaldo:
             raise RuntimeError("historia vacía: no hay fila de remanente (guarda 4)")
         t_src = np.asarray(t_src, dtype=np.float64)
         onions = np.asarray(onions, dtype=np.int64)
+        if self.tick_next < 2:
+            # una sola fila (génesis exacto): t_src solo puede ser el tick 0
+            if np.any(t_src < 0.0) or np.any(t_src > 0.0):
+                raise RuntimeError("historia de una fila: solo t_src=0 es consultable")
+            x0 = self.buf[0 % self.capacidad, onions]
+            return x0[:, :, 0], x0[:, :, 1]
         k = np.floor(t_src / self.dt).astype(np.int64)
         theta = t_src / self.dt - k                       # ∈ [0,1)
         # borde derecho exacto: t_src == último tick
@@ -79,10 +85,6 @@ class HistoriaCaldo:
             raise RuntimeError(
                 f"consulta pre-ventana: tick {int(k.min())} < retenido {self.tick_min} "
                 "— sub-retención del buffer (fail-loud, spec §1.3)")
-        if self.tick_next < 2:
-            # una sola fila (génesis exacto): t_src solo puede ser tick 0
-            x0 = self.buf[0 % self.capacidad, onions]
-            return x0[:, :, 0], x0[:, :, 1]
         f0 = self.buf[k % self.capacidad, onions]         # (M, n_S, 2)
         f1 = self.buf[(k + 1) % self.capacidad, onions]
         x0, v0 = f0[:, :, 0], f0[:, :, 1]

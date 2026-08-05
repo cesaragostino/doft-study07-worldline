@@ -17,7 +17,7 @@ import numpy as np
 def indice_pares(n: int) -> np.ndarray:
     """(n_pairs, 2) int64 en orden lexicográfico: p = i·N − i·(i+1)/2 + (j−i−1)."""
     pares = [(i, j) for i in range(n) for j in range(i + 1, n)]
-    return np.array(pares, dtype=np.int64)
+    return np.array(pares, dtype=np.int64).reshape(-1, 2)
 
 
 def s_proyeccion(tau: np.ndarray, B: np.ndarray, tau_s: float) -> np.ndarray:
