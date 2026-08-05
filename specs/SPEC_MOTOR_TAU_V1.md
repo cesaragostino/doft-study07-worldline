@@ -35,8 +35,13 @@ dτ_ij/dt = ℬ_ij(t) · s(τ_ij)
 ℬ_ij(t)  = λ · [ S_i(t) · S_j(t − τ_ij)  +  S_j(t) · S_i(t − τ_ij) ]
 ```
 
-- **λ > 0 (rama de EXPANSIÓN, declarada por COA)**: en el génesis ℬ(0)=2⟨S²⟩>0
-  puntual ⇒ el caldo expande desde τ=0 determinísticamente (escapa de la muerte τ≡0).
+- **λ > 0 (rama de EXPANSIÓN, declarada por COA)**: con remanente TEXTURADO,
+  ℬ(0) por par = 2λ·S_i(0)·S_j(0), de signo ~50/50 (medido, genoma 7 modos S). Los
+  pares coherentes (cos Δφ>0) expanden de inmediato; los anticoherentes quedan en la
+  capa de contacto hasta reclutamiento por rotación de fase + el sesgo expansivo de s
+  cerca de τ=0 (física declarada del borde). **El escape de τ≡0 es ESTADÍSTICO**
+  (determinista solo en el caso sin textura — el patológico de la guarda 7). La rama
+  λ>0 queda igual de bien elegida: λ<0 clava τ≡0 para siempre.
 - Bilineal PAR simetrizado, instantáneo, simétrico por par, cero lecturas nuevas
   (consume exactamente lo que Ψ ya consultó). Cumple las 5 propiedades del contrato
   §3.2.
@@ -45,11 +50,15 @@ dτ_ij/dt = ℬ_ij(t) · s(τ_ij)
   ⟨ℬ⟩ ∝ cos(ωτ) por modo S; conchas estables en ωτ = π/2 + 2πn (τ_final ≈ T/4);
   bajo lock el par se sienta en un cero de ⟨ℬ⟩ (LA GEOMETRÍA SE CONGELA AL LOCKEAR);
   pares en antifase → contacto τ=0.
-- **s(τ): proyección SUAVE C¹ en la ley** (enmienda 10): s(τ)=1 si ℬ≥0;
-  si ℬ<0: s(τ) = min(1, τ/τ_s) con τ_s = dt (una rampa lineal C⁰... NO: C¹ exigida)
-  → s(τ) = smoothstep(τ/τ_s) = 3(τ/τ_s)²−2(τ/τ_s)³ para τ<τ_s, 1 después; τ_s = 10·dt
-  DECLARADO. RHS continuo, sin eventos. τ≥0 garantizado por construcción (ℬ<0 se apaga
-  suave en τ→0).
+- **s(τ): proyección SUAVE en la ley** (enmienda 10; arreglo tap-spec 1): s(τ)=1 si
+  ℬ≥0. Si ℬ<0: s(τ)=0 para τ≤0; s(τ)=smoothstep(τ/τ_s)=3(τ/τ_s)²−2(τ/τ_s)³ para
+  0<τ<τ_s; s(τ)=1 para τ≥τ_s. **τ_s es constante FÍSICA de campaña en U.T.: 8e-4
+  (caldo 1)** — numéricamente 10·dt del caldo 1 pero JAMÁS re-derivada de dt
+  (requisito τ_s ≥ 10·dt_max; entra al fingerprint). Kink C⁰ declarado en ℬ=0 dentro
+  de la capa («sin eventos» ≠ C¹). **Clamp duro post-combine τ←max(τ,0) como
+  proyección de RESPALDO declarada, con contador de activaciones al trending**
+  (verificado: smoothstep literal en τ<0 CRECE sin cota — s=28 en u=−2 — y el cruce
+  discreto existe a λ grande: τ→9.8e21 demostrado sin clamp).
 - τ SIN inercia (enmienda 7): primer orden, constitutivo.
 
 ### 1.3 Cero causal (enmienda 1 — regla, no error)
@@ -190,7 +199,15 @@ estados de bit_generator.
   `src/study07/artifacts/{recorder_caldo,checkpoint_caldo,capsula_caldo}.py`,
   `tools/caldo_pilotos.py`, `tests/test_caldo_guardas.py` (§8).
 - **Motor v1-KV: INTOCADO y congelado** (baseline histórico); el caldo no comparte
-  Network (comparte physics/rhs.py del onion interno, sin modificarlo).
+  Network. **El RHS interno del caldo es un KERNEL APILADO NUEVO (derivatives_apilado,
+  eje N — habilitado por todos-iguales): transcripción CERTIFICADA de physics/rhs.py,
+  que queda INTOCADO como LA referencia.** Certificación DOBLE como gate de entrada:
+  (a) test elementwise apilado-vs-N-llamadas con igualdad EXACTA (diff==0 — exige
+  preservar el orden de operaciones por onion; medido: una transcripción casual da
+  1 ulp) sobre estados aleatorios cubriendo todas las ramas; (b) guarda 1 integral.
+  Enmienda REGISTRADA al «una sola implementación» de PHYSICS_CONTRACT §9: la
+  referencia es una; el kernel apilado es su transcripción certificada, re-certificada
+  en cada cambio. Costo verificado: 16.1→1.66 ms/paso ⇒ caldo 600 u.t. ≈ 4-6 h.
 - Costo esperado: ~una noche/caldo de 600 u.t. con apilado (baseline medido 48-77 h
   mono-proceso); 16 cores ENTRE unidades (pilotos/guardas/réplicas). Kernel compilado
   = decisión aparte con certificación bit-contra-referencia (NO en v1).
@@ -214,3 +231,92 @@ Implementación aceptada cuando: batería §8 completa en verde (11/11), pilotos
 corridos y sus (K, λ) declarados, y el primer caldo N=25 integrado 600 u.t. con
 worldline v1 conforme al schema §6. Recién entonces: lecturas (máquina H, trending τ,
 embedding espectral de τ como instrumento nuevo de espacio emergente).
+
+
+---
+
+## 12. Enmiendas v1.1 (tap wf_338762da — textos del juez; los 3 BLOQUEA ya inline en §1-§9)
+
+**Semánticas selladas (reemplazan/precisan el cuerpo):**
+
+4. **Rama solapada = HERMITE CÚBICA DE ETAPA** sobre [t, t_k] con (x(t),v(t)) de la
+   historia y (x^k,v^k) del propio estado de etapa, por modo, por onion. Cada etapa usa
+   su PROPIO extremo derecho (las etapas no forman trayectoria única y no hace falta).
+   NO hay dense-output de dos pasadas (verificado equivalente a 4 dígitos). Orden
+   medido: 4 en génesis suave, ≥3 garantizado. Y OFF-BY-ONE corregido: la historia al
+   entrar a step(t) contiene ticks **≤ t** (la fila t, post-kick del paso anterior, es
+   nodo Hermite de las consultas t_src ∈ (t−dt, t)).
+5. **Alcance del orden declarado**: vale en escenarios SIN cruces de la frontera causal
+   (génesis y concha — guarda 9); cada cruce (conexión/desconexión J≡0↔activa no
+   alineada) degrada localmente a ~orden 2 (medido) y lo señala el trending
+   min_ij(t−τ_ij−t_pulso) tocando 0. Sin localización de eventos (contrato).
+6. **Calendario**: t_pulso ≡ 0 = origen. El remanente se genera FUERA del calendario:
+   burn-in aislado por onion a T_rem×ticks_rem consumiendo su stream, trayectoria
+   DESCARTADA — solo el estado final es la IC en t=0 y la historia arranca con esa
+   única fila (guarda 4). T(t)=T_pulso en [0, ticks_pulso·dt), 0 después. Los pares
+   τ=0 consultan el estado remanente desde t=0 INCLUSIVE (test estricto <).
+7. **Techo de K operativo**: A_pulso ≔ RMS(S) de equilibrio PREDICHO a T_pulso por
+   fórmula cerrada A_pulso = sqrt(Σ_{ν∈S} T_pulso/(m_ν·ω_ν²)) (el RMS medido depende
+   de ticks_pulso — S1 no termaliza en 0.3 u.t.). Cláusula de pico:
+   **K ≤ 3/((N−1)·n_S·κ·A_pulso) con κ=3.5 DECLARADO** (pico/RMS p95-max medido bajo
+   quench). F̂>3 sostenido SE REPORTA como resultado; K jamás se ajusta en vuelo.
+   Mapa K↔k_viejo re-derivado por campaña (all-to-all N=25 ⇒ ~1/1680, indicativo).
+8. **RNG/identidad**: path correcto src/study07/compat/study06_v4.py, firma
+   node_seed(seed, idx) invocada con **id_onion = entero ESTABLE asignado al génesis**
+   (0..N−1 del manifiesto), portado como campo propio en manifiesto/checkpoint/cápsula,
+   independiente de la posición en memoria. Guarda 2 permuta posiciones manteniendo
+   (id, stream) juntos.
+9. **Anexo de schemas OBLIGATORIO antes de implementar artefactos** (paso 0 del plan):
+   specs/WORLDLINE_CALDO_SCHEMA.md + specs/CHECKPOINT_SCHEMA_V2.md +
+   specs/CAPSULA_CALDO_SCHEMA.md con claves npz/meta EXACTAS. Convención de pares:
+   **índice lexicográfico p = i·N − i·(i+1)/2 + (j−i−1)** — el MISMO p ordena τ, f^S,
+   ℬ, checkpoint y cápsula. Canal f^S = (n_pairs, 2) con las sumas retardadas
+   colapsadas consumidas en el sub-paso 0. **Timestamps = tick int64; t ≡ tick·dt
+   siempre DERIVADO, jamás float acumulado** (la mordida t_abs, cerrada). Manifiesto
+   caldo lista K/λ/τ_s/calendario_pulso/n_pairs/convención-p/ids. Gate «a caballo»:
+   checkpoint con tick_ck ∈ (0, ticks_pulso) y comparación bit-exacta de X, τ, RNG y
+   worldline directa-vs-restore hasta 2·ticks_pulso.
+10. **Ledger W completo**: W_ij(t) = ∫(Σ_{μ∈S_i} f_{i←j,μ}·v_iμ +
+    Σ_{ν∈S_j} f_{j←i,ν}·v_jν) dt — ambos lados, suma sobre los 7 modos S, integrado A
+    TASA COMPLETA por el recorder desde lo emitido, registrado en cajas de N_caja
+    ticks declaradas (las mismas del ×32).
+11. **Buffer**: UN array (W_ticks, N, n_S, 2) float64 contiguo indexado por tick int64
+    módulo W_ticks; «por onion» es la VISTA (habilita consulta vectorizada de pares).
+    RAM caldo 1: 4.2 GB. Criterio de retención VALIDADO en el piloto i (extrapolación
+    de max|dτ/dt| a 600 u.t. < tope) o política de escalamiento declarada (re-alloc
+    amortizado hasta 21 GB, spill a disco declarado).
+12. **Orden de reducción CANÓNICO (semántica sellada)**: pares en orden lexicográfico
+    p; acumulación sobre receptores EN ORDEN DE p (loop explícito o np.add.at,
+    documentado). Ningún refactor lo cambia sin re-certificar guardas 1/2/7.
+13. **Guarda 8, fixture nombrado**: genoma canónico 61b48428 + clon con las ω de S
+    escaladas ×φ (áurea, inconmensurable); control conmensurado apareado: clon ×2.
+14. **Guarda 10, receta ejecutable**: (a) χ/notches ESTÁTICO — Jacobiano frío del
+    NodeSpec canónico vs oráculo (paridad de matriz, sin integrar); (b) reloj
+    C√(1+0.1b) resid ≤1.5% y b-filtro (picos R²): DOS corridas de 120 u.t. del motor
+    nuevo — (i) N=1, K=λ=0, con calendario de pulso del caldo 1; (ii) N=2 con (K,λ)
+    del piloto — estimador DE BANDA existente contra b(t) del film.
+15. **Prereg del piloto i = gate de ENTRADA al caldo 1** (fusiona enmienda 5 del
+    contrato): derivación analítica del peine MULTI-MODO ⟨ℬ⟩(τ) = Σ_m C_m·cos(ω_m τ)
+    con los pesos del genoma real (las conchas S1~43-45 + S2~276-316 SE CORREN respecto
+    del T/4 monomodo — **H3 se lee contra ESA predicción**), estabilidad de τ=0,
+    distribución de ℬ(0) bajo IC térmica texturada, tasa de reclutamiento esperada.
+16. **PHYSICS_CONTRACT §9, enmienda registrada**: la referencia del RHS interno es UNA
+    (physics/rhs.py, intocado); derivatives_apilado es su transcripción CERTIFICADA
+    (doble gate: elementwise diff==0 + guarda 1 integral), re-certificada en cada
+    cambio de cualquiera de los dos.
+
+## 13. Plan de implementación (del juez — orden normativo)
+
+0. Aplicar arreglos (hecho) + anexo de schemas (3 archivos) + enmienda PHYSICS_CONTRACT.
+1. PREREG piloto i (peine multi-modo analítico + ℬ(0) texturado + reclutamiento).
+2. physics/historia_tau.py (buffer nuevo; tests aislados vs analítico).
+3. physics/interaccion_tau.py (J pura apilada: f^S + ℬ + cero causal + s; tests).
+4. derivatives_apilado (transcripción certificada, doble gate).
+5. engine/caldo.py (paso §2 completo; clamp respaldo con contador; streams; push).
+6. tests/test_caldo_guardas.py (guardas 1-8 en CI).
+7. artifacts/{recorder,checkpoint,capsula}_caldo.py (desbloqueado por el anexo).
+8. tools/caldo_pilotos.py + PILOTO i (N=2, barrido K×λ; valida retención).
+9. PILOTO ii (N=25 × 5 u.t. — ventana génesis, escape estadístico vs prereg).
+10. Guardas 9-10 (orden medido; receta 14). Guarda 11 (χ^S) en paralelo.
+11. CALDO 1: N=25, 600 u.t. (~4-6 h) → lecturas (H1 por W_ij, H2 vs bracketing,
+    H3 vs peine multi-modo; máquina H; trending τ; embedding espectral).
