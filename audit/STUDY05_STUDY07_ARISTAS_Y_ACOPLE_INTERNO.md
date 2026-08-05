@@ -670,3 +670,21 @@ artefactos numéricos, aunque en régimen sensible quizá deban converger distri
 observables y no trayectorias punto a punto. La comparación apareada con el motor vigente
 permitirá después preguntar si el acople secundario converge en menos u.t., pero la respuesta no
 se fija en esta arquitectura.
+
+## 9. Cierre posterior: puertos y grafo inicial supersedidos como norte
+
+**Fecha:** 2026-08-05.
+
+**Estado:** enmienda conceptual; no altera código ni resultados históricos.
+
+La sección 7.4 y la arquitectura de puertos de la sección 8 se conservan para mostrar el camino de
+razonamiento, pero ya no son la dirección propuesta para el motor siguiente. La revisión posterior
+elimina tanto el grafo inicial forzado como la valencia programada: todos los pares tienen
+oportunidad causal de interactuar y la geometría, los retardos, las relaciones persistentes y los
+grumos evolucionan dentro de la misma trayectoria.
+
+El contrato conceptual vigente para esa dirección está en
+`audit/MOTOR_SIN_GRAFO_RETARDO_EVOLUTIVO.md`. Mantiene del presente documento el onion completo, la
+interacción secundaria sin árbitro, la integración recíproca y la prohibición de reinyectar locks;
+reemplaza los slots discretos por posición y velocidad macroscópicas integradas y trata el grafo
+únicamente como producto de lectura.
