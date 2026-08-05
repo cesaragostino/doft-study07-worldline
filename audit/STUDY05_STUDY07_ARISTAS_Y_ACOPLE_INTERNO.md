@@ -520,3 +520,153 @@ ecuaciones vigentes la forma exacta de \(\mathcal I^{(S)}\) que acopla dos super
 sin sumar globalmente los modos, sin reinjectar dinámica que ya propaga el onion y sin crear una
 ontología adicional. Mientras eso no esté escrito y auditado, implementar un nuevo KV, un puerto
 o un árbitro sólo cambiaría de proxy.
+
+## 8. Puertos como capacidad de contacto y suma recíproca en el RHS
+
+**Aclaración de ontología:** esta sección recupera la palabra «puerto» en un sentido distinto al
+descartado arriba. Un puerto no es un oscilador, una reducción modal, una memoria ni un detector.
+Es un *slot de contacto*: limita la valencia del onion e identifica qué término de interacción
+pertenece a qué vecino.
+
+### 8.1 Sí: formalmente hay un término por puerto activo
+
+Sea \(V_i\) la capacidad máxima de contactos del onion \(i\), y \(a\in\{1,\ldots,V_i\}\) uno de
+sus slots. La ocupación \(\eta_{ia}\in\{0,1\}\) y el apareamiento
+\(\pi(i,a)=(j,b,e)\) son topología de la corrida, no nuevas variables diferenciales. Cada puerto
+puede estar inactivo o apareado con exactamente un puerto del otro onion.
+
+En software, \(V_i\) pertenece a la constitución inmutable del onion y el apareamiento pertenece
+a la red de la ola. No hay razón para agregar un vector de estado por puerto mientras el puerto
+no posea una coordenada física propia: hacerlo sólo para administrar conexiones fabricaría
+dinámica. Si la geometría exige orientación o una región de piel distinta por slot, eso será
+metadata constitutiva que selecciona coordenadas ya presentes, no memoria evolutiva paralela.
+
+La forma estructural correcta es:
+
+\[
+\dot X_i(t)=F_i(X_i(t))+
+\sum_{a=1}^{V_i}\eta_{ia}\,
+R_{ia\leftarrow \pi(i,a)}(t).
+\]
+
+Sí es, por tanto, una suma de un término por contacto activo. Pero cada \(R\) debe tener la forma
+del estado diferencial al que físicamente aporta; no puede colapsarse primero a un único escalar
+por nodo. Para una interacción mecánica que entra por los modos secundarios, una escritura más
+concreta es:
+
+\[
+\dot v_{i\mu}=
+\bigl[F_i(X_i)\bigr]_{v_\mu}+
+\frac{1}{m_{i\mu}}
+\sum_{a:\eta_{ia}=1} f^{(e)}_{ia,\mu}(t),
+\qquad \mu\in S_i,
+\]
+
+con \(f^{(e)}_{ia,\mu}=0\) sobre todo grado que no forme parte de la superficie física de
+contacto. `x`, `z`, `b` y `e` no necesitan una reinyección paralela: evolucionan porque el RHS
+interno completo ya acopla posición, velocidad, memoria y energía. Inyectar también allí una
+versión resumida del mismo efecto duplicaría la propagación.
+
+La forma exacta de \(f^{(e)}\) sigue siendo la cuestión física abierta. Esta ecuación fija dónde
+debe vivir y qué no debe hacer; no inventa su ley.
+
+### 8.2 Reciprocidad significa una arista, dos contribuciones causales
+
+Para una arista \(e=((i,a),(j,b))\), ambos extremos se evalúan con la misma ley constitutiva y los
+mismos parámetros:
+
+\[
+R_{ia\leftarrow jb}(t)=
+\Phi_e\!\left(X_i(t),X_j(t-\tau_e)\right),
+\qquad
+R_{jb\leftarrow ia}(t)=
+\Phi_e\!\left(X_j(t),X_i(t-\tau_e)\right).
+\]
+
+No son dos links dirigidos configurables de forma independiente. Son las dos recepciones de un
+mismo contacto. Con \(\tau_e=0\) y una interacción pasiva sobre coordenadas conjugadas, la ley
+debería recuperar la antisimetría de acción y reacción. Con retardo, las dos fuerzas no tienen por
+qué ser opuestas **en el mismo instante**, porque cada extremo recibe un estado pasado distinto;
+la reciprocidad reside en compartir ley, parámetros, delay y apareamiento causal.
+
+El historial necesario para evaluar \(\tau_e\) no constituye una memoria autónoma del link. Es la
+representación numérica de la señal emitida anteriormente por cada superficie. El buffer actual,
+que sólo guarda `sum(x)` y `sum(v)` por nodo, no alcanza para este contrato. Una implementación
+futura deberá guardar las coordenadas secundarias exactas que use \(\Phi_e\), por nodo o por slot
+según la geometría finalmente declarada, sin guardar un lock ni una salud.
+
+### 8.3 La propagación por el grafo ya surge de integrar conjuntamente
+
+Una conexión en el puerto \(a\) altera primero los componentes físicos donde actúa
+\(R_{ia\leftarrow jb}\). El propio \(F_i\) transforma ese cambio y modifica el estado completo de
+\(i\). Los demás puertos leen después ese nuevo estado al construir sus términos recíprocos:
+
+\[
+X_j \longrightarrow R_{ia\leftarrow jb}
+\longrightarrow X_i
+\longrightarrow R_{kc\leftarrow ia}
+\longrightarrow X_k.
+\]
+
+No se programa una transferencia especial «del puerto a al puerto c». Si hiciera falta, sería
+señal de que se volvió a partir artificialmente el onion. La red propaga porque todos los términos
+comparten \(X_i\) y porque éste se integra como una unidad.
+
+El `Network.step()` vigente ya posee la semántica temporal adecuada para preservar esto: en cada
+etapa de RK4 calcula la interacción de todas las aristas desde el mismo conjunto de estados de
+etapa, calcula luego todos los RHS y recién entonces construye la etapa siguiente. Este orden
+evita que el resultado dependa de qué onion o puerto fue iterado primero. Debe conservarse.
+
+### 8.4 Lo que debe cambiar respecto del acople vigente
+
+Hoy `kv_force()` acumula los contactos de un nodo, divide cada suma por el peso total incidente y
+produce un único `f_inter[i]`. Después `derivatives()` agrega ese escalar por igual a cada modo.
+Para el mecanismo propuesto, el contrato de datos tendría que cambiar de:
+
+```text
+f_inter[n_nodes]                    # un escalar agregado por onion
+```
+
+a algo conceptualmente equivalente a:
+
+```text
+f_contact[n_nodes][n_modes_i]       # suma vectorial de sus puertos activos
+```
+
+La evaluación seguiría haciéndose una vez por arista y por etapa RK4, generando juntas las dos
+contribuciones recíprocas. Luego se acumularían por nodo y se entregarían al RHS completo.
+
+La normalización automática por grado tampoco es neutra: al conectar un puerto nuevo debilita
+aritméticamente todos los contactos anteriores, aunque ninguna ecuación física haya producido esa
+competencia. La superposición natural es una suma. Si existe un presupuesto finito de acople por
+onion o por superficie, deberá estar representado en su constitución y evolucionar mediante sus
+ecuaciones; no aparecer como división instantánea por el número de vecinos activos.
+
+### 8.5 Dónde deben aparecer los locks secundarios
+
+La ley \(\Phi_e\) no recibe `L_pq`, un estado de lock ni una razón elegida. Pone en contacto las
+coordenadas secundarias reales de ambos onions. Si sus ecuaciones no lineales y su biografía
+permiten captura 1:1, p:q, pulling, relevo o release, esos comportamientos aparecerán en las
+trayectorias y los instrumentos los leerán después.
+
+Así se mantiene la distinción decisiva:
+
+- **el motor** integra contacto físico entre estados completos;
+- **el trending** observa qué relaciones de fase se formaron;
+- **la evolución** conserva y combina las consecuencias de esas trayectorias;
+- ningún resultado del trending vuelve hacia atrás para encender, apagar o ponderar el contacto.
+
+### 8.6 Consecuencia para el nacimiento del grafo
+
+La condición inicial puede fijar \(V_i\), qué slots se enfrentan y durante qué ola tienen
+oportunidad de contacto. Eso fuerza encuentros, no enlaces exitosos. Durante esa ola todos los
+contactos declarados participan en el RHS, incluso si jamás lockean. El grafo formado —locks,
+persistencias y grumos observados— se reconstruye como resultado, sin podar la integración.
+
+Es esperable que una población que arranca con muchos encuentros incompatibles tenga un
+transitorio ruidoso. Parte de ese ruido podría ser física de competencia y parte error numérico o
+consecuencia del KV global actual; no deben confundirse. Un estudio al reducir `dt` puede revelar
+artefactos numéricos, aunque en régimen sensible quizá deban converger distribuciones u
+observables y no trayectorias punto a punto. La comparación apareada con el motor vigente
+permitirá después preguntar si el acople secundario converge en menos u.t., pero la respuesta no
+se fija en esta arquitectura.
