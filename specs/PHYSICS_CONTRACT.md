@@ -169,3 +169,19 @@ referencia. `ola1/simulation.py` == `olar/physics_core.py` en la ley (verificado
 término, adenda §21.3 del audit); difieren sólo en contorno: cap de dt (v4 nació sin cap),
 guardas (§8), ruido (sólo olar), e_ref (ola1 siempre recalibra). Este contrato adopta:
 dt explícito, guardas en runner, FDT como §6, e_ref como §7.2.
+
+
+---
+
+## Enmienda 2026-08-05 — kernel apilado del caldo (SPEC_MOTOR_TAU_V1, tap wf_338762da)
+
+La cláusula «una sola implementación de la fuerza» (§9) se precisa para el motor τ:
+**la REFERENCIA del RHS interno del onion es UNA y es physics/rhs.py (INTOCADO)**. El
+motor caldo usa `derivatives_apilado` (eje N, habilitado por todos-iguales) como
+**transcripción CERTIFICADA** de esa referencia, bajo doble gate permanente:
+(a) test unitario elementwise apilado-vs-por-onion con igualdad EXACTA (diff == 0 —
+exige preservar el orden de operaciones por onion; verificado: una transcripción
+casual difiere en 1 ulp) sobre estados aleatorios que cubren todas las ramas;
+(b) guarda integral (caldo con K=λ=0 bit-exacto contra el motor v1 en 10k ticks).
+Cualquier cambio en cualquiera de las dos copias re-certifica ANTES de mergear.
+No es una segunda física: es la misma, transcrita y certificada.
