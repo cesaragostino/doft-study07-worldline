@@ -376,3 +376,147 @@ identidad modal en la interfaz actual.
 - `M2` en campos históricos de Study05 puede ser una magnitud derivada; `M2` en
   `specs/EXPERIMENT_CONTRACT.md` de Study07 es un tipo formal de campaña. No deben confundirse.
 
+## 7. Enmienda conceptual posterior: dos onions completos, piel contra piel
+
+**Estado:** corrección del norte de diseño posterior a la auditoría y a la cosecha de trending.
+No altera los resultados medidos ni rehabilita los films como evidencia de una física que no
+simularon. Sí reemplaza como dirección de implementación cualquier lectura de la sección 3.4
+que convierta `B/C`, un puerto o una arista en una nueva pieza física independiente.
+
+### 7.1 La unidad física y numérica es el onion completo
+
+El onion no se parte en un oscilador portador, un conjunto de puertos y un objeto link que luego
+se vuelven a ensamblar. En cada `dt` se integra el estado diferencial completo:
+
+\[
+X_i=(x_i,v_i,z_i,b_i,e_i,\ldots),
+\qquad
+\dot X_i=F_i(X_i)+\sum_j\epsilon_{ij}\,
+\mathcal I^{(S)}_{ij}\!\left(X_i(t),X_j(t-\tau_{ij})\right).
+\]
+
+La notación \(\mathcal I^{(S)}\) sólo reserva el lugar donde la interacción piel contra piel
+entra por las dinámicas resonantes secundarias **ya contenidas** en los dos estados completos.
+No define un detector, una proyección modal elegida desde afuera ni una ecuación autónoma de la
+arista. La ecuación recíproca de \(j\) se integra en el mismo paso y la respuesta se propaga al
+resto de cada onion mediante sus propios acoples diferenciales internos.
+
+Por lo tanto:
+
+- las resonancias secundarias no son piezas separables del onion ni puertos discretos que un
+  árbitro asigna;
+- el link no agrega una «dinámica del link», una salud, una memoria o un oscilador nuevo;
+- el link es la relación persistente que emerge entre las trayectorias completas cuando sus
+  dinámicas secundarias se capturan, se arrastran, se relevan o se liberan;
+- la interacción no debe reducirse a una fuerza escalar agregada aplicada por igual a todos los
+  modos. Que el onion completo responda no significa que todos sus grados reciban el mismo
+  término externo.
+
+El problema de implementación pendiente no es decidir qué fracción del onion simular, sino
+transcribir desde las coordenadas secundarias que el motor ya posee el término local de
+interacción \(\mathcal I^{(S)}\), sin duplicar dinámica interna ni inventar un proxy que la
+reemplace.
+
+### 7.2 El tamaño inmediato de un término no decide su existencia
+
+Se retira explícitamente el criterio «primero probar si el término basta». La pregunta física es
+si el término representa el mecanismo postulado. Si lo representa, se integra en su `dt` nativo
+aunque su efecto instantáneo sea \(10^{-8}\), cero dentro de la resolución de un film corto o
+pequeño frente a otro término.
+
+En un sistema evolutivo, una perturbación diminuta puede cambiar el tiempo de captura, el orden
+de encuentros, una competencia posterior o la biografía transmitida a otra ola. Su relevancia no
+puede decidirse sólo por amplitud inmediata, AUC, significación estadística o capacidad de
+clasificar supervivientes. Esas medidas sirven para observar y comparar trayectorias; no para
+borrar términos físicos de la ecuación.
+
+Esto tampoco declara que toda fórmula candidata sea correcta. Exige una correspondencia física
+con el estado diferencial existente y resultados prospectivos que permitan refutarla. Lo que se
+elimina es el salto lógico desde «el efecto medido es pequeño» hacia «el mecanismo no importa».
+
+### 7.3 Locks, lenguas y reducciones son lecturas, no árbitros del motor
+
+Los \(L_{p:q}\), la coherencia de fase, las lenguas de Arnold y las reducciones tipo Adler pueden
+describir desde afuera lo ocurrido en las trayectorias integradas. Son instrumentos valiosos para
+detectar captura, pulling, relevo y release. No deben:
+
+- crear o apagar interacciones dentro del RHS;
+- seleccionar de antemano qué banda puede tocar a cuál;
+- convertir un umbral de observación en una ley de formación;
+- sustituir la integración completa por una dinámica reducida porque reproduzca una métrica.
+
+Una reducción puede explicar después una región del comportamiento. No adquiere por eso derecho
+a reemplazar la física generadora, y tampoco queda descartada porque explique sólo una fracción
+minúscula de la evolución.
+
+### 7.4 El grafo inicial fuerza encuentros; el grafo formado es un resultado
+
+Para iniciar una corrida hace falta declarar qué pares entran en contacto o tienen oportunidad de
+interactuar. Ese grafo inicial es una condición experimental forzada: no presupone que sus links
+estén formados, sanos ni destinados a sobrevivir. No debe existir un filtro previo de «links sin
+oportunidad» basado en films históricos.
+
+A partir de esos encuentros, son resultados de la integración:
+
+- cuántas capturas aparecen;
+- qué razones secundarias participan;
+- cuánto persisten, fluctúan o se liberan;
+- qué competencia introduce la biografía acumulada;
+- qué distribución de enlaces y qué grumos quedan al final de una ola y entre olas.
+
+En consecuencia, no se fija como input la distribución de enlaces que se intenta explicar. Se
+fija una condición inicial reproducible de encuentros y se mide la población que la dinámica
+forma. Si más adelante el pasado sesga nuevos encuentros, ese sesgo debe provenir del estado y la
+historia efectivamente integrados, no de un clasificador externo de salud.
+
+### 7.5 Lugar del Kelvin–Voigt vigente
+
+El KV retardado actual puede conservar valor como control histórico y como ley de un enlace
+macroscópico **ya constituido**. No representa por sí mismo la formación piel contra piel buscada:
+
+1. calcula una señal desde sumas globales de posición y velocidad;
+2. presupone una arista ya presente;
+3. devuelve una fuerza escalar a todos los modos;
+4. pierde la identidad de las resonancias secundarias cuyo lock debería emerger.
+
+El problema no es que KV sea una fórmula en vez de una ecuación diferencial. El problema es que
+resume y aplica de antemano una relación macroscópica que aquí debería nacer de la integración de
+los dos onions completos. Por eso los `B/C` de la sección 3.4 sólo deben leerse como una forma de
+exhibir cuánta información borra la interfaz uniforme, no como arquitectura recomendada.
+
+### 7.6 Qué permiten decir los gráficos actuales
+
+El trending a `dt` completo conserva un resultado útil: los enlaces impuestos por KV no son
+constantes; sus potencias, fases, episodios de lock y rutas energéticas fluctúan, se relevan y a
+veces convergen. El panel P2 es especialmente claro como trayectoria energética del motor
+vigente. Eso es un dato real de esos films.
+
+La abundancia de ruido y phase slips es **compatible** con una entrada KV global que mezcla las
+capas y las fuerza uniformemente, pero estos mismos films no pueden demostrar que ésa sea toda la
+causa. Fueron producidos por ese mecanismo y no contienen el contrafactual con interacción
+secundaria local. P2 queda entonces como baseline exigente, no como validación de la física del
+link.
+
+La expectativa de que una interacción secundaria correctamente integrada converja en menos u.t.
+es una **predicción prospectiva**, no un hallazgo que pueda atribuirse retroactivamente. Tendrá
+valor cuando dos corridas apareadas —KV histórico y mecanismo secundario— partan de los mismos
+onions, encuentros, semilla y horizonte, y se comparen sin cambiar el instrumento de lectura.
+
+### 7.7 Contrato conceptual para el próximo diseño
+
+Un diseño futuro sólo será consistente con esta enmienda si cumple simultáneamente:
+
+1. integra el RHS completo de cada onion en cada `dt`;
+2. introduce la interacción a través de variables secundarias físicas ya existentes;
+3. deja que los acoples internos del propio onion propaguen esa perturbación;
+4. no crea estado, memoria, salud ni árbitro independiente para la arista;
+5. no usa el detector de lock para decidir qué ecuación ejecutar;
+6. conserva términos físicamente justificados aunque sean pequeños en una campaña corta;
+7. fuerza sólo las oportunidades iniciales de encuentro y trata la formación como outcome;
+8. registra locks, fase, potencia y tiempos como observables, no como sustitutos del motor.
+
+Queda abierta una sola cuestión de diseño físico antes de tocar el motor: identificar en las
+ecuaciones vigentes la forma exacta de \(\mathcal I^{(S)}\) que acopla dos superficies secundarias
+sin sumar globalmente los modos, sin reinjectar dinámica que ya propaga el onion y sin crear una
+ontología adicional. Mientras eso no esté escrito y auditado, implementar un nuevo KV, un puerto
+o un árbitro sólo cambiaría de proxy.
