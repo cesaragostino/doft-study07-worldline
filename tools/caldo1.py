@@ -46,7 +46,7 @@ def main():
     spec = _spec()
     c = RedCaldo(spec, 25, dt=DT, seed=SEED, K=K, lam=LAM, tau_s=TAU_S,
                  T_pulso=T_PULSO, ticks_pulso=TICKS_PULSO,
-                 T_rem=T_REM, ticks_rem=TICKS_REM, w_ticks_max=1 << 21)
+                 T_rem=T_REM, ticks_rem=TICKS_REM, w_ticks_max=1_500_000)  # tope SELLADO caldo 1: 120 u.t. (spec §3)
     rec = RecorderCaldo(DEST, c, {
         "run_id": RUN_ID, "seed": SEED, "genoma_id": GENOMA, "git_hash": git_hash,
         "procedencia": "gate §15 bitácora 2026-08-05 (pilotos i/ii + ronda 2/2b)"},
