@@ -90,8 +90,10 @@ def correr(n, K, lam, etiqueta):
         print(f"  [{etiqueta}] onion {i}: C={C:.4f} resid={resid*100:.2f}% "
               f"R²={r2:.4f} {'PASA' if resid <= 0.015 else 'FALLA'}", flush=True)
     res["tau_final"] = [float(x) for x in c.tau] if c.n_pairs else []
+    np.savez_compressed(OUT / f"GUARDA10B_{etiqueta}_series.npz",
+                        lider=lider, bq=bq, dt=DT)
     (OUT / f"GUARDA10B_{etiqueta}.json").write_text(json.dumps(res, indent=1))
-    print(f"[guarda10b] {etiqueta} → GUARDA10B_{etiqueta}.json "
+    print(f"[guarda10b] {etiqueta} → GUARDA10B_{etiqueta}.json + series.npz "
           f"({res['min_por_corrida']:.1f} min)", flush=True)
 
 
