@@ -65,7 +65,7 @@ def _correr(args):
             tau_serie.append([k * dt, float(c.tau.mean()), float(c.tau.max())])
             # F̂ por par (proxy declarado): K·(|S_ret| + n_S·|x_S|_max)
             fmax = max(fmax, float(np.abs(c.last_fS_sub0).max()) * K * 1.0)
-    return {"K": K, "lam": lam, "n": n, "ut": ut, "dt": dt,
+    return {"K": K, "lam": lam, "n": n, "ut": ut, "dt": dt, "seed": seed,
             "tau_final_mean": float(c.tau.mean()) if c.n_pairs else 0.0,
             "tau_final_max": float(c.tau.max()) if c.n_pairs else 0.0,
             "tau_final_por_par": [float(t) for t in c.tau],
@@ -136,6 +136,28 @@ def completo():
     print("[piloto-i] completo → PILOTO_I_COMPLETO.json", flush=True)
 
 
+def ronda2b():
+    """§14: la zona adiabática. (K=0.3, λ∈{100,300}) × 3 semillas × 120 u.t. + un dt/2
+    (marcado CONFUNDIDO por trayectoria — kicks por tick; va como sanidad de rigidez).
+    Preguntas selladas: (a) ¿atracción de concha reproducible en semillas?; (b) ¿captura
+    por la rama parásita τ̇=2 a λ≤300? (esperado: no — fluctuación 3× menor); (c) tasa
+    de creep vs λ (esperada ~lineal: 6e-4 y 2e-3 por u.t.)."""
+    trabajos = [(0.3, lam, 2, 120.0, DT, s)
+                for lam in (100.0, 300.0) for s in (20260805, 20260806, 20260807)]
+    trabajos.append((0.3, 300.0, 2, 120.0, DT / 2, 20260805))
+    res = []
+    with ProcessPoolExecutor(max_workers=7) as ex:
+        for r in ex.map(_correr, trabajos):
+            res.append(r)
+            print(f"  λ={r['lam']:.0e} dt={r['dt']:.0e} seed={r['seed']}: "
+                  f"τ_final={r['tau_final_max']:.4f} dτ_max={r['max_abs_dtau']:.3f} "
+                  f"clamp={r['clamp_count']}", flush=True)
+    (OUT / "PILOTO_I_RONDA2B.json").write_text(json.dumps(
+        {"K": 0.3, "lams": [100.0, 300.0], "seeds": [20260805, 20260806, 20260807],
+         "resultados": res, "conchas_prereg": CONCHAS}, indent=1))
+    print("[ronda2b] → PILOTO_I_RONDA2B.json", flush=True)
+
+
 def piloto_ii():
     """N=25 × 5 u.t.: la ventana del génesis con el (K,λ) declarado."""
     comp = json.loads((OUT / "PILOTO_I_COMPLETO.json").read_text())
@@ -154,4 +176,5 @@ def piloto_ii():
 
 
 if __name__ == "__main__":
-    {"screen": screen, "completo": completo, "ii": piloto_ii}[sys.argv[1]]()
+    {"screen": screen, "completo": completo, "ii": piloto_ii,
+     "ronda2b": ronda2b}[sys.argv[1]]()
