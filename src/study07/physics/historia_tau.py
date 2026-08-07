@@ -21,6 +21,7 @@ import numpy as np
 class HistoriaCaldo:
     def __init__(self, n_onions: int, n_s: int, dt: float,
                  w_ticks_ini: int = 1 << 17, w_ticks_max: int = 1 << 21) -> None:
+        w_ticks_ini = min(int(w_ticks_ini), int(w_ticks_max))   # retenciones chicas (§43)
         if w_ticks_ini < 2 or w_ticks_max < w_ticks_ini:
             raise ValueError("ventana: se exige 2 <= w_ini <= w_max")
         self.n = int(n_onions)
