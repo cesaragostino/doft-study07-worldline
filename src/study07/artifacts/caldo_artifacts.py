@@ -47,13 +47,15 @@ def fingerprint_extendido(caldo: RedCaldo, seed: int, genoma_id: str) -> str:
 class RecorderCaldo:
     def __init__(self, out_dir, caldo: RedCaldo, manifest: dict, *,
                  chunk_ticks: int = 16384, dec_factor: int = 32,
-                 n_caja: int = 2500, segmentos_full=((0.0, 5.0),)) -> None:
+                 n_caja: int = 2500, segmentos_full=((0.0, 5.0),),
+                 dec_tau: int = 1) -> None:
         self.dir = Path(out_dir)
         (self.dir / "worldline").mkdir(parents=True, exist_ok=False)
         (self.dir / "checkpoints").mkdir(exist_ok=True)
         self.caldo = caldo
         self.chunk_ticks = int(chunk_ticks)
         self.dec = int(dec_factor)
+        self.dec_tau = int(dec_tau)          # §43: τ decimado DECLARADO (1 = tasa completa, GOLD intacta)
         self.n_caja = int(n_caja)
         self.segmentos_full = [(float(a), float(b)) for a, b in segmentos_full]
         dim = (caldo.spec.n_modes * 2 + caldo.spec.n_z + caldo.spec.n_layers * 2)
@@ -68,7 +70,7 @@ class RecorderCaldo:
             "calendario_pulso": {"T_pulso": caldo.T_pulso,
                                  "ticks_pulso": caldo.ticks_pulso},
             "dt": caldo.dt, "chunk_ticks": self.chunk_ticks,
-            "dec_factor": self.dec, "N_caja": self.n_caja,
+            "dec_factor": self.dec, "dec_tau": self.dec_tau, "N_caja": self.n_caja,
             "segmentos_full": self.segmentos_full,
             "semantica": ("fila 0 = estado PRE-step (remanente, t=0); estados/tau[k] = "
                           "POST step tick k; fS_sub0/B_sub0 = consumido/emitido en el "
@@ -102,7 +104,11 @@ class RecorderCaldo:
         c = self.caldo
         self.rows["ticks"].append(c.tick)
         self.rows["estados"].append(self._flat().astype(np.float64))
-        self.rows["tau"].append(c.tau.copy())
+        if self.dec_tau == 1:
+            self.rows["tau"].append(c.tau.copy())
+        elif pre_step or c.tick % self.dec_tau == 0:
+            self.rows["tau"].append(c.tau.copy())
+            self.rows.setdefault("tau_ticks", []).append(c.tick)
         self.rows["kicks"].append(c.last_kicks.copy())
         t = c.tick * c.dt
         if pre_step or c.tick % self.dec == 0 or self._en_segmento_full(t):
@@ -146,7 +152,10 @@ class RecorderCaldo:
             nombre,
             ticks=np.array(self.rows["ticks"], dtype=np.int64),
             estados=np.stack(self.rows["estados"]),
-            tau=np.stack(self.rows["tau"]),
+            tau=(np.stack(self.rows["tau"]) if self.rows["tau"]
+                 else np.zeros((0, self.caldo.n_pairs))),
+            **({"tau_ticks": np.array(self.rows["tau_ticks"], dtype=np.int64)}
+               if "tau_ticks" in self.rows else {}),
             kicks=np.stack(self.rows["kicks"]),
             fS_sub0=(np.stack(self.rows["fS_sub0"])
                      if self.rows["fS_sub0"] else np.zeros((0, self.caldo.n_pairs, 2))),
