@@ -140,7 +140,9 @@ function dibujar(){
         Math.hypot(p[d0], p[d1], p[d2])); }
   const esc = zoom * Math.min(W, H) * 0.42 / run._rmax;
   const pr = F.pos9.map(p => proyectar(p[d0], p[d1], p[d2], esc));
-  const aristas = (run.aristas_ut && run.aristas_ut[String(F.ut)]) || [];
+  const arObj = (run.aristas_ut && run.aristas_ut[String(F.ut)]) || {n: 0, l: []};
+  const aristas = arObj.l || arObj;            // compat datos viejos
+  const nLocksReal = arObj.n !== undefined ? arObj.n : aristas.length;
   if (verAristas) {
     cx.lineWidth = 0.6;
     cx.strokeStyle = "rgba(120,150,220,0.10)";
@@ -212,7 +214,8 @@ function dibujar(){
   document.getElementById("t_v").textContent = F.t.toFixed(1);
   document.getElementById("fid_v").textContent = (fidV * 100).toFixed(0) + "%";
   document.getElementById("fidfill").style.width = (fidV * 100) + "%";
-  document.getElementById("lk_v").textContent = aristas.length +
+  document.getElementById("lk_v").textContent = nLocksReal +
+    (nLocksReal > aristas.length ? " (dibujo " + aristas.length + ")" : "") +
     (modo > 0 ? " · visibles " + nVis + "/" + F.pos9.length : "");
 }
 let tPrev = 0;

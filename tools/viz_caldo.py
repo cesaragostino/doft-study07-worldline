@@ -108,9 +108,11 @@ def frames_de(run):
             frecs = 2 * np.pi * kk / (segU.shape[0] * dtd)
             A = np.abs(frecs[:, None] - frecs[None, :])[iu] < LENGUA
             idxs = np.where(A)[0]
+            n_reales = int(len(idxs))
             if len(idxs) > MAX_ARISTAS:
                 idxs = idxs[np.linspace(0, len(idxs) - 1, MAX_ARISTAS).astype(int)]
-            aristas_ut[ut] = [[int(iu[0][q]), int(iu[1][q])] for q in idxs]
+            aristas_ut[ut] = {"n": n_reales,
+                              "l": [[int(iu[0][q]), int(iu[1][q])] for q in idxs]}
         fr.append({"t": round(t0 + PASO / 2, 2),
                    "pos9": np.round(pos9, 4).tolist(),
                    "ntot": np.round(ntot, 4).tolist(),
