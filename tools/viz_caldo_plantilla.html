@@ -145,10 +145,18 @@ function dibujar(){
   }
   // fidelidad por onion en la terna visible: ‖pos_terna‖/‖pos_total‖
   const orden = pr.map((p, i) => [p[3], i]).sort((a, b) => b[0] - a[0]);
-  let eMin = 1e9, eMax = -1e9, bMin = 1e9, bMax = -1e9, rmsMax = 1e-9;
-  for (const v of F.e) { eMin = Math.min(eMin, v); eMax = Math.max(eMax, v); }
-  for (const v of F.b) { bMin = Math.min(bMin, v); bMax = Math.max(bMax, v); }
-  for (const v of F.rms) rmsMax = Math.max(rmsMax, v);
+  // ESCALAS ABSOLUTAS POR CORRIDA (no por frame): lo que crece se ve crecer —
+  // sin el apagon relativo que la normalizacion instantanea fabricaba
+  if (!run._esc) {
+    let eMin = 1e9, eMax = -1e9, bMin = 1e9, bMax = -1e9, rmsMax = 1e-9;
+    for (const G of run.frames) {
+      for (const v of G.e) { eMin = Math.min(eMin, v); eMax = Math.max(eMax, v); }
+      for (const v of G.b) { bMin = Math.min(bMin, v); bMax = Math.max(bMax, v); }
+      for (const v of G.rms) rmsMax = Math.max(rmsMax, v);
+    }
+    run._esc = {eMin, eMax, bMin, bMax, rmsMax};
+  }
+  const {eMin, eMax, bMin, bMax, rmsMax} = run._esc;
   let fidTerna = 0, fidTot = 0;
   for (const [, i] of orden) {
     const p = F.pos9[i];
