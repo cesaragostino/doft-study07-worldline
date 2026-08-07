@@ -199,7 +199,7 @@ function dibujar(){
   const hx = 16, hy = H - 120, hw = 24, hmax = 66;
   cx.font = "10px sans-serif";
   for (let k = 0; k < 9; k++) {
-    const enTerna3 = TERNAS[terna].includes(k);
+    const enTerna3 = TERNAS[modo].includes(k);
     const h = hmax * (occ[k] / (occTot + 1e-12));
     cx.fillStyle = enTerna3 ? "rgba(232,163,61,0.9)" : "rgba(90,110,160,0.55)";
     cx.fillRect(hx + k * (hw + 5), hy + hmax - h, hw, h);
