@@ -41,6 +41,14 @@ def main():
                                                     tracker_componentes)
     dirw = Path(sys.argv[1])
     sig, bq, dt, man = cargar(dirw)
+    # corridas con muerte informativa: las ventanas se RECORTAN al span disponible
+    # (declarado — el censo reporta las ventanas efectivas, jamás inventa datos)
+    span = sig.shape[0] * dt * DEC
+    global VENTANAS
+    VENTANAS = tuple((ta, min(tb, span - 0.5)) for ta, tb in VENTANAS
+                     if ta < span - 2.0)
+    if not VENTANAS:
+        VENTANAS = ((max(0.0, span - 12.0), span - 0.5),)
     n = sig.shape[1]
     iu = np.triu_indices(n, 1)
     dtd = dt * DEC
