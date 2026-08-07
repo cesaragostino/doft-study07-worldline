@@ -170,6 +170,32 @@ function dibujar(){
     cx.fillStyle = `rgba(${r},${g},${b},${alfa.toFixed(2)})`;
     cx.beginPath(); cx.arc(pr[i][0], pr[i][1], rad, 0, 7); cx.fill();
   }
+  // ── histograma de ocupación por dimensión (9 barras, abajo-izquierda) ──
+  const occ = new Array(9).fill(0); const dom = new Array(9).fill(0);
+  let occTot = 0;
+  for (const i in F.pos9) {
+    const p = F.pos9[i];
+    let mejor = 0, mv = -1;
+    for (let k = 0; k < 9; k++) {
+      const c = p[k] * p[k]; occ[k] += c; occTot += c;
+      if (c > mv) { mv = c; mejor = k; }
+    }
+    dom[mejor]++;
+  }
+  const hx = 16, hy = H - 120, hw = 24, hmax = 66;
+  cx.font = "10px sans-serif";
+  for (let k = 0; k < 9; k++) {
+    const enTerna3 = TERNAS[terna].includes(k);
+    const h = hmax * (occ[k] / (occTot + 1e-12));
+    cx.fillStyle = enTerna3 ? "rgba(232,163,61,0.9)" : "rgba(90,110,160,0.55)";
+    cx.fillRect(hx + k * (hw + 5), hy + hmax - h, hw, h);
+    cx.fillStyle = "#8fa1c7";
+    cx.fillText(String(k + 1), hx + k * (hw + 5) + 8, hy + hmax + 12);
+    if (dom[k] > 0)
+      cx.fillText(String(dom[k]), hx + k * (hw + 5) + 4, hy + hmax - h - 4);
+  }
+  cx.fillStyle = "#6b7a99";
+  cx.fillText("ocupación por dimensión (nº = onions con esa dim dominante)", hx, hy - 6);
   const fidV = terna === 0 ? F.fid : (fidTot > 0 ? fidTerna / fidTot : 0);
   document.getElementById("t_v").textContent = F.t.toFixed(1);
   document.getElementById("fid_v").textContent = (fidV * 100).toFixed(0) + "%";
