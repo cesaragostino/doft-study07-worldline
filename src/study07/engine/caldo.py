@@ -19,18 +19,36 @@ from ..compat.study06_v4 import node_seed
 from ..physics.historia_tau import HistoriaCaldo
 from ..physics.interaccion_tau import evaluar_pares, indice_pares
 from ..physics.rhs_apilado import derivatives_apilado
+from ..physics.rhs_apilado_het import derivatives_apilado_het
+from ..physics.spec_lote import SpecLote
 from ..physics.state import Layer, NodeSpec
 
 _C_RK4 = (0.0, 0.5, 0.5, 1.0)
 
 
 class RedCaldo:
-    def __init__(self, spec: NodeSpec, n_onions: int, *, dt: float, seed: int,
+    """spec: NodeSpec (población homogénea — camino SELLADO, ops intactas) o
+    lista de N NodeSpecs (heterogénea, M2-build 1 — kernel het certificado;
+    genoma_ids OBLIGATORIO en ese caso, fail-loud)."""
+
+    def __init__(self, spec, n_onions: int, *, dt: float, seed: int,
                  K: float, lam: float, tau_s: float,
                  T_pulso: float, ticks_pulso: int,
                  T_rem: float, ticks_rem: int,
-                 w_ticks_max: int = 1 << 21, ids=None) -> None:
-        self.spec = spec
+                 w_ticks_max: int = 1 << 21, ids=None, genoma_ids=None) -> None:
+        self.het = isinstance(spec, (list, tuple))
+        if self.het:
+            if len(spec) != int(n_onions):
+                raise ValueError("RedCaldo het: len(specs) != n_onions")
+            if genoma_ids is None:
+                raise ValueError("RedCaldo het: genoma_ids es OBLIGATORIO (custodia)")
+            self.lote = SpecLote(spec, genoma_ids)
+            self.spec = self.lote.ref            # arquitectura (índices, capas)
+            self.genoma_ids = list(self.lote.genoma_ids)
+        else:
+            self.spec = spec
+            self.lote = None
+            self.genoma_ids = None if genoma_ids is None else list(genoma_ids)
         self.n = int(n_onions)
         self.dt = float(dt)
         self.K = float(K)
@@ -42,15 +60,20 @@ class RedCaldo:
                     else np.asarray(ids, dtype=np.int64))   # identidad estable del génesis
         self.rngs = [np.random.default_rng(node_seed(int(seed), int(i)))
                      for i in self.ids]
-        self.S_idx = np.array([i for i, m in enumerate(spec.modes)
+        self.S_idx = np.array([i for i, m in enumerate(self.spec.modes)
                                if m.layer in (Layer.S1, Layer.S2)], dtype=np.int64)
         self.n_s = len(self.S_idx)
-        self.masa = np.array([m.mass for m in spec.modes])
-        self.gamma = np.array([m.gamma for m in spec.modes])
-        self.masa_S = self.masa[self.S_idx]
+        if self.het:
+            self.masa = self.lote.mass           # (N, nm) — por onion
+            self.gamma = self.lote.gamma
+            self.masa_S = self.masa[:, self.S_idx]     # (N, n_S)
+        else:
+            self.masa = np.array([m.mass for m in self.spec.modes])
+            self.gamma = np.array([m.gamma for m in self.spec.modes])
+            self.masa_S = self.masa[self.S_idx]
         self.pares = indice_pares(self.n)
         self.n_pairs = len(self.pares)
-        nm, nz, nl = spec.n_modes, spec.n_z, spec.n_layers
+        nm, nz, nl = self.spec.n_modes, self.spec.n_z, self.spec.n_layers
         self.x = np.zeros((self.n, nm)); self.v = np.zeros((self.n, nm))
         self.z = np.zeros((self.n, nz)); self.b = np.zeros((self.n, nl))
         self.e = np.zeros((self.n, nl))
@@ -72,25 +95,33 @@ class RedCaldo:
         self.historia.push(self.x[:, self.S_idx], self.v[:, self.S_idx])  # fila t=0
 
     # ── burn-in aislado (K=λ=0, FDT a T_rem, streams propios) ──
+    def _kernel(self, x, v, z, b, e, f_ext):
+        """Despacho: kernel het certificado (población heterogénea) o el homogéneo
+        SELLADO (bit-igualdad probada en N-idénticos — doble gate M2-build 1)."""
+        if self.het:
+            return derivatives_apilado_het(self.lote, x, v, z, b, e, f_ext)
+        return derivatives_apilado(self.spec, x, v, z, b, e, f_ext)
+
     def _burn_in(self, T_rem: float, ticks_rem: int) -> None:
         f0 = np.zeros_like(self.x)
         sigma_v = np.sqrt(2.0 * self.gamma * T_rem * self.dt / np.maximum(self.masa, 1e-12))
         for _ in range(ticks_rem):
             self._rk4_interno(f0)
             for i in range(self.n):
-                kick = sigma_v * self.rngs[i].standard_normal(self.x.shape[1])
+                sv = sigma_v if sigma_v.ndim == 1 else sigma_v[i]   # het: fila del onion
+                kick = sv * self.rngs[i].standard_normal(self.x.shape[1])
                 self.v[i] = self.v[i] + kick
 
     def _rk4_interno(self, f_ext) -> None:
         """RK4 SOLO interno (burn-in): sin pares, sin τ."""
         est = (self.x, self.v, self.z, self.b, self.e)
-        k1 = derivatives_apilado(self.spec, *est, f_ext)
+        k1 = self._kernel(*est, f_ext)
         e2 = tuple(s + 0.5 * self.dt * k for s, k in zip(est, k1))
-        k2 = derivatives_apilado(self.spec, *e2, f_ext)
+        k2 = self._kernel(*e2, f_ext)
         e3 = tuple(s + 0.5 * self.dt * k for s, k in zip(est, k2))
-        k3 = derivatives_apilado(self.spec, *e3, f_ext)
+        k3 = self._kernel(*e3, f_ext)
         e4 = tuple(s + self.dt * k for s, k in zip(est, k3))
-        k4 = derivatives_apilado(self.spec, *e4, f_ext)
+        k4 = self._kernel(*e4, f_ext)
         c = self.dt / 6.0
         self.x, self.v, self.z, self.b, self.e = tuple(
             s + c * (a + 2 * b_ + 2 * c_ + d) for s, a, b_, c_, d in
@@ -145,7 +176,7 @@ class RedCaldo:
                                      tau_s=self.tau_s)
         f_ext = np.zeros_like(x)
         f_ext[:, self.S_idx] = f_S
-        dx, dv, dz, db, de = derivatives_apilado(self.spec, x, v, z, b, e, f_ext)
+        dx, dv, dz, db, de = self._kernel(x, v, z, b, e, f_ext)
         return (dx, dv, dz, db, de, dtau), (S_ret, B)
 
     def step(self) -> None:
@@ -188,7 +219,8 @@ class RedCaldo:
             sigma_v = np.sqrt(2.0 * self.gamma * self.T_pulso * self.dt
                               / np.maximum(self.masa, 1e-12))
             for i in range(self.n):
-                kick = sigma_v * self.rngs[i].standard_normal(self.x.shape[1])
+                sv = sigma_v if sigma_v.ndim == 1 else sigma_v[i]   # het: fila del onion
+                kick = sv * self.rngs[i].standard_normal(self.x.shape[1])
                 self.v[i] = self.v[i] + kick
                 self.last_kicks[i] = kick
         else:

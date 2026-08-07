@@ -25,7 +25,14 @@ def _sha(b: bytes) -> str:
 
 def fingerprint_extendido(caldo: RedCaldo, seed: int, genoma_id: str) -> str:
     """Constitución ∪ constantes de campaña — canónico, orden de claves fijo."""
-    modos = [(m.omega0, m.gamma, m.mass, str(m.layer)) for m in caldo.spec.modes]
+    if getattr(caldo, "het", False):
+        # población heterogénea: la constitución cubre TODOS los genomas por onion
+        # (bug-class kappa_global — un solo spec de referencia NO alcanza)
+        modos = [[(m.omega0, m.gamma, m.mass, str(m.layer)) for m in s.modes]
+                 for s in caldo.lote.specs]
+        genoma_id = f"{genoma_id}|het:" + ",".join(caldo.genoma_ids)
+    else:
+        modos = [(m.omega0, m.gamma, m.mass, str(m.layer)) for m in caldo.spec.modes]
     doc = {"genoma": genoma_id, "modos": modos, "N": caldo.n,
            "K": caldo.K, "lambda": caldo.lam, "tau_s_ut": caldo.tau_s,
            "calendario_pulso": {"T_pulso": caldo.T_pulso,
@@ -116,10 +123,11 @@ class RecorderCaldo:
             xs = x_pre[:, c.S_idx]; vs = v_pre[:, c.S_idx]
             i_idx, j_idx = c.pares[:, 0], c.pares[:, 1]
             n_s = float(c.n_s)
-            f_i = (c.K / c.masa_S[None, :]) * (c.last_fS_sub0[:, 0][:, None]
-                                               - n_s * xs[i_idx])
-            f_j = (c.K / c.masa_S[None, :]) * (c.last_fS_sub0[:, 1][:, None]
-                                               - n_s * xs[j_idx])
+            # masas del RECEPTOR: (n_S,) homogéneo (ops selladas) ó fila por onion (het)
+            mS_i = c.masa_S[None, :] if c.masa_S.ndim == 1 else c.masa_S[i_idx]
+            mS_j = c.masa_S[None, :] if c.masa_S.ndim == 1 else c.masa_S[j_idx]
+            f_i = (c.K / mS_i) * (c.last_fS_sub0[:, 0][:, None] - n_s * xs[i_idx])
+            f_j = (c.K / mS_j) * (c.last_fS_sub0[:, 1][:, None] - n_s * xs[j_idx])
             self.W_acc += c.dt * ((f_i * vs[i_idx]).sum(1) + (f_j * vs[j_idx]).sum(1))
             if c.tick % self.n_caja == 0:
                 self.W_cajas.append((c.tick, self.W_acc.copy()))
@@ -194,21 +202,25 @@ def guardar_checkpoint(caldo: RedCaldo, path, *, seed: int, genoma_id: str,
 
 def restaurar_checkpoint(spec, path, *, seed: int, genoma_id: str,
                          K: float, lam: float, tau_s: float,
-                         T_pulso: float, ticks_pulso: int) -> RedCaldo:
-    """Rehidrata un RedCaldo EXACTO. EXIGE fingerprint idéntico (fail-loud)."""
+                         T_pulso: float, ticks_pulso: int,
+                         genoma_ids=None) -> RedCaldo:
+    """Rehidrata un RedCaldo EXACTO. EXIGE fingerprint idéntico (fail-loud).
+    spec: NodeSpec (homogéneo) o lista de NodeSpecs + genoma_ids (het, M2-build 1)."""
     import ast
     f = np.load(path, allow_pickle=False)
     meta = json.loads(str(f["meta_json"]))
     n = int(meta["N"])
     caldo = RedCaldo(spec, n, dt=float(meta["dt"]), seed=seed, K=K, lam=lam,
                      tau_s=tau_s, T_pulso=T_pulso, ticks_pulso=ticks_pulso,
-                     T_rem=0.0, ticks_rem=0, ids=meta["ids_onion"])
+                     T_rem=0.0, ticks_rem=0, ids=meta["ids_onion"],
+                     genoma_ids=genoma_ids)
     fp = fingerprint_extendido(caldo, seed, genoma_id)
     if fp != meta["fingerprint_extendido"]:
         raise RuntimeError("checkpoint caldo: fingerprint extendido difiere — "
                            "constitución o constantes de campaña cambiadas (fail-loud)")
     est = f["estados"]
-    nm, nz, nl = spec.n_modes, spec.n_z, spec.n_layers
+    ref = caldo.spec                       # het: arquitectura de referencia del lote
+    nm, nz, nl = ref.n_modes, ref.n_z, ref.n_layers
     caldo.x = est[:, :nm].copy(); caldo.v = est[:, nm:2 * nm].copy()
     caldo.z = est[:, 2 * nm:2 * nm + nz].copy()
     caldo.b = est[:, 2 * nm + nz:2 * nm + nz + nl].copy()

@@ -59,6 +59,9 @@ def evaluar_pares(x_S: np.ndarray, S_act: np.ndarray, S_ret: np.ndarray,
     np.add.at(cnt, i_idx, act)
     np.add.at(cnt, j_idx, act)
     # término por modo receptor: (K/m_μ)·(acc_i − cnt_i·n_S·x_iμ)  [colapso §1.1,
-    # n_S del EMISOR = n_S común (todos-iguales); forma factorizada canónica declarada]
-    f_S = (K / masa_S[None, :]) * (acc[:, None] - cnt[:, None] * float(n_s) * x_S)
+    # n_S del EMISOR = n_S común (arquitectura compartida — SpecLote la valida);
+    # masa_S (n_S,) = población homogénea (camino sellado, ops intactas) ó
+    # masa_S (N, n_S) = heterogénea (masa del RECEPTOR por onion — M2-build 1)]
+    m2d = masa_S[None, :] if masa_S.ndim == 1 else masa_S
+    f_S = (K / m2d) * (acc[:, None] - cnt[:, None] * float(n_s) * x_S)
     return f_S, dtau, B
