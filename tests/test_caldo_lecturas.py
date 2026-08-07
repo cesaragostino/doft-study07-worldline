@@ -85,3 +85,18 @@ def test_tracker_componentes_conocido():
     muertos = [e for e in r["episodios"] if e["muere"] is not None]
     assert len(muertos) >= 1
     assert any(ev["tipo"] == "nace" and ev["t"] == 2 for ev in r["eventos"])
+
+
+def test_residual_afinidad_detecta_lock_sin_reloj():
+    """E=+1 construido: dos señales con la MISMA frecuencia instantánea pero b
+    lejanos en el eje ω(b) — lock observado SIN afinidad biográfica."""
+    from study07.instruments.caldo_lecturas import residual_afinidad
+    t = np.arange(0, 10.0, DT)
+    sig = np.stack([np.cos(10.0 * t), np.cos(10.0 * t + 0.4)], axis=1)
+    ph = fases_banda(sig, DT, lo=7.0, hi=15.0)
+    b = np.zeros((len(t), 2)); b[:, 1] = 8.0        # ω(b): 10.24 vs 17.4 — sin afinidad
+    E, f_mas, f_menos, racha = residual_afinidad(ph, b, DT)
+    assert f_mas[0] > 0.8 and racha[0] >= 8          # residuo +1 PERSISTENTE
+    b2 = np.zeros((len(t), 2))                       # b iguales ⇒ E=0
+    E2, f2_mas, _, _ = residual_afinidad(ph, b2, DT)
+    assert f2_mas[0] == 0.0 and (E2 == 0).all()

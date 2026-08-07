@@ -186,3 +186,40 @@ def tracker_componentes(lista_A, jaccard_min: float = 0.5):
             vivos[prox_id] = cm
             prox_id += 1
     return {"episodios": episodios, "eventos": eventos, "fragmentacion": frag}
+
+
+def residual_afinidad(ph, b_serie, dt, caja_ut: float = 1.0,
+                      C: float = C_RELOJ, lengua: float = LENGUA):
+    """LA BRÚJULA M2 (COA, §42): E(t) = A^φ(t) − A^b(t) por caja.
+
+    ph: fases (T, N) [fases_banda]; b_serie: b_Q (T, N) co-muestreado.
+    Por caja: A^φ del lock de pendientes (grafo_lock por caja) y A^b de la afinidad
+    con el b MEDIO de la caja. E ∈ {−1, 0, +1} por par-caja:
+      +1 = lock SIN afinidad (candidato a vínculo más allá del reloj)
+      −1 = afinidad SIN lock (compatibles que no se enlazan)
+    Devuelve (E (ncajas, P) int8, frac_mas (P,), frac_menos (P,),
+    racha_mas_max (P,) — persistencia del residuo +1 en cajas consecutivas)."""
+    n_t, n = ph.shape
+    caja = int(round(caja_ut / dt))
+    ncaja = n_t // caja
+    iu = np.triu_indices(n, 1)
+    P = len(iu[0])
+    E = np.zeros((ncaja, P), dtype=np.int8)
+    t_loc = np.arange(caja) * dt
+    for a in range(ncaja):
+        s0, s1 = a * caja, (a + 1) * caja
+        pend = np.polyfit(t_loc, ph[s0:s1], 1)[0]
+        A_phi = (np.abs(pend[:, None] - pend[None, :]) < lengua)[iu]
+        w = omega_reloj(b_serie[s0:s1].mean(0), C)
+        A_b = (np.abs(w[:, None] - w[None, :]) < lengua)[iu]
+        E[a] = A_phi.astype(np.int8) - A_b.astype(np.int8)
+    frac_mas = (E == 1).mean(0)
+    frac_menos = (E == -1).mean(0)
+    racha = np.zeros(P, dtype=np.int64)
+    for p in range(P):
+        m = 0; r = 0
+        for val in E[:, p]:
+            r = r + 1 if val == 1 else 0
+            m = max(m, r)
+        racha[p] = m
+    return E, frac_mas, frac_menos, racha
