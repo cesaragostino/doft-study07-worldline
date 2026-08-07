@@ -123,6 +123,16 @@
   "tau_mediana": 0.009672339141461768,
   "tau_max": 0.6318598653993207
  },
+ "mundos": {
+  "dstar_global": 1,
+  "componentes_locales": [
+   {
+    "n_miembros": 25,
+    "dstar_local": 1,
+    "no_eucl_local": 0.41134786451205263
+   }
+  ]
+ },
  "componentes": {
   "fragmentacion": [
    1,

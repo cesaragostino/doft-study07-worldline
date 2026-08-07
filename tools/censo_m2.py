@@ -104,6 +104,24 @@ def main():
                               "ev_top5": [float(x) for x in ev[:5]],
                               "tau_mediana": float(np.median(tau)),
                               "tau_max": float(tau.max())}
+    # ── d* LOCAL por componente vs GLOBAL (lectura declarada §44b: «mundos por
+    # bloques» — grupos con espacio propio de baja dimensión separados por edad) ──
+    if cks:
+        from study07.instruments.caldo_lecturas import componentes as _comp
+        A_fin = grafos_1ut[-1]
+        et = _comp(A_fin)
+        M_tau = matriz_tau(tau, n)
+        locales = []
+        for cid in np.unique(et):
+            miembros = np.where(et == cid)[0]
+            if len(miembros) >= 4:                    # MDS local con sentido
+                sub = M_tau[np.ix_(miembros, miembros)]
+                _, d_loc, ne_loc = mds_espectro(sub)
+                locales.append({"n_miembros": int(len(miembros)),
+                                "dstar_local": int(d_loc),
+                                "no_eucl_local": float(ne_loc)})
+        censo["mundos"] = {"dstar_global": censo.get("mds_final", {}).get("dstar"),
+                           "componentes_locales": locales}
     tr = tracker_componentes(grafos_1ut)
     censo["componentes"] = {"fragmentacion": tr["fragmentacion"],
                             "episodios": len(tr["episodios"]),
