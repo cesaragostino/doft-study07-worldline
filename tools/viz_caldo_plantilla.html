@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>DOFT · caldo τ en 3D</title>
+<style>
+  :root { --tinta:#e8e4da; --fondo:#0b0e14; --panel:#141a26; --acento:#e8a33d; }
+  * { margin:0; box-sizing:border-box; }
+  body { background:var(--fondo); color:var(--tinta); font:14px/1.45 "Avenir Next",
+         "Helvetica Neue", sans-serif; overflow:hidden; }
+  #lienzo { display:block; cursor:grab; }
+  #panel { position:fixed; top:0; left:0; right:0; display:flex; gap:14px;
+           align-items:center; padding:10px 16px; background:linear-gradient(
+           to bottom, rgba(11,14,20,.92), rgba(11,14,20,0)); flex-wrap:wrap; }
+  h1 { font-size:15px; font-weight:600; letter-spacing:.04em; }
+  h1 b { color:var(--acento); font-weight:700; }
+  select,button { background:var(--panel); color:var(--tinta); border:1px solid #2a3550;
+           border-radius:6px; padding:5px 10px; font:inherit; cursor:pointer; }
+  #tiempo { flex:1; min-width:180px; accent-color:var(--acento); }
+  #hud { position:fixed; bottom:0; left:0; right:0; padding:10px 16px; display:flex;
+         gap:22px; align-items:baseline; background:linear-gradient(to top,
+         rgba(11,14,20,.92), rgba(11,14,20,0)); font-variant-numeric:tabular-nums; }
+  .dato { color:#8fa1c7; font-size:12px; }
+  .dato b { color:var(--tinta); font-size:15px; }
+  #fidbar { width:130px; height:7px; background:#232c42; border-radius:4px;
+            overflow:hidden; display:inline-block; vertical-align:middle; }
+  #fidfill { height:100%; background:var(--acento); width:0%; }
+  #nota { position:fixed; right:14px; bottom:44px; max-width:270px; font-size:11px;
+          color:#6b7a99; text-align:right; }
+</style>
+</head>
+<body>
+<canvas id="lienzo"></canvas>
+<div id="panel">
+  <h1>DOFT · <b>mapa τ</b> — el espacio como lectura</h1>
+  <select id="corrida"></select>
+  <button id="play">▶</button>
+  <input id="tiempo" type="range" min="0" max="0" value="0">
+  <button id="colorbtn">color: e_Q</button>
+  <button id="aristasbtn">locks: ON</button>
+</div>
+<div id="hud">
+  <span class="dato">t = <b id="t_v">–</b> u.t.</span>
+  <span class="dato">fidelidad 3D <span id="fidbar"><span id="fidfill"></span></span>
+        <b id="fid_v">–</b></span>
+  <span class="dato">locks <b id="lk_v">–</b></span>
+  <span class="dato" id="leyenda">tamaño = actividad · color = temperatura (log e_Q)
+        · radio = log(τ) <em>(transformación visual declarada)</em></span>
+</div>
+<div id="nota">fidelidad = fracción de la varianza del mapa τ capturada por estas 3
+dimensiones. Baja fidelidad ⇒ estás viendo la sombra 3D de un objeto de más
+dimensiones (el símplex). Arrastrá para orbitar, rueda para zoom.</div>
+<script>
+/*DATOS*/
+const cv = document.getElementById("lienzo"), cx = cv.getContext("2d");
+let W, H; function medir(){ W = cv.width = innerWidth; H = cv.height = innerHeight; }
+medir(); addEventListener("resize", medir);
+let rot = {a: 0.6, b: 0.35}, zoom = 1.0, fr = 0, playa = false, colorB = false,
+    verAristas = true;
+const combo = document.getElementById("corrida");
+for (const k of Object.keys(DATOS)) {
+  const o = document.createElement("option"); o.value = k; o.textContent =
+    k + " (" + DATOS[k].frames.length + " u.t.)"; combo.appendChild(o);
+}
+let run = DATOS[combo.value];
+const slider = document.getElementById("tiempo");
+function setRun(){ run = DATOS[combo.value]; fr = 0;
+  slider.max = run.frames.length - 1; slider.value = 0; }
+setRun();
+combo.onchange = setRun;
+slider.oninput = () => { fr = +slider.value; };
+document.getElementById("play").onclick = e => { playa = !playa;
+  e.target.textContent = playa ? "❚❚" : "▶"; };
+document.getElementById("colorbtn").onclick = e => { colorB = !colorB;
+  e.target.textContent = "color: " + (colorB ? "b_Q" : "e_Q"); };
+document.getElementById("aristasbtn").onclick = e => { verAristas = !verAristas;
+  e.target.textContent = "locks: " + (verAristas ? "ON" : "OFF"); };
+let drag = null;
+cv.onmousedown = e => drag = [e.clientX, e.clientY];
+addEventListener("mouseup", () => drag = null);
+addEventListener("mousemove", e => { if (!drag) return;
+  rot.a += (e.clientX - drag[0]) * 0.006; rot.b += (e.clientY - drag[1]) * 0.006;
+  rot.b = Math.max(-1.4, Math.min(1.4, rot.b)); drag = [e.clientX, e.clientY]; });
+cv.addEventListener("wheel", e => { zoom *= e.deltaY < 0 ? 1.1 : 0.9;
+  e.preventDefault(); }, {passive: false});
+
+function fuego(u){                       // 0..1 → azul-gris → rojo → blanco
+  u = Math.max(0, Math.min(1, u));
+  const r = Math.round(40 + 215 * Math.min(1, u * 1.7));
+  const g = Math.round(52 + 60 * u + 140 * Math.max(0, u - 0.6) / 0.4);
+  const b = Math.round(80 + 40 * (1 - u) + 130 * Math.max(0, u - 0.85) / 0.15);
+  return `rgb(${r},${g},${b})`;
+}
+function proyectar(p, escala){
+  const ca = Math.cos(rot.a), sa = Math.sin(rot.a),
+        cb = Math.cos(rot.b), sb = Math.sin(rot.b);
+  const x1 = p[0] * ca + p[2] * sa, z1 = -p[0] * sa + p[2] * ca;
+  const y1 = p[1] * cb - z1 * sb,  z2 = p[1] * sb + z1 * cb;
+  const pers = 900 / (900 + z2 * escala);
+  return [W / 2 + x1 * escala * pers, H / 2 + y1 * escala * pers, pers, z2];
+}
+function dibujar(){
+  const F = run.frames[Math.min(fr, run.frames.length - 1)];
+  cx.fillStyle = "#0b0e14"; cx.fillRect(0, 0, W, H);
+  // escala: que el radio máximo histórico de la corrida entre en pantalla
+  if (!run._rmax) { run._rmax = 1e-9;
+    for (const G of run.frames) for (const p of G.pos)
+      run._rmax = Math.max(run._rmax, Math.hypot(p[0], p[1], p[2])); }
+  const esc = zoom * Math.min(W, H) * 0.42 / run._rmax;
+  const pr = F.pos.map(p => proyectar(p, esc));
+  if (verAristas) {
+    cx.lineWidth = 0.6;
+    for (const [i, j] of F.aristas) {
+      cx.strokeStyle = "rgba(120,150,220,0.10)";
+      cx.beginPath(); cx.moveTo(pr[i][0], pr[i][1]);
+      cx.lineTo(pr[j][0], pr[j][1]); cx.stroke();
+    }
+  }
+  const orden = pr.map((p, i) => [p[3], i]).sort((a, b) => b[0] - a[0]);
+  let eMin = 1e9, eMax = -1e9, bMin = 1e9, bMax = -1e9;
+  for (const v of F.e) { eMin = Math.min(eMin, v); eMax = Math.max(eMax, v); }
+  for (const v of F.b) { bMin = Math.min(bMin, v); bMax = Math.max(bMax, v); }
+  for (const [, i] of orden) {
+    const u = colorB ? (F.b[i] - bMin) / (bMax - bMin + 1e-9)
+                     : (F.e[i] - eMin) / (eMax - eMin + 1e-9);
+    const rad = (1.5 + 9 * Math.sqrt(F.rms[i] / (Math.max(...F.rms) + 1e-9)))
+                * pr[i][2] * Math.sqrt(zoom);
+    cx.fillStyle = fuego(u);
+    cx.beginPath(); cx.arc(pr[i][0], pr[i][1], rad, 0, 7); cx.fill();
+  }
+  document.getElementById("t_v").textContent = F.t.toFixed(1);
+  document.getElementById("fid_v").textContent = (F.fid * 100).toFixed(0) + "%";
+  document.getElementById("fidfill").style.width = (F.fid * 100) + "%";
+  document.getElementById("lk_v").textContent = F.aristas.length;
+}
+let tPrev = 0;
+function ciclo(ts){
+  if (playa && ts - tPrev > 90) { fr = (fr + 1) % run.frames.length;
+    slider.value = fr; tPrev = ts; }
+  dibujar(); requestAnimationFrame(ciclo);
+}
+requestAnimationFrame(ciclo);
+</script>
+</body>
+</html>
