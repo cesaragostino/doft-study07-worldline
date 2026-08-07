@@ -1,0 +1,135 @@
+{
+ "run_id": "caldo2frio_n25_120ut_Tp5",
+ "N": 25,
+ "n_pairs": 300,
+ "manifest_sha_prefix": "084432edff22",
+ "umbrales": {
+  "rms_encendido": 0.1,
+  "rms_latente": 0.05,
+  "frac_clase": 0.5,
+  "dec": 8
+ },
+ "ventanas": {
+  "[30,60]": {
+   "pares_conteo": {
+    "LOCK_AFÍN": 300,
+    "LOCK_RESIDUAL": 0,
+    "AFÍN_SUELTO": 0,
+    "DESACOPLADO": 0,
+    "SIN-CLASIFICAR": 0
+   },
+   "densidad_grafo": 1.0,
+   "grado": {
+    "mediana": 24.0,
+    "max": 24
+   },
+   "E": {
+    "frac_mas_max": 0.0,
+    "racha_mas_max": 0,
+    "pares_con_residuo_persistente": 0
+   }
+  },
+  "[90,120]": {
+   "pares_conteo": {
+    "LOCK_AFÍN": 300,
+    "LOCK_RESIDUAL": 0,
+    "AFÍN_SUELTO": 0,
+    "DESACOPLADO": 0,
+    "SIN-CLASIFICAR": 0
+   },
+   "densidad_grafo": 1.0,
+   "grado": {
+    "mediana": 24.0,
+    "max": 24
+   },
+   "E": {
+    "frac_mas_max": 0.0,
+    "racha_mas_max": 0,
+    "pares_con_residuo_persistente": 0
+   }
+  }
+ },
+ "onions": {
+  "clase": [
+   "ENCENDIDO",
+   "ENCENDIDO",
+   "SIN-CLASIFICAR",
+   "SIN-CLASIFICAR",
+   "ENCENDIDO",
+   "ENCENDIDO",
+   "ENCENDIDO",
+   "ENCENDIDO",
+   "ENCENDIDO",
+   "ENCENDIDO",
+   "LATENTE",
+   "ENCENDIDO",
+   "ENCENDIDO",
+   "LATENTE",
+   "ENCENDIDO",
+   "ENCENDIDO",
+   "SIN-CLASIFICAR",
+   "ENCENDIDO",
+   "ENCENDIDO",
+   "ENCENDIDO",
+   "ENCENDIDO",
+   "ENCENDIDO",
+   "ENCENDIDO",
+   "ENCENDIDO",
+   "ENCENDIDO"
+  ],
+  "rms_final": [
+   0.24078441452979502,
+   0.13673467410886433,
+   0.08951618251351331,
+   0.07262061206862262,
+   0.33643595123617465,
+   0.24514928967735683,
+   5.008237119577954,
+   0.4445790066041355,
+   0.15959402519098495,
+   0.22965055966235057,
+   0.02081748435832349,
+   0.5077045572135553,
+   0.4837549942179556,
+   0.04199585755582309,
+   4.122591464576128,
+   0.13373799412397547,
+   0.06904481109722584,
+   0.5087019134004451,
+   0.1104509147591838,
+   0.1547167693287783,
+   3.2767928373876263,
+   1.9002196161367297,
+   0.7974303481246753,
+   0.72966149007835,
+   0.15968017478351915
+  ],
+  "conteo": {
+   "ENCENDIDO": 20,
+   "LATENTE": 2,
+   "SIN-CLASIFICAR": 3
+  }
+ },
+ "mds_final": {
+  "dstar": 1,
+  "no_eucl": 0.41134786451205263,
+  "ev_top5": [
+   0.21018577104632452,
+   0.05672482249315883,
+   0.026095886183286024,
+   0.0225357101195109,
+   0.016019525364272105
+  ],
+  "tau_mediana": 0.009672339141461768,
+  "tau_max": 0.6318598653993207
+ },
+ "componentes": {
+  "fragmentacion": [
+   1,
+   1
+  ],
+  "episodios": 1,
+  "relevos_totales": 0,
+  "muertes": 0
+ }
+}
