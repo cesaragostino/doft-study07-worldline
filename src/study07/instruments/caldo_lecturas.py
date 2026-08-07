@@ -130,3 +130,59 @@ def componentes(A: np.ndarray):
                 cola.append(int(vtx))
         actual += 1
     return etiqueta
+
+
+def tracker_componentes(lista_A, jaccard_min: float = 0.5):
+    """Medición 5 del contrato M2 (§35): persistencia/relevos/fragmentación.
+
+    lista_A: adyacencias bool (N,N) por ventana consecutiva. Componentes de ≥2
+    onions; matching entre ventanas por Jaccard ≥ jaccard_min (mejor primero,
+    determinista). Devuelve dict con:
+      episodios: [{id, nace, muere (exclusivo; None=vivo al final), miembros_ini,
+                   miembros_fin, relevos (nº de cambios de membresía)}]
+      eventos:   [{t, tipo: nace|muere|fusion|fision|relevo, ids}]
+      fragmentacion: [nº componentes por ventana]
+    """
+    episodios, eventos, frag = [], [], []
+    vivos = {}                                   # id → set de miembros
+    prox_id = 0
+    for t, A in enumerate(lista_A):
+        et = componentes(A)
+        comps = []
+        for c in np.unique(et):
+            m = set(np.where(et == c)[0].tolist())
+            if len(m) >= 2:
+                comps.append(m)
+        frag.append(len(comps))
+        usados_prev, usados_new = set(), set()
+        matches = []
+        for vid, vm in vivos.items():
+            for k, cm in enumerate(comps):
+                inter = len(vm & cm); union = len(vm | cm)
+                if union and inter / union >= jaccard_min:
+                    matches.append((inter / union, vid, k))
+        matches.sort(key=lambda x: (-x[0], x[1], x[2]))
+        for jac, vid, k in matches:
+            if vid in usados_prev or k in usados_new:
+                continue
+            usados_prev.add(vid); usados_new.add(k)
+            if vivos[vid] != comps[k]:
+                ep = next(e for e in episodios if e["id"] == vid)
+                ep["relevos"] += 1
+                ep["miembros_fin"] = sorted(comps[k])
+                eventos.append({"t": t, "tipo": "relevo", "ids": [vid]})
+            vivos[vid] = comps[k]
+        for vid in [v for v in list(vivos) if v not in usados_prev]:
+            next(e for e in episodios if e["id"] == vid)["muere"] = t
+            eventos.append({"t": t, "tipo": "muere", "ids": [vid]})
+            del vivos[vid]
+        for k, cm in enumerate(comps):
+            if k in usados_new:
+                continue
+            episodios.append({"id": prox_id, "nace": t, "muere": None,
+                              "miembros_ini": sorted(cm),
+                              "miembros_fin": sorted(cm), "relevos": 0})
+            eventos.append({"t": t, "tipo": "nace", "ids": [prox_id]})
+            vivos[prox_id] = cm
+            prox_id += 1
+    return {"episodios": episodios, "eventos": eventos, "fragmentacion": frag}

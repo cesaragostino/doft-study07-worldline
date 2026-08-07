@@ -62,3 +62,26 @@ def test_matriz_tau_y_componentes():
     A[0, 1] = A[1, 0] = A[2, 3] = A[3, 2] = True
     et = componentes(A)
     assert et[0] == et[1] and et[2] == et[3] and et[0] != et[2]
+
+
+def test_tracker_componentes_conocido():
+    """Nace → persiste con relevo → fisión → muere: la genealogía conocida."""
+    from study07.instruments.caldo_lecturas import tracker_componentes
+
+    def A(pares, n=6):
+        M = np.zeros((n, n), dtype=bool)
+        for i, j in pares:
+            M[i, j] = M[j, i] = True
+        return M
+
+    ventanas = [A([(0, 1), (1, 2)]),             # t=0: nace {0,1,2}
+                A([(0, 1), (1, 2), (2, 3)]),     # t=1: relevo (entra 3)
+                A([(0, 1), (2, 3)]),             # t=2: fisión → {0,1} y {2,3}
+                A([(0, 1)])]                     # t=3: {2,3} muere
+    r = tracker_componentes(ventanas)
+    assert r["fragmentacion"] == [1, 1, 2, 1]
+    ep0 = r["episodios"][0]
+    assert ep0["nace"] == 0 and ep0["relevos"] >= 1
+    muertos = [e for e in r["episodios"] if e["muere"] is not None]
+    assert len(muertos) >= 1
+    assert any(ev["tipo"] == "nace" and ev["t"] == 2 for ev in r["eventos"])
