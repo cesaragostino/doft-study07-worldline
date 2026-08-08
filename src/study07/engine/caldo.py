@@ -35,7 +35,8 @@ class RedCaldo:
                  K: float, lam: float, tau_s: float,
                  T_pulso: float, ticks_pulso: int,
                  T_rem: float, ticks_rem: int,
-                 w_ticks_max: int = 1 << 21, ids=None, genoma_ids=None) -> None:
+                 w_ticks_max: int = 1 << 21, ids=None, genoma_ids=None,
+                 T_fondo: float = 0.0) -> None:
         self.het = isinstance(spec, (list, tuple))
         if self.het:
             if len(spec) != int(n_onions):
@@ -55,6 +56,7 @@ class RedCaldo:
         self.lam = float(lam)
         self.tau_s = float(tau_s)
         self.T_pulso = float(T_pulso)
+        self.T_fondo = float(T_fondo)   # §53 A1: baño FDT post-pulso (calendario, no ley; 0 = sellado)
         self.ticks_pulso = int(ticks_pulso)
         self.ids = (np.arange(self.n, dtype=np.int64) if ids is None
                     else np.asarray(ids, dtype=np.int64))   # identidad estable del génesis
@@ -215,8 +217,10 @@ class RedCaldo:
             margen = (self.tick * self.dt) - self.tau
             self.min_margen_causal = min(self.min_margen_causal, float(margen.min()))
         # kicks FDT del PULSO (calendario: T(t)=T_pulso en [0, ticks_pulso))
-        if self.tick <= self.ticks_pulso and self.T_pulso > 0.0:
-            sigma_v = np.sqrt(2.0 * self.gamma * self.T_pulso * self.dt
+        T_ahora = (self.T_pulso if (self.tick <= self.ticks_pulso and self.T_pulso > 0.0)
+                   else self.T_fondo)
+        if T_ahora > 0.0:
+            sigma_v = np.sqrt(2.0 * self.gamma * T_ahora * self.dt
                               / np.maximum(self.masa, 1e-12))
             for i in range(self.n):
                 sv = sigma_v if sigma_v.ndim == 1 else sigma_v[i]   # het: fila del onion

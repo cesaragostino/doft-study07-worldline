@@ -16,6 +16,7 @@ STUDY07 = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(STUDY07 / "src"))
 
 CAL = {"frio": (5.0, 10.0), "frontera": (12.7, 60.0), "caliente": (13.0, 80.0)}
+BANO = {"b005": 0.005, "b02": 0.02, "b05": 0.05}    # §53 A1: celdas de T_fondo
 K, LAM, TAU_S, DT, UT = 0.3, 30.0, 8e-4, 8e-5, 120.0
 TICKS_PULSO, T_REM, TICKS_REM = 1250, 0.05, 2500
 CK_CADA_UT, DEC_TAU = 10.0, 8
@@ -28,7 +29,7 @@ def poblacion():
     for u in j["unidades"]:
         s, _ = parse_theta_v2(u["constituyentes"][0]["theta"], emission_scale=0.1)
         specs.append(s); gids.append(u["run_id"])
-    assert len(specs) == 150, f"población: {len(specs)} != 150 (prereg §43)"
+    assert len(specs) == 150, f"población: {len(specs)} != 150 (§43/§53)"
     return specs, gids
 
 
@@ -36,16 +37,22 @@ def main():
     from study07.artifacts.caldo_artifacts import RecorderCaldo, guardar_checkpoint
     from study07.engine.caldo import RedCaldo
     calendario, seed = sys.argv[1], int(sys.argv[2])
-    t_pulso, ret_ut = CAL[calendario]
-    run_id = f"m2censal1_{calendario}_s{seed}"
+    if calendario in BANO:                            # A1: frio + baño, N=50, ret 30
+        t_fondo, t_pulso, ret_ut, n_pob = BANO[calendario], 5.0, 30.0, 50
+        run_id = f"a1bano_{calendario}_s{seed}"
+    else:
+        t_fondo, n_pob = 0.0, 150
+        t_pulso, ret_ut = CAL[calendario]
+        run_id = f"m2censal1_{calendario}_s{seed}"
     dest = Path("/Volumes/ExternalDisk/doft-study07/m2_censal") / run_id
     git_hash = subprocess.run(["git", "rev-parse", "HEAD"], cwd=STUDY07,
                               capture_output=True, text=True).stdout.strip()
     specs, gids = poblacion()
-    c = RedCaldo(specs, 150, genoma_ids=gids, dt=DT, seed=seed, K=K, lam=LAM,
+    specs, gids = specs[:n_pob], gids[:n_pob]
+    c = RedCaldo(specs, n_pob, genoma_ids=gids, dt=DT, seed=seed, K=K, lam=LAM,
                  tau_s=TAU_S, T_pulso=t_pulso, ticks_pulso=TICKS_PULSO,
                  T_rem=T_REM, ticks_rem=TICKS_REM,
-                 w_ticks_max=int(round(ret_ut / DT)))
+                 w_ticks_max=int(round(ret_ut / DT)), T_fondo=t_fondo)
     rec = RecorderCaldo(dest, c, {
         "run_id": run_id, "seed": seed, "genoma_id": "census_lote1_150",
         "git_hash": git_hash, "prereg": "§43 bitácora 2026-08-07"},
