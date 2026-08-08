@@ -144,6 +144,21 @@ function dibujar(){
         Math.hypot(p[d0], p[d1], p[d2])); }
   const esc = zoom * Math.min(W, H) * 0.42 / run._rmax;
   const pr = F.pos9.map(p => proyectar(p[d0], p[d1], p[d2], esc));
+  if (verXYZ) {                        // ejes cartesianos de la terna visible
+    const L = run._rmax * 0.95;
+    const nombres = [d0 + 1, d1 + 1, d2 + 1];
+    const dirs = [[L,0,0],[0,L,0],[0,0,L]];
+    cx.setLineDash([4, 5]); cx.lineWidth = 1;
+    for (let a = 0; a < 3; a++) {
+      const p1 = proyectar(-dirs[a][0], -dirs[a][1], -dirs[a][2], esc);
+      const p2 = proyectar(dirs[a][0], dirs[a][1], dirs[a][2], esc);
+      cx.strokeStyle = "rgba(232,163,61,0.35)";
+      cx.beginPath(); cx.moveTo(p1[0], p1[1]); cx.lineTo(p2[0], p2[1]); cx.stroke();
+      cx.fillStyle = "rgba(232,163,61,0.8)"; cx.font = "11px sans-serif";
+      cx.fillText("dim " + nombres[a], p2[0] + 4, p2[1] - 4);
+    }
+    cx.setLineDash([]);
+  }
   const arObj = (run.aristas_ut && run.aristas_ut[String(F.ut)]) || {n: 0, l: []};
   const aristas = arObj.l || arObj;            // compat datos viejos
   const nLocksReal = arObj.n !== undefined ? arObj.n : aristas.length;
