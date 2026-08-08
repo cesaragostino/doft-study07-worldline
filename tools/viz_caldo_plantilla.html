@@ -46,6 +46,7 @@
   <button id="colorbtn">color: e_Q</button>
   <button id="aristasbtn">locks: ON</button>
   <button id="xyzbtn">XYZ: OFF</button>
+  <button id="cuerposbtn">cuerpos: OFF</button>
   <button id="regen" style="display:none">↻ regenerar</button>
   <span id="girando">regenerando…</span>
 </div>
@@ -68,7 +69,7 @@ const cv = document.getElementById("lienzo"), cx = cv.getContext("2d");
 let W, H; function medir(){ W = cv.width = innerWidth; H = cv.height = innerHeight; }
 medir(); addEventListener("resize", medir);
 let rot = {a: 0.6, b: 0.35}, zoom = 1.0, fr = 0, playa = false, colorB = false,
-    verAristas = true, modo = 0, verXYZ = false;   // 0=todas (proyecta 1-3, alpha) · 1/2/3=terna con FILTRO
+    verAristas = true, modo = 0, verXYZ = false, verCuerpos = false;   // 0=todas (proyecta 1-3, alpha) · 1/2/3=terna con FILTRO
 const TERNAS = [[0,1,2],[0,1,2],[3,4,5],[6,7,8]];
 const ETIQ = ["todas (1-3)", "solo 1-3", "solo 4-6", "solo 7-9"];
 let datos = DATOS;
@@ -99,6 +100,8 @@ document.getElementById("colorbtn").onclick = e => { colorB = !colorB;
     "temperatura (log e_Q)") + " · radio = log(τ) · "; };
 document.getElementById("aristasbtn").onclick = e => { verAristas = !verAristas;
   e.target.textContent = "locks: " + (verAristas ? "ON" : "OFF"); };
+document.getElementById("cuerposbtn").onclick = e => { verCuerpos = !verCuerpos;
+  e.target.textContent = "cuerpos: " + (verCuerpos ? "ON" : "OFF"); };
 document.getElementById("xyzbtn").onclick = e => { verXYZ = !verXYZ;
   e.target.textContent = "XYZ: " + (verXYZ ? "ON" : "OFF"); };
 document.getElementById("ejesbtn").onclick = e => { modo = (modo + 1) % 4;
@@ -162,6 +165,49 @@ function dibujar(){
   const arObj = (run.aristas_ut && run.aristas_ut[String(F.ut)]) || {n: 0, l: []};
   const aristas = arObj.l || arObj;            // compat datos viejos
   const nLocksReal = arObj.n !== undefined ? arObj.n : aristas.length;
+  if (verCuerpos && aristas.length) {          // §50: cascos = «cuerpos» (proxy ola3)
+    const et = new Array(F.pos9.length).fill(-1);
+    let cid = 0;
+    const ady = new Map();
+    for (const [i, j] of aristas) {
+      if (!ady.has(i)) ady.set(i, []); if (!ady.has(j)) ady.set(j, []);
+      ady.get(i).push(j); ady.get(j).push(i);
+    }
+    for (const s0 of ady.keys()) {
+      if (et[s0] >= 0) continue;
+      const cola = [s0]; et[s0] = cid;
+      while (cola.length) {
+        const u = cola.pop();
+        for (const v of ady.get(u) || []) if (et[v] < 0) { et[v] = cid; cola.push(v); }
+      }
+      cid++;
+    }
+    for (let c = 0; c < cid; c++) {
+      const pts = [];
+      for (let i = 0; i < et.length; i++)
+        if (et[i] === c && visible[i]) pts.push([pr[i][0], pr[i][1]]);
+      if (pts.length < 4) continue;
+      pts.sort((a, b) => a[0] - b[0] || a[1] - b[1]);      // casco convexo (monotone)
+      const cruz = (o, a, b) => (a[0]-o[0])*(b[1]-o[1]) - (a[1]-o[1])*(b[0]-o[0]);
+      const abajo = [];
+      for (const p of pts) { while (abajo.length >= 2 &&
+        cruz(abajo[abajo.length-2], abajo[abajo.length-1], p) <= 0) abajo.pop();
+        abajo.push(p); }
+      const arriba = [];
+      for (let k = pts.length - 1; k >= 0; k--) { const p = pts[k];
+        while (arriba.length >= 2 &&
+          cruz(arriba[arriba.length-2], arriba[arriba.length-1], p) <= 0) arriba.pop();
+        arriba.push(p); }
+      const casco = abajo.slice(0, -1).concat(arriba.slice(0, -1));
+      cx.beginPath(); cx.moveTo(casco[0][0], casco[0][1]);
+      for (const p of casco.slice(1)) cx.lineTo(p[0], p[1]);
+      cx.closePath();
+      cx.fillStyle = `hsla(${(c * 67) % 360}, 60%, 55%, 0.07)`;
+      cx.strokeStyle = `hsla(${(c * 67) % 360}, 60%, 65%, 0.30)`;
+      cx.lineWidth = 1;
+      cx.fill(); cx.stroke();
+    }
+  }
   if (verAristas) {
     cx.lineWidth = 0.6;
     cx.strokeStyle = "rgba(120,150,220,0.10)";
