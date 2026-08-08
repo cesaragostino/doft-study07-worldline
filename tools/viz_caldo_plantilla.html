@@ -75,6 +75,7 @@ const combo = document.getElementById("corrida");
 function poblarCombo(sel){
   combo.innerHTML = "";
   for (const k of Object.keys(datos)) {
+    if (!datos[k].frames || !datos[k].frames.length) continue;   // sin frames, fuera
     const o = document.createElement("option"); o.value = k;
     o.textContent = k + " (" + datos[k].frames.length + " fr)"; combo.appendChild(o);
   }
@@ -121,7 +122,7 @@ function proyectar(x, y, z, escala){
         cb = Math.cos(rot.b), sb = Math.sin(rot.b);
   const x1 = x * ca + z * sa, z1 = -x * sa + z * ca;
   const y1 = y * cb - z1 * sb, z2 = y * sb + z1 * cb;
-  const pers = 900 / (900 + z2 * escala);
+  const pers = 900 / Math.max(60, 900 + z2 * escala);   // clamp: jamás negativo
   return [W / 2 + x1 * escala * pers, H / 2 + y1 * escala * pers, pers, z2];
 }
 function dibujar(){
@@ -186,7 +187,7 @@ function dibujar(){
     const [r, g, b] = fuego(u);
     const rad = (1.5 + 9 * Math.sqrt(F.rms[i] / rmsMax)) * pr[i][2] * Math.sqrt(zoom);
     cx.fillStyle = `rgba(${r},${g},${b},${alfa.toFixed(2)})`;
-    cx.beginPath(); cx.arc(pr[i][0], pr[i][1], rad, 0, 7); cx.fill();
+    cx.beginPath(); cx.arc(pr[i][0], pr[i][1], Math.max(0.3, rad), 0, 7); cx.fill();
   }
   // ── histograma de ocupación por dimensión (9 barras, abajo-izquierda) ──
   const occ = new Array(9).fill(0); const dom = new Array(9).fill(0);
@@ -203,7 +204,7 @@ function dibujar(){
   const hx = 16, hy = H - 120, hw = 24, hmax = 66;
   cx.font = "10px sans-serif";
   for (let k = 0; k < 9; k++) {
-    const enTerna3 = TERNAS[modo].includes(k);
+    const enTerna3 = modo === 0 || TERNAS[modo].includes(k);
     const h = hmax * (occ[k] / (occTot + 1e-12));
     cx.fillStyle = enTerna3 ? "rgba(232,163,61,0.9)" : "rgba(90,110,160,0.55)";
     cx.fillRect(hx + k * (hw + 5), hy + hmax - h, hw, h);
@@ -226,7 +227,8 @@ let tPrev = 0;
 function ciclo(ts){
   if (playa && ts - tPrev > 60) { fr = (fr + 1) % run.frames.length;
     slider.value = fr; tPrev = ts; }
-  dibujar(); requestAnimationFrame(ciclo);
+  try { dibujar(); } catch (err) { console.error("dibujar:", err); }
+  requestAnimationFrame(ciclo);                 // el loop NUNCA muere
 }
 requestAnimationFrame(ciclo);
 // ── modo servidor: botón regenerar (aparece solo si /estado responde) ──

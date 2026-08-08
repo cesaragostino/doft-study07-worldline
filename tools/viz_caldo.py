@@ -136,8 +136,12 @@ def construir():
                 if r is None:
                     continue
                 try:
-                    runs[d.name] = frames_de(r)
-                    print(f"[viz]   {len(runs[d.name]['frames'])} frames", flush=True)
+                    fr = frames_de(r)
+                    if not fr["frames"]:
+                        print("[viz]   0 frames — fuera del combo", flush=True)
+                        continue
+                    runs[d.name] = fr
+                    print(f"[viz]   {len(fr['frames'])} frames", flush=True)
                 except Exception as ex:
                     print(f"[viz]   salteada ({ex})", flush=True)
     plantilla = (STUDY07 / "tools/viz_caldo_plantilla.html").read_text()
