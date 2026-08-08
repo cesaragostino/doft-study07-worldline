@@ -45,6 +45,7 @@
   <button id="ejesbtn" title="todas: transparencia por pertenencia · terna: SOLO los residentes (≥50% de su norma ahí)">ejes: todas (1-3)</button>
   <button id="colorbtn">color: e_Q</button>
   <button id="aristasbtn">locks: ON</button>
+  <button id="xyzbtn">XYZ: OFF</button>
   <button id="regen" style="display:none">↻ regenerar</button>
   <span id="girando">regenerando…</span>
 </div>
@@ -67,7 +68,7 @@ const cv = document.getElementById("lienzo"), cx = cv.getContext("2d");
 let W, H; function medir(){ W = cv.width = innerWidth; H = cv.height = innerHeight; }
 medir(); addEventListener("resize", medir);
 let rot = {a: 0.6, b: 0.35}, zoom = 1.0, fr = 0, playa = false, colorB = false,
-    verAristas = true, modo = 0;   // 0=todas (proyecta 1-3, alpha) · 1/2/3=terna con FILTRO
+    verAristas = true, modo = 0, verXYZ = false;   // 0=todas (proyecta 1-3, alpha) · 1/2/3=terna con FILTRO
 const TERNAS = [[0,1,2],[0,1,2],[3,4,5],[6,7,8]];
 const ETIQ = ["todas (1-3)", "solo 1-3", "solo 4-6", "solo 7-9"];
 let datos = DATOS;
@@ -98,6 +99,8 @@ document.getElementById("colorbtn").onclick = e => { colorB = !colorB;
     "temperatura (log e_Q)") + " · radio = log(τ) · "; };
 document.getElementById("aristasbtn").onclick = e => { verAristas = !verAristas;
   e.target.textContent = "locks: " + (verAristas ? "ON" : "OFF"); };
+document.getElementById("xyzbtn").onclick = e => { verXYZ = !verXYZ;
+  e.target.textContent = "XYZ: " + (verXYZ ? "ON" : "OFF"); };
 document.getElementById("ejesbtn").onclick = e => { modo = (modo + 1) % 4;
   e.target.textContent = "ejes: " + ETIQ[modo];
   document.getElementById("ejes_v").textContent = ETIQ[modo]; run._rmax = 0; };
