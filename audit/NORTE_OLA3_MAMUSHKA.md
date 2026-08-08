@@ -62,5 +62,7 @@ solo agotando lo anterior.
 Una campaña «encuentra mamushka» si aparece AL MENOS UNO: (i) meseta jerárquica
 estable en el dendrograma; (ii) lock colectivo irreducible; (iii) bloque con W
 interno > 0 sostenido; (iv) componente que sobrevive recambio de miembros con
-identidad de voz (rigidez medida por el tracker + canto). Cualquier hallazgo se
-verifica contra su nulo barajado antes de nombrarse estructura.
+identidad de voz (rigidez medida por el tracker + canto); (v) **marco propio
+estable** — rotación del subespacio local ≪ rotación global sostenida (§52: hoy
+TODOS los marcos hierven ~30°/10 u.t. — nadie tiene sistema de reposo). Cualquier
+hallazgo se verifica contra su nulo barajado antes de nombrarse estructura.
